@@ -1,0 +1,36 @@
+gtk-vnc (0.2.0-0ubuntu3) hardy; urgency=low
+
+  * Sponsor the package from Fernando Ribeiro
+  * debian/control:
+    - use correct XSBC-Original-Maintainer
+    - the -dev package depends on the library
+    - updated -dev package name to match the library one
+    - updated short description to mention the differences between binaries
+  * debian/copyright:
+    - the license is under LGPL 2.1
+
+ -- Sebastien Bacher <seb128@canonical.com>  Tue, 13 Nov 2007 20:33:03 +0100
+
+gtk-vnc (0.2.0-0ubuntu2) gutsy; urgency=low
+
+  * News upstream release
+
+ -- Fernando Ribeiro <fernando@staff.nerdgroup.org>  Fri, 14 Sep 2007 10:17:52 -0300
+
+gtk-vnc (0.1.0-0ubuntu2) gutsy; urgency=low
+
+  * debian/copyright:
+    - Fixed license to LGPL-2.1 instead GPL
+  * debian/rules:
+    - Dropped python dbg
+  * debian/control:
+    - Dropped python-gtk-vnc-dbg
+    - Fixed Maintainer to MOTU
+
+ -- Fernando Ribeiro <fernando@staff.nerdgroup.org>  Thu, 13 Sep 2007 11:01:23 -0300
+
+gtk-vnc (0.1.0-0ubuntu1) gutsy; urgency=low
+
+  * Initial release.
+
+ -- Fernando Ribeiro <fernando@staff.nerdgroup.org>  Fri, 24 Aug 2007 15:06:13 -0300

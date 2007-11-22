@@ -1,0 +1,55 @@
+Source: gtk-vnc
+Section: gnome
+Priority: optional
+XS-Python-Version: >= 2.4
+Maintainer: Ubuntu MOTU Developers <ubuntu-motu@lists.ubuntu.com>
+XSBC-Original-Maintainer: Fernando Ribeiro <fernando@staff.nerdgroup.org>
+Standards-Version: 3.7.2
+Build-Depends: cdbs (>= 0.4.41), debhelper (>= 5.0.38), python-central (>= 0.5.6), libgtk2.0-dev (>= 2.10), python-all-dev (>= 2.3.5-11), libgnutls-dev (>= 1.6.3-1), python-gtk2-dev (>= 2.10.6), autotools-dev
+
+Package: libgtk-vnc-1.0-0
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A VNC viewer widget for GTK+ (runtime libraries)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the shared library.
+
+Package: libgtk-vnc-1.0-dev
+Architecture: any
+Section: libdevel
+Depends: ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version})
+Description: A VNC viewer widget for GTK+ (development files)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the development headers.
+
+Package: python-gtk-vnc
+Architecture: any
+Section: python
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-gtk2
+Provides: ${python:Provides}
+XB-Python-Version: ${python:Versions}
+Description: A VNC viewer widget for GTK+ (python binding)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the python binding.
