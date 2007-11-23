@@ -1,6 +1,8 @@
-gtk-vnc (0.2.0-1~pre0) unstable; urgency=low
+gtk-vnc (0.2.0-1) unstable; urgency=low
 
-  * Upload to Debian
+  * Upload to Debian (Closes: #452512)
+  * drop most of the versioned build dependencies since even etch has recent
+    enough versions
   * Thanks to the Ubuntu maintainers!
 
  -- Guido Guenther <agx@sigxcpu.org>  Thu, 22 Nov 2007 18:54:13 +0100
