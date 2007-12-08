@@ -1,3 +1,9 @@
+gtk-vnc (0.2.0-2) unstable; urgency=low
+
+  * add missing dependencies to the -dev package (Closes: #454975)
+
+ -- Guido Guenther <agx@sigxcpu.org>  Sat, 08 Dec 2007 15:42:22 +0100
+
 gtk-vnc (0.2.0-1) unstable; urgency=low
 
   * Upload to Debian (Closes: #452512)
