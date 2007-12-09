@@ -24,7 +24,8 @@ Description: A VNC viewer widget for GTK+ (runtime libraries)
 Package: libgtk-vnc-1.0-dev
 Architecture: any
 Section: libdevel
-Depends: ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version}), libgtk2.0-dev, libgnutls-dev
+Depends: ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version}),
+ libgtk2.0-dev (>= 2.0), libgnutls-dev (>= 1.4.0)
 Description: A VNC viewer widget for GTK+ (development files)
  It is built using coroutines, allowing it to be completely asynchronous while
  remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
@@ -39,7 +40,7 @@ Description: A VNC viewer widget for GTK+ (development files)
 Package: python-gtk-vnc
 Architecture: any
 Section: python
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-gtk2
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-gtk2 (>= 2.0)
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: A VNC viewer widget for GTK+ (python binding)
