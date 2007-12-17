@@ -6,7 +6,7 @@
 
 G_BEGIN_DECLS
 
-/* VOID:INT,INT (../../src/vncmarshal.txt:1) */
+/* VOID:INT,INT (vncmarshal.txt:1) */
 extern void g_cclosure_user_marshal_VOID__INT_INT (GClosure     *closure,
                                                    GValue       *return_value,
                                                    guint         n_param_values,

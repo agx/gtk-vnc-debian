@@ -4,7 +4,7 @@
 
 
 
-#line 3 "../../src/vnc.override"
+#line 3 "./vnc.override"
 #include <Python.h>
 #include "pygobject.h"
 #include "vncdisplay.h"
@@ -98,7 +98,7 @@ _wrap_vnc_display_close(PyGObject *self)
     return Py_None;
 }
 
-#line 15 "../../src/vnc.override"
+#line 15 "./vnc.override"
 static PyObject*
 _wrap_vnc_display_send_keys(PyGObject *self,
                             PyObject *args, PyObject *kwargs) 
@@ -260,6 +260,21 @@ _wrap_vnc_display_get_name(PyGObject *self)
     return Py_None;
 }
 
+static PyObject *
+_wrap_vnc_display_client_cut_text(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "text", NULL };
+    char *text;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:VncDisplay.client_cut_text", kwlist, &text))
+        return NULL;
+    
+    vnc_display_client_cut_text(VNC_DISPLAY(self->obj), text);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static const PyMethodDef _PyVncDisplay_methods[] = {
     { "open_fd", (PyCFunction)_wrap_vnc_display_open_fd, METH_VARARGS|METH_KEYWORDS,
       NULL },
@@ -288,6 +303,8 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
     { "get_height", (PyCFunction)_wrap_vnc_display_get_height, METH_NOARGS,
       NULL },
     { "get_name", (PyCFunction)_wrap_vnc_display_get_name, METH_NOARGS,
+      NULL },
+    { "client_cut_text", (PyCFunction)_wrap_vnc_display_client_cut_text, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { NULL, NULL, 0, NULL }
 };
@@ -351,6 +368,9 @@ const PyMethodDef gtkvnc_functions[] = {
 void
 gtkvnc_add_constants(PyObject *module, const gchar *strip_prefix)
 {
+#ifdef VERSION
+    PyModule_AddStringConstant(module, "__version__", VERSION);
+#endif
   pyg_enum_add(module, "DisplayCredential", strip_prefix, VNC_TYPE_DISPLAY_CREDENTIAL);
 
   if (PyErr_Occurred())
@@ -377,7 +397,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 381 "vnc.c"
+#line 401 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }

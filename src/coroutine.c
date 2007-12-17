@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "coroutine.h"
 
 int coroutine_release(struct coroutine *co)
@@ -28,6 +29,8 @@ static int _coroutine_release(struct continuation *cc)
 			return ret;
 	}
 
+	co->caller = NULL;
+
 	return munmap(cc->stack, cc->stack_size);
 }
 
@@ -44,8 +47,8 @@ int coroutine_init(struct coroutine *co)
 
 	co->cc.stack_size = co->stack_size;
 	co->cc.stack = mmap(0, co->stack_size,
-			    PROT_READ | PROT_WRITE | PROT_EXEC,
-			    MAP_SHARED | MAP_ANONYMOUS | MAP_GROWSDOWN,
+			    PROT_READ | PROT_WRITE,
+			    MAP_PRIVATE | MAP_ANONYMOUS,
 			    -1, 0);
 	if (co->cc.stack == MAP_FAILED)
 		return -1;
@@ -57,25 +60,23 @@ int coroutine_init(struct coroutine *co)
 }
 
 #if 0
-static __thread struct coroutine system;
+static __thread struct coroutine leader;
 static __thread struct coroutine *current;
 #else
-static struct coroutine system;
+static struct coroutine leader;
 static struct coroutine *current;
 #endif
 
 struct coroutine *coroutine_self(void)
 {
 	if (current == NULL)
-		current = &system;
+		current = &leader;
 	return current;
 }
 
 void *coroutine_swap(struct coroutine *from, struct coroutine *to, void *arg)
 {
 	int ret;
-
-	to->caller = from;
 	to->data = arg;
 	current = to;
 	ret = cc_swap(&from->cc, &to->cc);
@@ -83,7 +84,7 @@ void *coroutine_swap(struct coroutine *from, struct coroutine *to, void *arg)
 		return from->data;
 	else if (ret == 1) {
 		coroutine_release(to);
-		current = &system;
+		current = &leader;
 		to->exited = 1;
 		return to->data;
 	}
@@ -91,14 +92,25 @@ void *coroutine_swap(struct coroutine *from, struct coroutine *to, void *arg)
 	return NULL;
 }
 
-void *yieldto(struct coroutine *to, void *arg)
+void *coroutine_yieldto(struct coroutine *to, void *arg)
 {
+	if (to->caller) {
+		fprintf(stderr, "Co-routine is re-entering itself\n");
+		abort();
+	}
+	to->caller = coroutine_self();
 	return coroutine_swap(coroutine_self(), to, arg);
 }
 
-void *yield(void *arg)
+void *coroutine_yield(void *arg)
 {
-	return yieldto(coroutine_self()->caller, arg);
+	struct coroutine *to = coroutine_self()->caller;
+	if (!to) {
+		fprintf(stderr, "Co-routine is yielding to no one\n");
+		abort();
+	}
+	coroutine_self()->caller = NULL;
+	return coroutine_swap(coroutine_self(), to, arg);
 }
 /*
  * Local variables:

@@ -135,7 +135,7 @@ static gboolean g_io_wait_helper(GIOChannel *channel G_GNUC_UNUSED,
 				 gpointer data)
 {
 	struct coroutine *to = data;
-	yieldto(to, &cond);
+	coroutine_yieldto(to, &cond);
 	return FALSE;
 }
 
@@ -144,7 +144,7 @@ static GIOCondition g_io_wait(GIOChannel *channel, GIOCondition cond)
 	GIOCondition *ret;
 
 	g_io_add_watch(channel, cond | G_IO_HUP | G_IO_ERR | G_IO_NVAL, g_io_wait_helper, coroutine_self());
-	ret = yield(NULL);
+	ret = coroutine_yield(NULL);
 
 	return *ret;
 }
@@ -161,7 +161,7 @@ static GIOCondition g_io_wait_interruptable(struct wait_queue *wait,
 	id = g_io_add_watch(channel, cond | G_IO_HUP | G_IO_ERR | G_IO_NVAL, g_io_wait_helper, wait->context);
 
 	wait->waiting = TRUE;
-	ret = yield(NULL);
+	ret = coroutine_yield(NULL);
 	wait->waiting = FALSE;
 
 	if (ret == NULL) {
@@ -174,7 +174,7 @@ static GIOCondition g_io_wait_interruptable(struct wait_queue *wait,
 static void g_io_wakeup(struct wait_queue *wait)
 {
 	if (wait->waiting)
-		yieldto(wait->context, NULL);
+		coroutine_yieldto(wait->context, NULL);
 }
 
 
@@ -213,7 +213,7 @@ GSourceFuncs waitFuncs = {
 static gboolean g_condition_wait_helper(gpointer data)
 {
         struct coroutine *co = (struct coroutine *)data;
-        yieldto(co, NULL);
+        coroutine_yieldto(co, NULL);
         return FALSE;
 }
 
@@ -240,7 +240,7 @@ static gboolean g_condition_wait(g_condition_wait_func func, gpointer data)
 
 	g_source_attach(src, NULL);
 	g_source_set_callback(src, g_condition_wait_helper, coroutine_self(), NULL);
-	yield(NULL);
+	coroutine_yield(NULL);
 	return TRUE;
 }
 
@@ -991,6 +991,9 @@ static void gvnc_bell(struct gvnc *gvnc)
 {
 	if (gvnc->has_error || !gvnc->ops.bell)
 		return;
+
+	GVNC_DEBUG("Server beep\n");
+
 	if (!gvnc->ops.bell(gvnc->ops_data))
 		gvnc->has_error = TRUE;
 }
@@ -1000,6 +1003,9 @@ static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
 {
 	if (gvnc->has_error || !gvnc->ops.server_cut_text)
 		return;
+
+	GVNC_DEBUG("Server cut text\n");
+
 	if (!gvnc->ops.server_cut_text(gvnc->ops_data, data, len))
 		gvnc->has_error = TRUE;
 }
@@ -1771,7 +1777,7 @@ static gboolean gvnc_perform_auth(struct gvnc *gvnc)
 	}
 
 	for (i = 0 ; i < nauth ; i++) {
-		GVNC_DEBUG("Possible auth %d\n", auth[i]);
+		GVNC_DEBUG("Possible auth %u\n", auth[i]);
 	}
 
 	if (gvnc->has_error || !gvnc->ops.auth_type)
@@ -1787,7 +1793,7 @@ static gboolean gvnc_perform_auth(struct gvnc *gvnc)
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Choose auth %d\n", gvnc->auth_type);
+	GVNC_DEBUG("Choose auth %u\n", gvnc->auth_type);
 	if (!gvnc_gather_credentials(gvnc))
 		return FALSE;
 
@@ -1813,6 +1819,10 @@ static gboolean gvnc_perform_auth(struct gvnc *gvnc)
 		return gvnc_perform_auth_vencrypt(gvnc);
 
 	default:
+		if (gvnc->ops.auth_unsupported)
+			gvnc->ops.auth_unsupported (gvnc->ops_data, gvnc->auth_type);
+		gvnc->has_error = TRUE;
+
 		return FALSE;
 	}
 
@@ -1960,6 +1970,7 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	if (gvnc->major != 3)
 		goto fail;
 	if (gvnc->minor != 3 &&
+	    gvnc->minor != 4 &&
 	    gvnc->minor != 5 &&
 	    gvnc->minor != 6 &&
 	    gvnc->minor != 7 &&
@@ -2068,7 +2079,9 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
                 }
 
         reconnect:
-                if (connect(fd, runp->ai_addr, runp->ai_addrlen) == 0) {
+                /* FIXME: Better handle EINPROGRESS/EISCONN return values,
+                   as explained in connect(2) man page */
+                if ( (connect(fd, runp->ai_addr, runp->ai_addrlen) == 0) || errno == EISCONN) {
                         gvnc->channel = chan;
                         gvnc->fd = fd;
                         freeaddrinfo(ai);
@@ -2095,7 +2108,7 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 
 gboolean gvnc_set_auth_type(struct gvnc *gvnc, unsigned int type)
 {
-        GVNC_DEBUG("Requested auth type %d\n", type);
+        GVNC_DEBUG("Requested auth type %u\n", type);
         if (gvnc->auth_type != GVNC_AUTH_INVALID) {
                 gvnc->has_error = TRUE;
                 return !gvnc_has_error(gvnc);
@@ -2104,6 +2117,9 @@ gboolean gvnc_set_auth_type(struct gvnc *gvnc, unsigned int type)
             type != GVNC_AUTH_VNC &&
             type != GVNC_AUTH_TLS &&
             type != GVNC_AUTH_VENCRYPT) {
+            	if (gvnc->ops.auth_unsupported)
+					gvnc->ops.auth_unsupported (gvnc->ops_data, type);
+
                 gvnc->has_error = TRUE;
                 return !gvnc_has_error(gvnc);
         }
