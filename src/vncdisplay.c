@@ -76,13 +76,17 @@ typedef enum
 	VNC_DESKTOP_RESIZE,
 
 	VNC_AUTH_FAILURE,
+	VNC_AUTH_UNSUPPORTED,
+
+	VNC_SERVER_CUT_TEXT,
+	VNC_BELL,
 
 	LAST_SIGNAL
 } vnc_display_signals;
 
 static guint signals[LAST_SIGNAL] = { 0, 0, 0, 0,
 				      0, 0, 0, 0,
-				      0, 0, };
+				      0, 0, 0, 0, 0,};
 static GParamSpec *signalCredParam;
 
 GtkWidget *vnc_display_new(void)
@@ -602,6 +606,43 @@ static gboolean on_auth_failure(void *opaque, const char *msg)
 	return TRUE;
 }
 
+static gboolean on_auth_unsupported(void *opaque, unsigned int auth_type)
+{
+	VncDisplay *obj = VNC_DISPLAY(opaque);
+
+	g_signal_emit (G_OBJECT (obj),
+		       signals[VNC_AUTH_UNSUPPORTED],
+		       0,
+		       auth_type);
+
+	return TRUE;
+}
+
+static gboolean on_server_cut_text(void *opaque, const void* text, size_t len)
+{
+	VncDisplay *obj = VNC_DISPLAY(opaque);
+	GString *str = g_string_new_len ((const gchar *)text, len);
+
+	g_signal_emit (G_OBJECT (obj),
+		       signals[VNC_SERVER_CUT_TEXT],
+		       0,
+		       str->str);
+
+	g_string_free (str, TRUE);
+	return TRUE;
+}
+
+static gboolean on_bell(void *opaque)
+{
+	VncDisplay *obj = VNC_DISPLAY(opaque);
+
+	g_signal_emit (G_OBJECT (obj),
+		       signals[VNC_BELL],
+		       0);
+
+	return TRUE;
+}
+
 static gboolean on_local_cursor(void *opaque, int x, int y, int width, int height, uint8_t *image)
 {
 	VncDisplay *obj = VNC_DISPLAY(opaque);
@@ -643,6 +684,9 @@ static const struct gvnc_ops vnc_display_ops = {
 	.pointer_type_change = on_pointer_type_change,
 	.shared_memory_rmid = on_shared_memory_rmid,
 	.local_cursor = on_local_cursor,
+	.auth_unsupported = on_auth_unsupported,
+	.server_cut_text = on_server_cut_text,
+	.bell = on_bell
 };
 
 static void *vnc_coroutine(void *opaque)
@@ -728,7 +772,7 @@ static gboolean do_vnc_display_open(gpointer data)
 	co->release = NULL;
 
 	coroutine_init(co);
-	yieldto(co, obj);
+	coroutine_yieldto(co, obj);
 
 	return FALSE;
 }
@@ -949,6 +993,41 @@ static void vnc_display_class_init(VncDisplayClass *klass)
 			     1,
 			     G_TYPE_STRING);
 
+	signals[VNC_AUTH_UNSUPPORTED] =
+		g_signal_new("vnc-auth-unsupported",
+			     G_TYPE_FROM_CLASS(klass),
+			     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_HOOKS,
+			     0,
+			     NULL,
+			     NULL,
+			     g_cclosure_marshal_VOID__UINT,
+			     G_TYPE_NONE,
+			     1,
+			     G_TYPE_UINT);
+
+	signals[VNC_SERVER_CUT_TEXT] =
+		g_signal_new("vnc-server-cut-text",
+			     G_TYPE_FROM_CLASS(klass),
+			     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_HOOKS,
+			     0,
+			     NULL,
+			     NULL,
+			     g_cclosure_marshal_VOID__STRING,
+			     G_TYPE_NONE,
+			     1,
+			     G_TYPE_STRING);
+
+	signals[VNC_BELL] =
+		g_signal_new("vnc-bell",
+			     G_TYPE_FROM_CLASS(klass),
+			     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_HOOKS,
+			     0,
+			     NULL,
+			     NULL,
+			     g_cclosure_marshal_VOID__VOID,
+			     G_TYPE_NONE,
+			     0);
+
 	g_type_class_add_private(klass, sizeof(VncDisplayPrivate));
 }
 
@@ -985,7 +1064,8 @@ static void vnc_display_init(VncDisplay *display)
 			      GDK_BUTTON_MOTION_MASK |
 			      GDK_ENTER_NOTIFY_MASK |
 			      GDK_LEAVE_NOTIFY_MASK |
-			      GDK_SCROLL_MASK);
+			      GDK_SCROLL_MASK |
+			      GDK_KEY_PRESS_MASK);
 	gtk_widget_set_double_buffered(widget, FALSE);
 
 	display->priv = VNC_DISPLAY_GET_PRIVATE(display);
@@ -1094,6 +1174,8 @@ void vnc_display_set_pointer_grab(VncDisplay *obj, gboolean enable)
 	priv->grab_pointer = enable;
 	if (!enable && priv->absolute && priv->in_pointer_grab)
 		do_pointer_ungrab(obj, FALSE);
+	if (enable && priv->absolute && !priv->in_pointer_grab)
+		do_pointer_grab(obj, FALSE);
 }
 
 void vnc_display_set_keyboard_grab(VncDisplay *obj, gboolean enable)
@@ -1103,6 +1185,9 @@ void vnc_display_set_keyboard_grab(VncDisplay *obj, gboolean enable)
 	priv->grab_keyboard = enable;
 	if (!enable && priv->in_keyboard_grab && !priv->in_pointer_grab)
 		do_keyboard_ungrab(obj, FALSE);
+	if (enable && !priv->in_keyboard_grab)
+		do_keyboard_grab(obj, FALSE);
+
 }
 
 GType vnc_display_credential_get_type(void)
@@ -1151,6 +1236,13 @@ const char * vnc_display_get_name(VncDisplay *obj)
 	g_return_val_if_fail (VNC_IS_DISPLAY (obj), NULL);
 
 	return gvnc_get_name (obj->priv->gvnc);
+}
+
+void vnc_display_client_cut_text(VncDisplay *obj, const gchar *text)
+{
+	g_return_if_fail (VNC_IS_DISPLAY (obj));
+
+	gvnc_client_cut_text(obj->priv->gvnc, text, strlen (text));
 }
 
 /*
