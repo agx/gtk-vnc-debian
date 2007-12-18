@@ -1,3 +1,9 @@
+gtk-vnc (0.3.1-2) unstable; urgency=low
+
+  * update the shlibs (Closes: #456912) - Thanks to Sebastian Bacher
+
+ -- Guido Guenther <agx@sigxcpu.org>  Tue, 18 Dec 2007 16:40:54 +0100
+
 gtk-vnc (0.3.1-1) unstable; urgency=low
 
   * New Upstream Version
