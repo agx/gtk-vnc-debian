@@ -1,3 +1,11 @@
+gtk-vnc (0.3.1-2~bpo40+1) etch-backports; urgency=low
+
+  * Rebuild for Etch backports.
+  * lower build-dependency on libgnutils-dev and python-gtk2-dev as to what is
+    specified in configure.ac
+
+ -- Guido Guenther <agx@sigxcpu.org>  Thu, 27 Dec 2007 16:07:03 +0100
+
 gtk-vnc (0.3.1-2) unstable; urgency=low
 
   * update the shlibs (Closes: #456912) - Thanks to Sebastian Bacher
