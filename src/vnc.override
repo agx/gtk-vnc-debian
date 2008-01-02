@@ -10,24 +10,26 @@ import gtk.DrawingArea as PyGtkDrawingArea_Type
 %%
 ignore-glob
   *_get_type
+  vnc_display_send_keys_ex
 %%
 override vnc_display_send_keys kwargs 
 static PyObject*
 _wrap_vnc_display_send_keys(PyGObject *self,
                             PyObject *args, PyObject *kwargs) 
 {
-    static char *kwlist[] = {"keys", NULL}; 
+    static char *kwlist[] = {"keys", "kind", NULL}; 
     PyObject *keyList;
+    int kind = VNC_DISPLAY_KEY_EVENT_CLICK;
     int ret, i, len;
     guint *keys;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,    
-                                     "O:VncDisplay.send_keys", kwlist,
-                                     &keyList))
-        return;
+                                     "O|I:VncDisplay.send_keys", kwlist,
+                                     &keyList, &kind))
+	return NULL;
 
     if (!PyList_Check(keyList))
-        return;
+	return NULL;
 
     len = PyList_Size(keyList);
     keys = malloc(sizeof(guint)*len);
@@ -38,11 +40,14 @@ _wrap_vnc_display_send_keys(PyGObject *self,
         sym = PyString_AsString(val);
         if (!sym) {
             free(keys);
-            return;
+	    return NULL;
         }
         keys[i] = gdk_keyval_from_name(sym);
     }
 
-    vnc_display_send_keys(VNC_DISPLAY(self->obj), keys, len);
+    vnc_display_send_keys_ex(VNC_DISPLAY(self->obj), keys, len, kind);
     free(keys);
+
+    Py_INCREF(Py_None);
+    return Py_None;
 }

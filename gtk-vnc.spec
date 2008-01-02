@@ -2,14 +2,14 @@
 
 Summary: A GTK widget for VNC clients
 Name: gtk-vnc
-Version: 0.3.1
+Version: 0.3.2
 Release: 1%{?dist}%{?extra_release}
 License: LGPL
 Group: Development/Libraries
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: http://gtk-vnc.sf.net/
-BuildRequires: gtk2-devel pygtk2-devel python-devel
+BuildRequires: gtk2-devel pygtk2-devel python-devel zlib-devel
 
 %description
 gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
