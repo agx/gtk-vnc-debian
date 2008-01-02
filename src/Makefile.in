@@ -34,9 +34,13 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@WITH_PYTHON_TRUE@am__append_1 = vnc.defs vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_2 = vnc.override
-@WITH_PYTHON_FALSE@am__append_3 = vnc.override vncmodule.c
+@WITH_UCONTEXT_TRUE@am__append_1 = continuation.h continuation.c coroutine_ucontext.c
+@WITH_UCONTEXT_TRUE@am__append_2 = coroutine_gthread.c
+@WITH_UCONTEXT_FALSE@am__append_3 = coroutine_gthread.c
+@WITH_UCONTEXT_FALSE@am__append_4 = continuation.h continuation.c coroutine_ucontext.c
+@WITH_PYTHON_TRUE@am__append_5 = vnc.defs vncmodule.defs.c
+@WITH_PYTHON_TRUE@am__append_6 = vnc.override
+@WITH_PYTHON_FALSE@am__append_7 = vnc.override vncmodule.c
 subdir = src
 DIST_COMMON = $(gtk_vnc_include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -69,11 +73,18 @@ gtkvnc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(CFLAGS) $(gtkvnc_la_LDFLAGS) $(LDFLAGS) -o $@
 @WITH_PYTHON_TRUE@am_gtkvnc_la_rpath = -rpath $(pyexecdir)
 libgtk_vnc_1_0_la_DEPENDENCIES =
-am_libgtk_vnc_1_0_la_OBJECTS = libgtk_vnc_1_0_la-continuation.lo \
-	libgtk_vnc_1_0_la-coroutine.lo libgtk_vnc_1_0_la-d3des.lo \
+am__libgtk_vnc_1_0_la_SOURCES_DIST = blt.h blt1.h coroutine.h d3des.h \
+	d3des.c gvnc.h gvnc.c vncdisplay.h vncdisplay.c vncmarshal.h \
+	vncmarshal.c utils.h continuation.h continuation.c \
+	coroutine_ucontext.c coroutine_gthread.c
+@WITH_UCONTEXT_TRUE@am__objects_1 = libgtk_vnc_1_0_la-continuation.lo \
+@WITH_UCONTEXT_TRUE@	libgtk_vnc_1_0_la-coroutine_ucontext.lo
+@WITH_UCONTEXT_FALSE@am__objects_2 =  \
+@WITH_UCONTEXT_FALSE@	libgtk_vnc_1_0_la-coroutine_gthread.lo
+am_libgtk_vnc_1_0_la_OBJECTS = libgtk_vnc_1_0_la-d3des.lo \
 	libgtk_vnc_1_0_la-gvnc.lo libgtk_vnc_1_0_la-vncdisplay.lo \
-	libgtk_vnc_1_0_la-vncshmimage.lo \
-	libgtk_vnc_1_0_la-vncmarshal.lo
+	libgtk_vnc_1_0_la-vncmarshal.lo $(am__objects_1) \
+	$(am__objects_2)
 libgtk_vnc_1_0_la_OBJECTS = $(am_libgtk_vnc_1_0_la_OBJECTS)
 libgtk_vnc_1_0_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) \
@@ -93,7 +104,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(gtkvnc_la_SOURCES) $(libgtk_vnc_1_0_la_SOURCES)
 DIST_SOURCES = $(am__gtkvnc_la_SOURCES_DIST) \
-	$(libgtk_vnc_1_0_la_SOURCES)
+	$(am__libgtk_vnc_1_0_la_SOURCES_DIST)
 gtk_vnc_includeHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(gtk_vnc_include_HEADERS)
 ETAGS = etags
@@ -132,6 +143,8 @@ GNUTLS_CFLAGS = @GNUTLS_CFLAGS@
 GNUTLS_LIBS = @GNUTLS_LIBS@
 GNUTLS_REQUIRED = @GNUTLS_REQUIRED@
 GREP = @GREP@
+GTHREAD_CFLAGS = @GTHREAD_CFLAGS@
+GTHREAD_LIBS = @GTHREAD_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_REQUIRED = @GTK_REQUIRED@
@@ -234,10 +247,11 @@ target_vendor = @target_vendor@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = libgtk-vnc_sym.version vncmarshal.txt $(am__append_2) \
-	$(am__append_3)
+	$(am__append_4) $(am__append_6) $(am__append_7)
 lib_LTLIBRARIES = libgtk-vnc-1.0.la
-libgtk_vnc_1_0_la_LIBADD = @GTK_LIBS@ @GNUTLS_LIBS@
-libgtk_vnc_1_0_la_CFLAGS = @GTK_CFLAGS@ @GNUTLS_CFLAGS@ @WARNING_CFLAGS@ \
+libgtk_vnc_1_0_la_LIBADD = @GTK_LIBS@ @GNUTLS_LIBS@ @GTHREAD_LIBS@
+libgtk_vnc_1_0_la_CFLAGS = @GTK_CFLAGS@ @GNUTLS_CFLAGS@ @GTHREAD_CFLAGS@ \
+			   @WARNING_CFLAGS@ \
                            -DSYSCONFDIR=\""$(sysconfdir)"\" \
                            @DEBUG_CFLAGS@
 
@@ -245,18 +259,11 @@ libgtk_vnc_1_0_la_LDFLAGS = -Wl,--version-script=$(srcdir)/libgtk-vnc_sym.versio
                             -version-info 0:1:0
 
 gtk_vnc_includedir = $(includedir)/gtk-vnc-1.0/
-gtk_vnc_include_HEADERS = vncdisplay.h gvnc.h coroutine.h continuation.h
-libgtk_vnc_1_0_la_SOURCES = blt.h blt1.h \
-	continuation.h continuation.c \
-	coroutine.h coroutine.c \
-	d3des.h d3des.c \
-	gvnc.h gvnc.c \
-	vncdisplay.h vncdisplay.c \
-	vncshmimage.h vncshmimage.c \
-        vncmarshal.h vncmarshal.c \
-	utils.h
-
-CLEANFILES = vncmarshal.c vncmarshal.h $(am__append_1)
+gtk_vnc_include_HEADERS = vncdisplay.h gvnc.h
+libgtk_vnc_1_0_la_SOURCES = blt.h blt1.h coroutine.h d3des.h d3des.c \
+	gvnc.h gvnc.c vncdisplay.h vncdisplay.c vncmarshal.h \
+	vncmarshal.c utils.h $(am__append_1) $(am__append_3)
+CLEANFILES = vncmarshal.c vncmarshal.h $(am__append_5)
 @WITH_PYTHON_TRUE@pyexec_LTLIBRARIES = gtkvnc.la
 @WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-1.0.la @PYGTK_LIBS@
 # Auto-generated C code for Python binding is full of compiler warnings :-(
@@ -367,12 +374,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkvnc_la-vncmodule.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkvnc_la-vncmodule.defs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-continuation.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-coroutine.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-coroutine_gthread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-coroutine_ucontext.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-d3des.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-gvnc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncdisplay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncmarshal.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncshmimage.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -409,20 +416,6 @@ gtkvnc_la-vncmodule.defs.lo: vncmodule.defs.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtkvnc_la_CFLAGS) $(CFLAGS) -c -o gtkvnc_la-vncmodule.defs.lo `test -f 'vncmodule.defs.c' || echo '$(srcdir)/'`vncmodule.defs.c
 
-libgtk_vnc_1_0_la-continuation.lo: continuation.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-continuation.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-continuation.Tpo -c -o libgtk_vnc_1_0_la-continuation.lo `test -f 'continuation.c' || echo '$(srcdir)/'`continuation.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-continuation.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-continuation.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='continuation.c' object='libgtk_vnc_1_0_la-continuation.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-continuation.lo `test -f 'continuation.c' || echo '$(srcdir)/'`continuation.c
-
-libgtk_vnc_1_0_la-coroutine.lo: coroutine.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-coroutine.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-coroutine.Tpo -c -o libgtk_vnc_1_0_la-coroutine.lo `test -f 'coroutine.c' || echo '$(srcdir)/'`coroutine.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-coroutine.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-coroutine.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='coroutine.c' object='libgtk_vnc_1_0_la-coroutine.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-coroutine.lo `test -f 'coroutine.c' || echo '$(srcdir)/'`coroutine.c
-
 libgtk_vnc_1_0_la-d3des.lo: d3des.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-d3des.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-d3des.Tpo -c -o libgtk_vnc_1_0_la-d3des.lo `test -f 'd3des.c' || echo '$(srcdir)/'`d3des.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-d3des.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-d3des.Plo
@@ -444,19 +437,33 @@ libgtk_vnc_1_0_la-vncdisplay.lo: vncdisplay.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vncdisplay.lo `test -f 'vncdisplay.c' || echo '$(srcdir)/'`vncdisplay.c
 
-libgtk_vnc_1_0_la-vncshmimage.lo: vncshmimage.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vncshmimage.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vncshmimage.Tpo -c -o libgtk_vnc_1_0_la-vncshmimage.lo `test -f 'vncshmimage.c' || echo '$(srcdir)/'`vncshmimage.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-vncshmimage.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-vncshmimage.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncshmimage.c' object='libgtk_vnc_1_0_la-vncshmimage.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vncshmimage.lo `test -f 'vncshmimage.c' || echo '$(srcdir)/'`vncshmimage.c
-
 libgtk_vnc_1_0_la-vncmarshal.lo: vncmarshal.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vncmarshal.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vncmarshal.Tpo -c -o libgtk_vnc_1_0_la-vncmarshal.lo `test -f 'vncmarshal.c' || echo '$(srcdir)/'`vncmarshal.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-vncmarshal.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-vncmarshal.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncmarshal.c' object='libgtk_vnc_1_0_la-vncmarshal.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vncmarshal.lo `test -f 'vncmarshal.c' || echo '$(srcdir)/'`vncmarshal.c
+
+libgtk_vnc_1_0_la-continuation.lo: continuation.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-continuation.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-continuation.Tpo -c -o libgtk_vnc_1_0_la-continuation.lo `test -f 'continuation.c' || echo '$(srcdir)/'`continuation.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-continuation.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-continuation.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='continuation.c' object='libgtk_vnc_1_0_la-continuation.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-continuation.lo `test -f 'continuation.c' || echo '$(srcdir)/'`continuation.c
+
+libgtk_vnc_1_0_la-coroutine_ucontext.lo: coroutine_ucontext.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-coroutine_ucontext.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-coroutine_ucontext.Tpo -c -o libgtk_vnc_1_0_la-coroutine_ucontext.lo `test -f 'coroutine_ucontext.c' || echo '$(srcdir)/'`coroutine_ucontext.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-coroutine_ucontext.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-coroutine_ucontext.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='coroutine_ucontext.c' object='libgtk_vnc_1_0_la-coroutine_ucontext.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-coroutine_ucontext.lo `test -f 'coroutine_ucontext.c' || echo '$(srcdir)/'`coroutine_ucontext.c
+
+libgtk_vnc_1_0_la-coroutine_gthread.lo: coroutine_gthread.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-coroutine_gthread.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-coroutine_gthread.Tpo -c -o libgtk_vnc_1_0_la-coroutine_gthread.lo `test -f 'coroutine_gthread.c' || echo '$(srcdir)/'`coroutine_gthread.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libgtk_vnc_1_0_la-coroutine_gthread.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-coroutine_gthread.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='coroutine_gthread.c' object='libgtk_vnc_1_0_la-coroutine_gthread.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-coroutine_gthread.lo `test -f 'coroutine_gthread.c' || echo '$(srcdir)/'`coroutine_gthread.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

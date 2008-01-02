@@ -31,7 +31,7 @@ static int _coroutine_release(struct continuation *cc)
 
 	co->caller = NULL;
 
-	return munmap(cc->stack, cc->stack_size);
+	return 0;
 }
 
 static void coroutine_trampoline(struct continuation *cc)

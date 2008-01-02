@@ -11,7 +11,6 @@
 #include "vncdisplay.h"
 #include "coroutine.h"
 #include "gvnc.h"
-#include "vncshmimage.h"
 #include "utils.h"
 #include "vncmarshal.h"
 
@@ -19,8 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <gdk/gdkkeysyms.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -35,7 +32,7 @@ struct _VncDisplayPrivate
 	char *host;
 	char *port;
 	GdkGC *gc;
-	VncShmImage *shm_image;
+	GdkImage *image;
 	GdkCursor *null_cursor;
 	GdkCursor *remote_cursor;
 
@@ -52,10 +49,10 @@ struct _VncDisplayPrivate
 
 	gboolean absolute;
 
-	gboolean use_shm;
 	gboolean grab_pointer;
 	gboolean grab_keyboard;
 	gboolean local_pointer;
+	gboolean read_only;
 };
 
 G_DEFINE_TYPE(VncDisplay, vnc_display, GTK_TYPE_DRAWING_AREA)
@@ -120,7 +117,7 @@ static gboolean expose_event(GtkWidget *widget, GdkEventExpose *expose,
 	GdkRectangle drawn;
 	GdkRegion *clear, *copy;
 
-	if (priv->shm_image == NULL)
+	if (priv->image == NULL)
 		return TRUE;
 
 	x = MIN(expose->area.x, priv->fb.width);
@@ -140,9 +137,8 @@ static gboolean expose_event(GtkWidget *widget, GdkEventExpose *expose,
 	gdk_region_subtract(clear, copy);
 
 	gdk_gc_set_clip_region(priv->gc, copy);
-	vnc_shm_image_draw(priv->shm_image, widget->window,
-			   priv->gc,
-			   x, y, x, y, w, h);
+	gdk_draw_image(widget->window, priv->gc, priv->image,
+		       x, y, x, y, w, h);
 
 	gdk_gc_set_clip_region(priv->gc, clear);
 	gdk_draw_rectangle(widget->window, priv->gc, TRUE, expose->area.x, expose->area.y,
@@ -237,7 +233,10 @@ static gboolean button_event(GtkWidget *widget, GdkEventButton *button,
 	int n;
 
 	if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
-		return TRUE;
+		return FALSE;
+
+	if (priv->read_only)
+		return FALSE;
 
 	if ((priv->grab_pointer || !priv->absolute) &&
 	    !priv->in_pointer_grab &&
@@ -258,7 +257,7 @@ static gboolean button_event(GtkWidget *widget, GdkEventButton *button,
 				   0x7FFF, 0x7FFF);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean scroll_event(GtkWidget *widget, GdkEventScroll *scroll,
@@ -268,7 +267,10 @@ static gboolean scroll_event(GtkWidget *widget, GdkEventScroll *scroll,
 	int mask;
 
 	if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
-		return TRUE;
+		return FALSE;
+
+	if (priv->read_only)
+		return FALSE;
 
 	if (scroll->direction == GDK_SCROLL_UP)
 		mask = (1 << 3);
@@ -279,7 +281,7 @@ static gboolean scroll_event(GtkWidget *widget, GdkEventScroll *scroll,
 	else if (scroll->direction == GDK_SCROLL_RIGHT)
 		mask = (1 << 6);
 	else
-		return TRUE;
+		return FALSE;
 
 	if (priv->absolute) {
 		gvnc_pointer_event(priv->gvnc, priv->button_mask | mask,
@@ -293,7 +295,7 @@ static gboolean scroll_event(GtkWidget *widget, GdkEventScroll *scroll,
 				   0x7FFF, 0x7FFF);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion,
@@ -303,10 +305,13 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion,
 	int dx, dy;
 
 	if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
-		return TRUE;
+		return FALSE;
 
 	if (!priv->absolute && !priv->in_pointer_grab)
-		return TRUE;
+		return FALSE;
+
+	if (priv->read_only)
+		return FALSE;
 
 	if (!priv->absolute && priv->in_pointer_grab) {
 		GdkDrawable *drawable = GDK_DRAWABLE(widget->window);
@@ -324,7 +329,7 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion,
 			gdk_display_warp_pointer(display, screen, x, y);
 			priv->last_x = -1;
 			priv->last_y = -1;
-			return TRUE;
+			return FALSE;
 		}
 	}
 
@@ -343,7 +348,7 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion,
 	priv->last_x = (int)motion->x;
 	priv->last_y = (int)motion->y;
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
@@ -356,6 +361,9 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
 
 	if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
 		return TRUE;
+
+	if (priv->read_only)
+		return FALSE;
 
 	/*
 	 * Key handling in VNC is screwy. The event.keyval from GTK is
@@ -449,11 +457,8 @@ static gboolean on_resize(void *opaque, int width, int height)
 	if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
 		return TRUE;
 
-	if (priv->shm_image)
-		g_object_unref(priv->shm_image);
-
-	if (priv->fb.shm_id != -1)
-		shmctl(priv->fb.shm_id, IPC_RMID, NULL);
+	if (priv->image)
+		g_object_unref(priv->image);
 
 	if (priv->gc == NULL) {
 		priv->null_cursor = create_null_cursor();
@@ -466,25 +471,19 @@ static gboolean on_resize(void *opaque, int width, int height)
 
 	visual = gdk_drawable_get_visual(GTK_WIDGET(obj)->window);
 	
-	priv->shm_image = vnc_shm_image_new(visual, width, height, priv->use_shm);
-	priv->fb.shm_id = priv->shm_image->shmid;
-
+	priv->image = gdk_image_new(GDK_IMAGE_FASTEST, visual, width, height);
 	priv->fb.red_mask = visual->red_mask >> visual->red_shift;
 	priv->fb.green_mask = visual->green_mask >> visual->green_shift;
 	priv->fb.blue_mask = visual->blue_mask >> visual->blue_shift;
 	priv->fb.red_shift = visual->red_shift;
 	priv->fb.green_shift = visual->green_shift;
 	priv->fb.blue_shift = visual->blue_shift;
-	priv->fb.depth = priv->shm_image->depth;
-	priv->fb.bpp = priv->shm_image->bpp;
-	priv->fb.width = priv->shm_image->width;
-	priv->fb.height = priv->shm_image->height;
-	priv->fb.linesize = priv->shm_image->bytes_per_line;
-	priv->fb.data = (uint8_t *)priv->shm_image->pixels;
-
-	if (gvnc_shared_memory_enabled(priv->gvnc) && priv->fb.shm_id != -1)
-		gvnc_set_shared_buffer(priv->gvnc,
-				       priv->fb.linesize, priv->fb.shm_id);
+	priv->fb.depth = priv->image->depth;
+	priv->fb.bpp = priv->image->bpp;
+	priv->fb.width = priv->image->width;
+	priv->fb.height = priv->image->height;
+	priv->fb.linesize = priv->image->bpl;
+	priv->fb.data = (uint8_t *)priv->image->mem;
 
 	gtk_widget_set_size_request(GTK_WIDGET(obj), width, height);
 
@@ -509,23 +508,6 @@ static gboolean on_pointer_type_change(void *opaque, int absolute)
 	priv->absolute = absolute;
 	return TRUE;
 }
-
-static gboolean on_shared_memory_rmid(void *opaque, int shmid)
-{
-	VncDisplay *obj = VNC_DISPLAY(opaque);
-	VncDisplayPrivate *priv = obj->priv;
-
-	/* this needs to be much more robust */
-	if (shmid != priv->fb.shm_id) {
-		printf("server sent wrong shmid!\n");
-	}
-
-	shmctl(shmid, IPC_RMID, NULL);
-	if (shmid == priv->fb.shm_id)
-		priv->fb.shm_id = -1;
-	return TRUE;
-}
-
 
 static gboolean on_auth_cred(void *opaque)
 {
@@ -682,7 +664,6 @@ static const struct gvnc_ops vnc_display_ops = {
 	.update = on_update,
 	.resize = on_resize,
 	.pointer_type_change = on_pointer_type_change,
-	.shared_memory_rmid = on_shared_memory_rmid,
 	.local_cursor = on_local_cursor,
 	.auth_unsupported = on_auth_unsupported,
 	.server_cut_text = on_server_cut_text,
@@ -696,9 +677,10 @@ static void *vnc_coroutine(void *opaque)
 	int32_t encodings[] = { GVNC_ENCODING_DESKTOP_RESIZE,
 				GVNC_ENCODING_RICH_CURSOR,
 				GVNC_ENCODING_XCURSOR,
-				GVNC_ENCODING_SHARED_MEMORY,
 				GVNC_ENCODING_POINTER_CHANGE,
+				GVNC_ENCODING_ZRLE,
 				GVNC_ENCODING_HEXTILE,
+				GVNC_ENCODING_RRE,
 				GVNC_ENCODING_COPY_RECT,
 				GVNC_ENCODING_RAW };
 
@@ -730,7 +712,7 @@ static void *vnc_coroutine(void *opaque)
 		       signals[VNC_INITIALIZED],
 		       0);
 
-	if (!gvnc_set_encodings(priv->gvnc, 6, encodings))
+	if (!gvnc_set_encodings(priv->gvnc, ARRAY_SIZE(encodings), encodings))
 		goto cleanup;
 
 	if (!gvnc_framebuffer_update_request(priv->gvnc, 0, 0, 0, priv->fb.width, priv->fb.height))
@@ -834,17 +816,42 @@ void vnc_display_close(VncDisplay *obj)
 
 void vnc_display_send_keys(VncDisplay *obj, const guint *keyvals, int nkeyvals)
 {
+	vnc_display_send_keys_ex(obj, keyvals,
+				 nkeyvals, VNC_DISPLAY_KEY_EVENT_CLICK);
+}
+
+void vnc_display_send_keys_ex(VncDisplay *obj, const guint *keyvals,
+			      int nkeyvals, VncDisplayKeyEvent kind)
+{
 	int i;
 	if (obj->priv->gvnc == NULL || !gvnc_is_open(obj->priv->gvnc))
 		return;
 
-	for (i = 0 ; i < nkeyvals ; i++)
-		gvnc_key_event(obj->priv->gvnc, 1, keyvals[i]);
+	if (kind & VNC_DISPLAY_KEY_EVENT_PRESS) {
+		for (i = 0 ; i < nkeyvals ; i++)
+			gvnc_key_event(obj->priv->gvnc, 1, keyvals[i]);
+	}
 
-	for (i = (nkeyvals-1) ; i >= 0 ; i--)
-		gvnc_key_event(obj->priv->gvnc, 0, keyvals[i]);
+	if (kind & VNC_DISPLAY_KEY_EVENT_RELEASE) {
+		for (i = (nkeyvals-1) ; i >= 0 ; i--)
+			gvnc_key_event(obj->priv->gvnc, 0, keyvals[i]);
+	}
 }
 
+void vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask)
+{
+	VncDisplayPrivate *priv = obj->priv;
+
+	if (priv->gvnc == NULL || !gvnc_is_open(obj->priv->gvnc))
+		return;
+
+	if (priv->absolute) {
+		priv->button_mask = button_mask;
+		priv->last_x = x;
+		priv->last_y = y;
+		gvnc_pointer_event(priv->gvnc, priv->button_mask, x, y);
+	}
+}
 
 static void vnc_display_destroy (GtkObject *obj)
 {
@@ -1073,7 +1080,6 @@ static void vnc_display_init(VncDisplay *display)
 	display->priv->last_x = -1;
 	display->priv->last_y = -1;
 	display->priv->absolute = 1;
-	display->priv->fb.shm_id = -1;
 	display->priv->fd = -1;
 
 	display->priv->gvnc = gvnc_new(&vnc_display_ops, obj);
@@ -1151,11 +1157,6 @@ gboolean vnc_display_set_credential(VncDisplay *obj, int type, const gchar *data
 	return FALSE;
 }
 
-void vnc_display_set_use_shm(VncDisplay *obj, gboolean enable)
-{
-	obj->priv->use_shm = enable;
-}
-
 void vnc_display_set_pointer_local(VncDisplay *obj, gboolean enable)
 {
 	if (obj->priv->gc) {
@@ -1190,6 +1191,11 @@ void vnc_display_set_keyboard_grab(VncDisplay *obj, gboolean enable)
 
 }
 
+void vnc_display_set_read_only(VncDisplay *obj, gboolean enable)
+{
+	obj->priv->read_only = enable;
+}
+
 GType vnc_display_credential_get_type(void)
 {
 	static GType etype = 0;
@@ -1207,13 +1213,44 @@ GType vnc_display_credential_get_type(void)
 	return etype;
 }
 
+GType vnc_display_key_event_get_type(void)
+{
+	static GType etype = 0;
+
+	if (etype == 0) {
+		static const GEnumValue values[] = {
+			{ VNC_DISPLAY_KEY_EVENT_PRESS, "VNC_DISPLAY_KEY_EVENT_PRESS", "press" },
+			{ VNC_DISPLAY_KEY_EVENT_RELEASE, "VNC_DISPLAY_KEY_EVENT_RELEASE", "release" },
+			{ VNC_DISPLAY_KEY_EVENT_CLICK, "VNC_DISPLAY_KEY_EVENT_CLICK", "click" },
+			{ 0, NULL, NULL }
+		};
+		etype = g_enum_register_static ("VncDisplayKeyEvents", values );
+	}
+
+	return etype;
+}
+
 GdkPixbuf *vnc_display_get_pixbuf(VncDisplay *obj)
 {
-	if (!obj->priv->gvnc ||
-	    !gvnc_is_initialized(obj->priv->gvnc))
+	VncDisplayPrivate *priv = obj->priv;
+	GdkPixbuf *pixbuf;
+
+	if (!priv->gvnc ||
+	    !gvnc_is_initialized(priv->gvnc))
 		return NULL;
 
-	return vnc_shm_image_get_pixbuf(obj->priv->shm_image);
+	pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8,
+				priv->image->width, priv->image->height);
+
+	if (!gdk_pixbuf_get_from_image(pixbuf,
+				       priv->image,
+				       gdk_colormap_get_system(),
+				       0, 0, 0, 0,
+				       priv->image->width,
+				       priv->image->height))
+		return NULL;
+
+	return pixbuf;
 }
 
 

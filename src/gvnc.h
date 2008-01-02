@@ -18,7 +18,6 @@ struct gvnc_ops
 	gboolean (*server_cut_text)(void *, const void *, size_t);
 	gboolean (*resize)(void *, int, int);
 	gboolean (*pointer_type_change)(void *, int);
-	gboolean (*shared_memory_rmid)(void *, int);
 	gboolean (*local_cursor)(void *, int, int, int, int, uint8_t *);
 	gboolean (*auth_unsupported)(void *, unsigned int);
 };
@@ -40,8 +39,6 @@ struct gvnc_pixel_format
 struct gvnc_framebuffer
 {
 	uint8_t *data;
-
-	int shm_id;
 
 	int width;
 	int height;
@@ -74,7 +71,6 @@ typedef enum {
 	GVNC_ENCODING_XCURSOR = -240,
 
 	GVNC_ENCODING_POINTER_CHANGE = -257,
-	GVNC_ENCODING_SHARED_MEMORY = -258,
 } gvnc_encoding;
 
 typedef enum {
@@ -146,8 +142,6 @@ gboolean gvnc_set_encodings(struct gvnc *gvnc, int n_encoding, int32_t *encoding
 
 gboolean gvnc_set_pixel_format(struct gvnc *gvnc,
 			       const struct gvnc_pixel_format *fmt);
-
-gboolean gvnc_set_shared_buffer(struct gvnc *gvnc, int line_size, int shmid);
 
 gboolean gvnc_has_error(struct gvnc *gvnc);
 
