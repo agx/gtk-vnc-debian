@@ -294,6 +294,21 @@ _wrap_vnc_display_client_cut_text(PyGObject *self, PyObject *args, PyObject *kwa
     return Py_None;
 }
 
+static PyObject *
+_wrap_vnc_display_set_lossy_encoding(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "enable", NULL };
+    int enable;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_lossy_encoding", kwlist, &enable))
+        return NULL;
+    
+    vnc_display_set_lossy_encoding(VNC_DISPLAY(self->obj), enable);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static const PyMethodDef _PyVncDisplay_methods[] = {
     { "open_fd", (PyCFunction)_wrap_vnc_display_open_fd, METH_VARARGS|METH_KEYWORDS,
       NULL },
@@ -326,6 +341,8 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
     { "get_name", (PyCFunction)_wrap_vnc_display_get_name, METH_NOARGS,
       NULL },
     { "client_cut_text", (PyCFunction)_wrap_vnc_display_client_cut_text, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "set_lossy_encoding", (PyCFunction)_wrap_vnc_display_set_lossy_encoding, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { NULL, NULL, 0, NULL }
 };
@@ -419,7 +436,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 423 "vnc.c"
+#line 440 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }
