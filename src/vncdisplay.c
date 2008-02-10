@@ -2,8 +2,8 @@
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 2 as
- * published by the Free Software Foundation.
+ * it under the terms of the GNU Lesser General Public License version 2 or
+ * later as published by the Free Software Foundation.
  *
  *  GTK VNC Widget
  */
@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -40,8 +41,12 @@ struct _VncDisplayPrivate
 	struct coroutine coroutine;
 	struct gvnc *gvnc;
 
+	guint open_id;
+
 	gboolean in_pointer_grab;
 	gboolean in_keyboard_grab;
+
+	guint down_keyval[16];
 
 	int button_mask;
 	int last_x;
@@ -53,6 +58,7 @@ struct _VncDisplayPrivate
 	gboolean grab_keyboard;
 	gboolean local_pointer;
 	gboolean read_only;
+	gboolean allow_lossy;
 };
 
 G_DEFINE_TYPE(VncDisplay, vnc_display, GTK_TYPE_DRAWING_AREA)
@@ -390,7 +396,58 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
 					    &level,
 					    &consumed);
 
-	gvnc_key_event(priv->gvnc, key->type == GDK_KEY_PRESS ? 1 : 0, keyval);
+	/*
+	 * More VNC suckiness with key state & modifiers in particular
+	 *
+	 * Because VNC has no concept of modifiers, we have to track what keys are
+	 * pressed and when the widget looses focus send fake key up events for all
+	 * keys current held down. This is because upon gaining focus any keys held
+	 * down are no longer likely to be down. This would thus result in keys
+	 * being 'stuck on' in the remote server. eg upon Alt-Tab to switch window
+	 * focus you'd never see key up for the Alt or Tab keys without this :-(
+	 *
+	 * This is mostly a problem with modifier keys, but its best to just track
+	 * all key presses regardless. There's a limit to how many keys a user can
+	 * press at once due to a max of 10 fingers (normally :-), so down_key_vals
+	 * is only storing upto 16 for now. Should be plenty...
+	 *
+	 * Arggggh.
+	 */
+	if (key->type == GDK_KEY_PRESS) {
+		int i;
+		for (i = 0 ; i < (int)(sizeof(priv->down_keyval)/sizeof(priv->down_keyval[0])) ; i++) {
+			if (priv->down_keyval[i] == 0) {
+				priv->down_keyval[i] = keyval;
+				/* Send the actual key event we're dealing with */
+				gvnc_key_event(priv->gvnc, 1, keyval);
+				break;
+			} else if (priv->down_keyval[i] == keyval) {
+				/* Got an press when we're already pressed ! Why ... ?
+				 *
+				 * Well, GTK merges sequential press+release pairs of the same
+				 * key so instead of press+release,press+release,press+release
+				 * we only get press+press+press+press+press+release. This
+				 * really annoys some VNC servers, so we have to un-merge
+				 * them into a sensible stream of press+release pairs
+				 */
+				/* Fake an up event for the previous down event */
+				gvnc_key_event(priv->gvnc, 0, keyval);
+				/* Now send our actual ldown event */
+				gvnc_key_event(priv->gvnc, 1, keyval);
+			}
+		}
+	} else {
+		int i;
+		for (i = 0 ; i < (int)(sizeof(priv->down_keyval)/sizeof(priv->down_keyval[0])) ; i++) {
+			/* We were pressed, and now we're released, so... */
+			if (priv->down_keyval[i] == keyval) {
+				priv->down_keyval[i] = 0;
+				/* ..send the key releae event we're dealing with */
+				gvnc_key_event(priv->gvnc, 0, keyval);
+				break;
+			}
+		}
+	}
 
 	if (key->type == GDK_KEY_PRESS &&
 	    ((keyval == GDK_Control_L && (key->state & GDK_MOD1_MASK)) ||
@@ -434,6 +491,28 @@ static gboolean leave_event(GtkWidget *widget, GdkEventCrossing *crossing,
 
         if (priv->grab_keyboard)
                 do_keyboard_ungrab(VNC_DISPLAY(widget), FALSE);
+
+        return TRUE;
+}
+
+
+static gboolean focus_event(GtkWidget *widget, GdkEventFocus *focus G_GNUC_UNUSED,
+                            gpointer data G_GNUC_UNUSED)
+{
+        VncDisplayPrivate *priv = VNC_DISPLAY(widget)->priv;
+	int i;
+
+        if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
+                return TRUE;
+
+	for (i = 0 ; i < (int)(sizeof(priv->down_keyval)/sizeof(priv->down_keyval[0])) ; i++) {
+		/* We are currently pressed so... */
+		if (priv->down_keyval[i] != 0) {
+			/* ..send the fake key releae event to match */
+			gvnc_key_event(priv->gvnc, 0, priv->down_keyval[i]);
+			priv->down_keyval[i] = 0;
+		}
+	}
 
         return TRUE;
 }
@@ -512,36 +591,36 @@ static gboolean on_pointer_type_change(void *opaque, int absolute)
 static gboolean on_auth_cred(void *opaque)
 {
 	VncDisplay *obj = VNC_DISPLAY(opaque);
-	GValueArray *credList;
+	GValueArray *cred_list;
 	GValue username, password, clientname;
 
 	memset(&username, 0, sizeof(username));
 	memset(&password, 0, sizeof(password));
 	memset(&clientname, 0, sizeof(clientname));
 
-	credList = g_value_array_new(2);
+	cred_list = g_value_array_new(0);
 	if (gvnc_wants_credential_username(obj->priv->gvnc)) {
 		g_value_init(&username, G_PARAM_SPEC_VALUE_TYPE(signalCredParam));
 		g_value_set_enum(&username, VNC_DISPLAY_CREDENTIAL_USERNAME);
-		g_value_array_append(credList, &username);
+		cred_list = g_value_array_append(cred_list, &username);
 	}
 	if (gvnc_wants_credential_password(obj->priv->gvnc)) {
 		g_value_init(&password, G_PARAM_SPEC_VALUE_TYPE(signalCredParam));
 		g_value_set_enum(&password, VNC_DISPLAY_CREDENTIAL_PASSWORD);
-		g_value_array_append(credList, &password);
+		cred_list = g_value_array_append(cred_list, &password);
 	}
 	if (gvnc_wants_credential_x509(obj->priv->gvnc)) {
 		g_value_init(&clientname, G_PARAM_SPEC_VALUE_TYPE(signalCredParam));
 		g_value_set_enum(&clientname, VNC_DISPLAY_CREDENTIAL_CLIENTNAME);
-		g_value_array_append(credList, &clientname);
+		cred_list = g_value_array_append(cred_list, &clientname);
 	}
 
 	g_signal_emit (G_OBJECT (obj),
 		       signals[VNC_AUTH_CREDENTIAL],
 		       0,
-		       credList);
+		       cred_list);
 
-	g_value_array_free(credList);
+	g_value_array_free(cred_list);
 
 	return TRUE;
 }
@@ -656,6 +735,51 @@ static gboolean on_local_cursor(void *opaque, int x, int y, int width, int heigh
 	return TRUE;
 }
 
+static gboolean check_pixbuf_support(const char *name)
+{
+	GSList *list, *i;
+
+	list = gdk_pixbuf_get_formats();
+
+	for (i = list; i; i = i->next) {
+		GdkPixbufFormat *fmt = i->data;
+		if (!strcmp(gdk_pixbuf_format_get_name(fmt), name))
+			break;
+	}
+
+	g_slist_free(list);
+
+	return !!(i);
+}
+
+static gboolean on_render_jpeg(void *opaque,
+			       rgb24_render_func *render, void *render_opaque,
+			       int x, int y, int w, int h,
+			       uint8_t *data, int size)
+{
+	GdkPixbufLoader *loader = gdk_pixbuf_loader_new();
+	GdkPixbuf *p;
+	uint8_t *pixels;
+
+	if (!gdk_pixbuf_loader_write(loader, data, size, NULL))
+		return FALSE;
+
+	gdk_pixbuf_loader_close(loader, NULL);
+
+	p = g_object_ref(gdk_pixbuf_loader_get_pixbuf(loader));
+	g_object_unref(loader);
+
+	pixels = gdk_pixbuf_get_pixels(p);
+
+	render(render_opaque, x, y, w, h,
+	       gdk_pixbuf_get_pixels(p),
+	       gdk_pixbuf_get_rowstride(p));
+
+	gdk_pixbuf_unref(p);
+
+	return TRUE;
+}
+
 static const struct gvnc_ops vnc_display_ops = {
 	.auth_cred = on_auth_cred,
 	.auth_type = on_auth_type,
@@ -667,14 +791,30 @@ static const struct gvnc_ops vnc_display_ops = {
 	.local_cursor = on_local_cursor,
 	.auth_unsupported = on_auth_unsupported,
 	.server_cut_text = on_server_cut_text,
-	.bell = on_bell
+	.bell = on_bell,
+	.render_jpeg = on_render_jpeg,
 };
+
+/* we use an idle function to allow the coroutine to exit before we actually
+ * unref the object since the coroutine's state is part of the object */
+static gboolean delayed_unref_object(gpointer data)
+{
+	VncDisplay *obj = VNC_DISPLAY(data);
+
+	g_assert(obj->priv->coroutine.exited == TRUE);
+	g_object_unref(G_OBJECT(data));
+	return FALSE;
+}
 
 static void *vnc_coroutine(void *opaque)
 {
 	VncDisplay *obj = VNC_DISPLAY(opaque);
 	VncDisplayPrivate *priv = obj->priv;
-	int32_t encodings[] = { GVNC_ENCODING_DESKTOP_RESIZE,
+
+	/* this order is extremely important! */
+	int32_t encodings[] = {	GVNC_ENCODING_TIGHT_JPEG5,
+				GVNC_ENCODING_TIGHT,
+				GVNC_ENCODING_DESKTOP_RESIZE,
 				GVNC_ENCODING_RICH_CURSOR,
 				GVNC_ENCODING_XCURSOR,
 				GVNC_ENCODING_POINTER_CHANGE,
@@ -683,11 +823,13 @@ static void *vnc_coroutine(void *opaque)
 				GVNC_ENCODING_RRE,
 				GVNC_ENCODING_COPY_RECT,
 				GVNC_ENCODING_RAW };
+	int32_t *encodingsp;
+	int n_encodings;
 
 	int ret;
 
 	if (priv->gvnc == NULL || gvnc_is_open(priv->gvnc)) {
-		g_object_unref(G_OBJECT(obj));
+		g_idle_add(delayed_unref_object, obj);
 		return NULL;
 	}
 
@@ -712,8 +854,21 @@ static void *vnc_coroutine(void *opaque)
 		       signals[VNC_INITIALIZED],
 		       0);
 
-	if (!gvnc_set_encodings(priv->gvnc, ARRAY_SIZE(encodings), encodings))
-		goto cleanup;
+	encodingsp = encodings;
+	n_encodings = ARRAY_SIZE(encodings);
+
+	if (check_pixbuf_support("jpeg")) {
+		if (!priv->allow_lossy) {
+			encodingsp++;
+			n_encodings--;
+		}
+	} else {
+		encodingsp += 2;
+		n_encodings -= 2;
+	}
+
+	if (!gvnc_set_encodings(priv->gvnc, n_encodings, encodingsp))
+			goto cleanup;
 
 	if (!gvnc_framebuffer_update_request(priv->gvnc, 0, 0, 0, priv->fb.width, priv->fb.height))
 		goto cleanup;
@@ -731,7 +886,7 @@ static void *vnc_coroutine(void *opaque)
 	g_signal_emit (G_OBJECT (obj),
 		       signals[VNC_DISCONNECTED],
 		       0);
-	g_object_unref(G_OBJECT(obj));
+	g_idle_add(delayed_unref_object, obj);
 	/* Co-routine exits now - the VncDisplay object may no longer exist,
 	   so don't do anything else now unless you like SEGVs */
 	return NULL;
@@ -746,6 +901,8 @@ static gboolean do_vnc_display_open(gpointer data)
 		g_object_unref(G_OBJECT(obj));
 		return FALSE;
 	}
+
+	obj->priv->open_id = 0;
 
 	co = &obj->priv->coroutine;
 
@@ -769,7 +926,7 @@ gboolean vnc_display_open_fd(VncDisplay *obj, int fd)
 	obj->priv->port = NULL;
 
 	g_object_ref(G_OBJECT(obj)); /* Unref'd when co-routine exits */
-	g_idle_add(do_vnc_display_open, obj);
+	obj->priv->open_id = g_idle_add(do_vnc_display_open, obj);
 
 	return TRUE;
 }
@@ -791,7 +948,7 @@ gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *po
 	}
 
 	g_object_ref(G_OBJECT(obj)); /* Unref'd when co-routine exits */
-	g_idle_add(do_vnc_display_open, obj);
+	obj->priv->open_id = g_idle_add(do_vnc_display_open, obj);
 	return TRUE;
 }
 
@@ -804,6 +961,11 @@ gboolean vnc_display_is_open(VncDisplay *obj)
 
 void vnc_display_close(VncDisplay *obj)
 {
+	if (obj->priv->open_id) {
+		g_source_remove (obj->priv->open_id);
+		obj->priv->open_id = 0;
+	}
+
 	if (obj->priv->gvnc == NULL)
 		return;
 
@@ -925,10 +1087,10 @@ static void vnc_display_class_init(VncDisplayClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (VncDisplayClass, vnc_auth_credential),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__PARAM,
+			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE,
 			      1,
-			      G_TYPE_VALUE_ARRAY);
+			      G_TYPE_POINTER);
 
 
 	signals[VNC_POINTER_GRAB] =
@@ -1061,6 +1223,8 @@ static void vnc_display_init(VncDisplay *display)
 			 G_CALLBACK(enter_event), NULL);
 	g_signal_connect(obj, "leave-notify-event",
 			 G_CALLBACK(leave_event), NULL);
+	g_signal_connect(obj, "focus-out-event",
+			 G_CALLBACK(focus_event), NULL);
 
 	GTK_WIDGET_SET_FLAGS(obj, GTK_CAN_FOCUS);
 
@@ -1280,6 +1444,12 @@ void vnc_display_client_cut_text(VncDisplay *obj, const gchar *text)
 	g_return_if_fail (VNC_IS_DISPLAY (obj));
 
 	gvnc_client_cut_text(obj->priv->gvnc, text, strlen (text));
+}
+
+void vnc_display_set_lossy_encoding(VncDisplay *obj, gboolean enable)
+{
+	g_return_if_fail (VNC_IS_DISPLAY (obj));
+	obj->priv->allow_lossy = enable;
 }
 
 /*

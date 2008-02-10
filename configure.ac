@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gtk-vnc], [0.3.2], [anthony@codemonkey.ws])
+AC_INIT([gtk-vnc], [0.3.3], [anthony@codemonkey.ws])
 AC_CONFIG_SRCDIR([src/gvnc.c])
 
 GTK_REQUIRED=2.0.0
@@ -17,7 +17,7 @@ AC_CONFIG_HEADERS([config.h:config.hin])
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(gtk-vnc, 0.3.2)
+AM_INIT_AUTOMAKE(gtk-vnc, 0.3.3)
 
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
@@ -159,16 +159,48 @@ else
 fi
 AC_SUBST(DEBUG_CFLAGS)
 
+dnl --enable-plugin to enable the browser plugin.
+NSPR_REQUIRED=4.0.0
+FIREFOX_PLUGIN_REQUIRED=2.0.0
+AC_ARG_ENABLE(plugin,
+	[  --enable-plugin=[no/yes] enable browser plugin [default=no]],,
+	enable_plugin=no)
+if test "x$enable_plugin" = "xyes"; then
+    dnl Check for Netscape Portable Runtime development package.
+    PKG_CHECK_MODULES(NSPR, nspr >= $NSPR_REQUIRED)
+    dnl Check for Firefox plugin package (also includes NSPR cflags/libs).
+    PKG_CHECK_MODULES(FIREFOX_PLUGIN,
+		      firefox-plugin >= $FIREFOX_PLUGIN_REQUIRED)
+    AC_SUBST(FIREFOX_PLUGIN_CFLAGS)
+    AC_SUBST(FIREFOX_PLUGIN_LIBS)
+fi
+
 AM_CONDITIONAL(WITH_PYTHON, [test "$WITH_PYTHON" = "yes"])
 
 AM_CONDITIONAL(WITH_EXAMPLES, [test "$WITH_EXAMPLES" = "yes"])
+
+AM_CONDITIONAL(ENABLE_PLUGIN, [test "$enable_plugin" = "yes"])
 
 AC_CONFIG_FILES(
   Makefile
   src/Makefile
   examples/Makefile
+  plugin/Makefile
   gtk-vnc-1.0.pc
   gtk-vnc.spec
   )
 
 AC_OUTPUT
+
+echo "
+Configure summary:
+
+	Compiler ...................:  ${CC} 
+	Compiler Flags .............:  ${CFLAGS}
+	Prefix......................:  ${prefix}
+
+	Python biding ..............:  ${WITH_PYTHON}
+	Install example programs ...:  ${WITH_EXAMPLES}
+	Browser plugin .............:  ${enable_plugin}
+	DEBUG messages..............:  ${enable_debug}
+"

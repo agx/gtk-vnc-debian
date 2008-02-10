@@ -1,6 +1,27 @@
     GTK VNC News
     ============
 
+Jan 2, 2008: Release 0.3.3
+===========================
+
+Bug fixes:
+
+ o Track keystates to reset keyboard state on focus out (Daniel Berrange)
+ o Fix SEGV in vnc_display_close (Rich Jones)
+ o Compiler fixes for suncc (Halton Huo)
+ o More UltraVNC compatibility (Rich Jones)
+ o Big endian fixes (Anthony Liguori)
+ o Hide password characters in gvncviewer (Rich Jones)
+ o More debug on protocol error (Jonh Wendell)
+ o Fix SEGV on coroutine free (Anthony Liguori)
+ o Fix ZRLE encoding (Atsushi SAKAI)
+
+New features:
+
+ o Support got Tight encoding (Anthony Liguori)
+ o Mozilla browser plugin (Rich Jones)
+ o Output configure summary (Jonh Wendell)
+
 Dec 31, 2007: Release 0.3.2
 ===========================
 

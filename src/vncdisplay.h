@@ -2,8 +2,8 @@
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 2 as
- * published by the Free Software Foundation.
+ * it under the terms of the GNU Lesser General Public License version 2 or
+ * later as published by the Free Software Foundation.
  *
  *  GTK VNC Widget
  */
@@ -102,6 +102,8 @@ int		vnc_display_get_height(VncDisplay *obj);
 const char *	vnc_display_get_name(VncDisplay *obj);
 
 void		vnc_display_client_cut_text(VncDisplay *obj, const gchar *text);
+
+void		vnc_display_set_lossy_encoding(VncDisplay *obj, gboolean enable);
 
 G_END_DECLS
 
