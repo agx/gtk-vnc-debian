@@ -1,3 +1,11 @@
+gtk-vnc (0.3.3-1) unstable; urgency=low
+
+  * New Upstream Version
+  * lower the build-dependencies of libgnutils-dev and python-gtk2-dev
+    as to what is specified in configure.ac
+
+ -- Guido Guenther <agx@sigxcpu.org>  Sun, 10 Feb 2008 21:10:28 +0100
+
 gtk-vnc (0.3.2-1) unstable; urgency=low
 
   * New Upstream Version
