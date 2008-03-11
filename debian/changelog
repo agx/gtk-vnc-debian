@@ -1,3 +1,10 @@
+gtk-vnc (0.3.4-1) unstable; urgency=low
+
+  * New Upstream Version
+  * drop from_upstream_grab_focus.patch included in new upstream version
+
+ -- Guido Guenther <agx@sigxcpu.org>  Tue, 11 Mar 2008 20:49:59 +0100
+
 gtk-vnc (0.3.3-2) unstable; urgency=low
 
   * fix keyboard grab, many thanks to Emilio Pozuelo Monfort for
