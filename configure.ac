@@ -1,23 +1,32 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gtk-vnc], [0.3.3], [anthony@codemonkey.ws])
+AC_INIT([gtk-vnc], [0.3.4], [anthony@codemonkey.ws])
 AC_CONFIG_SRCDIR([src/gvnc.c])
 
 GTK_REQUIRED=2.0.0
 AC_SUBST(GTK_REQUIRED)
 GNUTLS_REQUIRED=1.4.0
 AC_SUBST(GNUTLS_REQUIRED)
+GTKGLEXT_REQUIRED=1.2.0
+AC_SUBST(GTKGLEXT_REQUIRED)
 
 PYGTK_REQUIRED=2.0.0
+GTKGLEXT_REQUIRED=1.2.0
+VIEW_REQUIRED=0.6.0
 GTHREAD_REQUIRED=2.0.0
 PYTHON_REQUIRED=2.4
+
+NSPR_REQUIRED=4.0.0
+FIREFOX_PLUGIN_REQUIRED=2.0.0
+MOZILLA_PLUGIN_REQUIRED=1.8
+
 
 AC_CONFIG_HEADERS([config.h:config.hin])
 
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(gtk-vnc, 0.3.3)
+AM_INIT_AUTOMAKE(gtk-vnc, 0.3.4)
 
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
@@ -82,6 +91,43 @@ WITH_EXAMPLES=$withval
 PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK_REQUIRED)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
+
+AC_ARG_WITH(gtkglext,
+[  --with-gtkglext         enable gtkgl support],
+[case "${withval}" in
+   yes|no) ;;
+   *)	   AC_MSG_ERROR([bad value ${withval} for gtkglext option]) ;;
+ esac],[withval=yes])
+
+WITH_GTKGLEXT=0
+if test "${withval}" = "yes"; then
+  PKG_CHECK_MODULES(GTKGLEXT, gtkglext-1.0 >= $GTKGLEXT_REQUIRED,
+	            [WITH_GTKGLEXT=1], [WITH_GTKGLEXT=0])
+fi
+AC_DEFINE_UNQUOTED(WITH_GTKGLEXT,[$WITH_GTKGLEXT], [Whether to use gtkglext])
+AC_SUBST(GTKGLEXT_CFLAGS)
+AC_SUBST(GTKGLEXT_LIBS)
+if test $WITH_GTKGLEXT -eq 0; then
+  with_scaling="no"
+else
+  with_scaling="yes"
+fi
+
+AC_ARG_WITH(libview,
+[  --with-libview          enable libview support in gvncviewer],
+[case "${withval}" in
+   yes|no) ;;
+   *)	   AC_MSG_ERROR([bad value ${withval} for libview option]) ;;
+ esac],[withval=yes])
+
+WITH_LIBVIEW=0
+if test "${withval}" = "yes"; then
+  PKG_CHECK_MODULES(VIEW, libview >= $VIEW_REQUIRED,
+		   [WITH_LIBVIEW=1], [WITH_LIBVIEW=0])
+fi
+AC_DEFINE_UNQUOTED(WITH_LIBVIEW,[$WITH_LIBVIEW], [Whether to use libview])
+AC_SUBST(VIEW_CFLAGS)
+AC_SUBST(VIEW_LIBS)
 
 PKG_CHECK_MODULES(GNUTLS, gnutls >= $GNUTLS_REQUIRED)
 AC_SUBST(GNUTLS_CFLAGS)
@@ -160,8 +206,6 @@ fi
 AC_SUBST(DEBUG_CFLAGS)
 
 dnl --enable-plugin to enable the browser plugin.
-NSPR_REQUIRED=4.0.0
-FIREFOX_PLUGIN_REQUIRED=2.0.0
 AC_ARG_ENABLE(plugin,
 	[  --enable-plugin=[no/yes] enable browser plugin [default=no]],,
 	enable_plugin=no)
@@ -170,7 +214,12 @@ if test "x$enable_plugin" = "xyes"; then
     PKG_CHECK_MODULES(NSPR, nspr >= $NSPR_REQUIRED)
     dnl Check for Firefox plugin package (also includes NSPR cflags/libs).
     PKG_CHECK_MODULES(FIREFOX_PLUGIN,
-		      firefox-plugin >= $FIREFOX_PLUGIN_REQUIRED)
+                     firefox-plugin >= $FIREFOX_PLUGIN_REQUIRED, ,[
+        PKG_CHECK_MODULES(MOZILLA_PLUGIN,
+                          mozilla-plugin >= $MOZILLA_PLUGIN_REQUIRED)
+        FIREFOX_PLUGIN_CFLAGS="$MOZILLA_PLUGIN_CFLAGS"
+        FIREFOX_PLUGIN_LIBS="$MOZILLA_PLUGIN_LIBS"
+    ])
     AC_SUBST(FIREFOX_PLUGIN_CFLAGS)
     AC_SUBST(FIREFOX_PLUGIN_LIBS)
 fi
@@ -203,4 +252,5 @@ Configure summary:
 	Install example programs ...:  ${WITH_EXAMPLES}
 	Browser plugin .............:  ${enable_plugin}
 	DEBUG messages..............:  ${enable_debug}
+	Scaling support.............:  ${with_scaling}
 "

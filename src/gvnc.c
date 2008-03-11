@@ -31,11 +31,17 @@
 #include "coroutine.h"
 #include "d3des.h"
 
+#include "x_keymap.h"
+
 #include "utils.h"
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
 #include <zlib.h>
+
+#include <gdk/gdkkeysyms.h>
+
+#include "vnc_keycodes.h"
 
 struct wait_queue
 {
@@ -158,6 +164,8 @@ struct gvnc
 
 	uint8_t zrle_pi;
 	int zrle_pi_bits;
+
+	gboolean has_ext_key_event;
 };
 
 #define nibhi(a) (((a) >> 4) & 0x0F)
@@ -346,6 +354,7 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 		if (gvnc_use_compression(gvnc)) {
 			int ret = gvnc_zread(gvnc, data + offset, len);
 			if (ret == -1) {
+				GVNC_DEBUG("Closing the connection: gvnc_read() - gvnc_zread() failed\n");
 				gvnc->has_error = TRUE;
 				return -errno;
 			}
@@ -378,11 +387,13 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 				case EINTR:
 					continue;
 				default:
+					GVNC_DEBUG("Closing the connection: gvnc_read() - ret=-1\n");
 					gvnc->has_error = TRUE;
 					return -errno;
 				}
 			}
 			if (ret == 0) {
+				GVNC_DEBUG("Closing the connection: gvnc_read() - ret=0\n");
 				gvnc->has_error = TRUE;
 				return -EPIPE;
 			}
@@ -431,11 +442,13 @@ static void gvnc_flush(struct gvnc *gvnc)
 			case EINTR:
 				continue;
 			default:
+				GVNC_DEBUG("Closing the connection: gvnc_flush\n");
 				gvnc->has_error = TRUE;
 				return;
 			}
 		}
 		if (ret == 0) {
+			GVNC_DEBUG("Closing the connection: gvnc_flush\n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -815,6 +828,7 @@ gboolean gvnc_set_encodings(struct gvnc *gvnc, int n_encoding, int32_t *encoding
 	uint8_t pad[1] = {0};
 	int i;
 
+	gvnc->has_ext_key_event = FALSE;
 	gvnc_write_u8(gvnc, 2);
 	gvnc_write(gvnc, pad, 1);
 	gvnc_write_u16(gvnc, n_encoding);
@@ -879,14 +893,29 @@ static void gvnc_buffered_flush(struct gvnc *gvnc)
 	g_io_wakeup(&gvnc->wait);
 }
 
-gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag, uint32_t key)
+gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag,
+			uint32_t key, uint16_t scancode)
 {
 	uint8_t pad[2] = {0};
 
-	gvnc_buffered_write_u8(gvnc, 4);
-	gvnc_buffered_write_u8(gvnc, down_flag);
-	gvnc_buffered_write(gvnc, pad, 2);
-	gvnc_buffered_write_u32(gvnc, key);
+	if (gvnc->has_ext_key_event) {
+		if (key == GDK_Pause)
+			scancode = VKC_PAUSE;
+		else
+			scancode = x_keycode_to_pc_keycode(scancode);
+
+		gvnc_buffered_write_u8(gvnc, 255);
+		gvnc_buffered_write_u8(gvnc, 0);
+		gvnc_buffered_write_u16(gvnc, down_flag);
+		gvnc_buffered_write_u32(gvnc, key);
+		gvnc_buffered_write_u32(gvnc, scancode);
+	} else {
+		gvnc_buffered_write_u8(gvnc, 4);
+		gvnc_buffered_write_u8(gvnc, down_flag);
+		gvnc_buffered_write(gvnc, pad, 2);
+		gvnc_buffered_write_u32(gvnc, key);
+	}
+
 	gvnc_buffered_flush(gvnc);
 	return !gvnc_has_error(gvnc);
 }
@@ -922,14 +951,14 @@ static inline uint8_t *gvnc_get_local(struct gvnc *gvnc, int x, int y)
 		(x * gvnc->local.bpp);
 }
 
-static uint8_t gvnc_swap_8(struct gvnc *gvnc, uint8_t pixel)
+static uint8_t gvnc_swap_8(struct gvnc *gvnc G_GNUC_UNUSED, uint8_t pixel)
 {
 	return pixel;
 }
 
 static uint16_t gvnc_swap_16(struct gvnc *gvnc, uint16_t pixel)
 {
-	if (gvnc->fmt.byte_order != __BYTE_ORDER)
+	if (gvnc->fmt.byte_order != gvnc->local.byte_order)
 		return  (((pixel >> 8) & 0xFF) << 0) |
 			(((pixel >> 0) & 0xFF) << 8);
 	else
@@ -938,7 +967,7 @@ static uint16_t gvnc_swap_16(struct gvnc *gvnc, uint16_t pixel)
 
 static uint32_t gvnc_swap_32(struct gvnc *gvnc, uint32_t pixel)
 {
-	if (gvnc->fmt.byte_order != __BYTE_ORDER)
+	if (gvnc->fmt.byte_order != gvnc->local.byte_order)
 		return  (((pixel >> 24) & 0xFF) <<  0) |
 			(((pixel >> 16) & 0xFF) <<  8) |
 			(((pixel >>  8) & 0xFF) << 16) |
@@ -1070,6 +1099,7 @@ static void gvnc_raw_update(struct gvnc *gvnc,
 
 	dst = malloc(width * (gvnc->fmt.bits_per_pixel / 8));
 	if (dst == NULL) {
+		GVNC_DEBUG("Closing the connection: gvnc_raw_update\n");
 		gvnc->has_error = TRUE;
 		return;
 	}
@@ -1351,6 +1381,7 @@ static void gvnc_zrle_update(struct gvnc *gvnc,
 	length = gvnc_read_u32(gvnc);
 	zlib_data = malloc(length);
 	if (zlib_data == NULL) {
+		GVNC_DEBUG("Closing the connection: gvnc_zrle_update\n");
 		gvnc->has_error = TRUE;
 		return;
 	}
@@ -1596,9 +1627,9 @@ static void gvnc_tight_update(struct gvnc *gvnc,
 		/* basic */
 		uint8_t filter_id = 0;
 		uint32_t data_size, zlib_length;
-		uint8_t *zlib_data;
+		uint8_t *zlib_data = NULL;
 		uint8_t palette[256][4];
-		int palette_size;
+		int palette_size = 0;
 
 		if (ccontrol & 0x04)
 			filter_id = gvnc_read_u8(gvnc);
@@ -1644,6 +1675,7 @@ static void gvnc_tight_update(struct gvnc *gvnc,
 			gvnc_tight_update_gradient(gvnc, x, y, width, height);
 			break;
 		default: /* error */
+			GVNC_DEBUG("Closing the connection: gvnc_tight_update() - filter_id unknown\n");
 			gvnc->has_error = TRUE;
 			break;
 		}
@@ -1675,6 +1707,7 @@ static void gvnc_tight_update(struct gvnc *gvnc,
 		g_free(jpeg_data);
 	} else {
 		/* error */
+		GVNC_DEBUG("Closing the connection: gvnc_tight_update() - ccontrol unknown\n");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1683,8 +1716,10 @@ static void gvnc_update(struct gvnc *gvnc, int x, int y, int width, int height)
 {
 	if (gvnc->has_error || !gvnc->ops.update)
 		return;
-	if (!gvnc->ops.update(gvnc->ops_data, x, y, width, height))
+	if (!gvnc->ops.update(gvnc->ops_data, x, y, width, height)) {
+		GVNC_DEBUG("Closing the connection: gvnc_update\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_set_color_map_entry(struct gvnc *gvnc, uint16_t color,
@@ -1694,8 +1729,10 @@ static void gvnc_set_color_map_entry(struct gvnc *gvnc, uint16_t color,
 	if (gvnc->has_error || !gvnc->ops.set_color_map_entry)
 		return;
 	if (!gvnc->ops.set_color_map_entry(gvnc->ops_data, color,
-					    red, green, blue))
+					    red, green, blue)) {
+		GVNC_DEBUG("Closing the connection: gvnc_set_color_map_entry\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_bell(struct gvnc *gvnc)
@@ -1705,8 +1742,10 @@ static void gvnc_bell(struct gvnc *gvnc)
 
 	GVNC_DEBUG("Server beep\n");
 
-	if (!gvnc->ops.bell(gvnc->ops_data))
+	if (!gvnc->ops.bell(gvnc->ops_data)) {
+		GVNC_DEBUG("Closing the connection: gvnc_bell\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
@@ -1715,26 +1754,38 @@ static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
 	if (gvnc->has_error || !gvnc->ops.server_cut_text)
 		return;
 
-	GVNC_DEBUG("Server cut text\n");
-
-	if (!gvnc->ops.server_cut_text(gvnc->ops_data, data, len))
+	if (!gvnc->ops.server_cut_text(gvnc->ops_data, data, len)) {
+		GVNC_DEBUG("Closing the connection: gvnc_server_cut_text\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_resize(struct gvnc *gvnc, int width, int height)
 {
 	if (gvnc->has_error || !gvnc->ops.resize)
 		return;
-	if (!gvnc->ops.resize(gvnc->ops_data, width, height))
+	if (!gvnc->ops.resize(gvnc->ops_data, width, height)) {
+		GVNC_DEBUG("Closing the connection: gvnc_resize\n");
 		gvnc->has_error = TRUE;
+	}
+}
+
+static void gvnc_pixel_format(struct gvnc *gvnc)
+{
+        if (gvnc->has_error || !gvnc->ops.pixel_format)
+                return;
+        if (!gvnc->ops.pixel_format(gvnc->ops_data, &gvnc->fmt))
+                gvnc->has_error = TRUE;
 }
 
 static void gvnc_pointer_type_change(struct gvnc *gvnc, int absolute)
 {
 	if (gvnc->has_error || !gvnc->ops.pointer_type_change)
 		return;
-	if (!gvnc->ops.pointer_type_change(gvnc->ops_data, absolute))
+	if (!gvnc->ops.pointer_type_change(gvnc->ops_data, absolute)) {
+		GVNC_DEBUG("Closing the connection: gvnc_pointer_type_change\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_rich_cursor_blt(struct gvnc *gvnc, uint8_t *pixbuf,
@@ -1757,12 +1808,14 @@ static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int hei
 
 		image = malloc(imagelen);
 		if (!image) {
+			GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !image \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
 		mask = malloc(masklen);
 		if (!mask) {
 			free(image);
+			GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !mask \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -1770,6 +1823,7 @@ static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int hei
 		if (!pixbuf) {
 			free(mask);
 			free(image);
+			GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !pixbuf \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -1786,8 +1840,10 @@ static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int hei
 
 	if (gvnc->has_error || !gvnc->ops.local_cursor)
 		return;
-	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf))
+	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf)) {
+		GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !ops.local_cursor() \n");
 		gvnc->has_error = TRUE;
+	}
 
 	free(pixbuf);
 }
@@ -1811,11 +1867,13 @@ static void gvnc_xcursor(struct gvnc *gvnc, int x, int y, int width, int height)
 
 		rowlen = ((width + 7)/8);
 		if (!(data = malloc(rowlen*height))) {
+			GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !data \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
 		if (!(mask = malloc(rowlen*height))) {
 			free(data);
+			GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !mask \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -1839,8 +1897,10 @@ static void gvnc_xcursor(struct gvnc *gvnc, int x, int y, int width, int height)
 
 	if (gvnc->has_error || !gvnc->ops.local_cursor)
 		return;
-	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf))
+	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf)) {
+		GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !ops.local_cursor() \n");
 		gvnc->has_error = TRUE;
+	}
 
 	free(pixbuf);
 }
@@ -1878,11 +1938,18 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 	case GVNC_ENCODING_POINTER_CHANGE:
 		gvnc_pointer_type_change(gvnc, x);
 		break;
+        case GVNC_ENCODING_WMVi:
+                gvnc_read_pixel_format(gvnc, &gvnc->fmt);
+                gvnc_pixel_format(gvnc);
+                break;
 	case GVNC_ENCODING_RICH_CURSOR:
 		gvnc_rich_cursor(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_XCURSOR:
 		gvnc_xcursor(gvnc, x, y, width, height);
+		break;
+	case GVNC_ENCODING_EXT_KEY_EVENT:
+		gvnc->has_ext_key_event = TRUE;
 		break;
 	default:
 		GVNC_DEBUG("Received an unknown encoding type: %d\n", etype);
@@ -1968,12 +2035,14 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 		gvnc_read(gvnc, pad, 3);
 		n_text = gvnc_read_u32(gvnc);
 		if (n_text > (32 << 20)) {
+			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText > allowed \n");
 			gvnc->has_error = TRUE;
 			break;
 		}
 
 		data = malloc(n_text + 1);
 		if (data == NULL) {
+			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText - !data \n");
 			gvnc->has_error = TRUE;
 			break;
 		}
@@ -2926,7 +2995,7 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 	    fb->red_shift == gvnc->fmt.red_shift &&
 	    fb->green_shift == gvnc->fmt.green_shift &&
 	    fb->blue_shift == gvnc->fmt.blue_shift &&
-	    __BYTE_ORDER == gvnc->fmt.byte_order)
+	    fb->byte_order == gvnc->fmt.byte_order)
 		gvnc->perfect_match = TRUE;
 	else
 		gvnc->perfect_match = FALSE;
@@ -3019,6 +3088,11 @@ int gvnc_get_width(struct gvnc *gvnc)
 int gvnc_get_height(struct gvnc *gvnc)
 {
 	return gvnc->height;
+}
+
+gboolean gvnc_using_raw_keycodes(struct gvnc *gvnc)
+{
+	return gvnc->has_ext_key_event;
 }
 
 /*

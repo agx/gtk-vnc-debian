@@ -60,6 +60,12 @@
 /* Version number of package */
 #undef VERSION
 
+/* Whether to use gtkglext */
+#undef WITH_GTKGLEXT
+
+/* Whether to use libview */
+#undef WITH_LIBVIEW
+
 /* Whether to use ucontext coroutine impl */
 #undef WITH_UCONTEXT
 

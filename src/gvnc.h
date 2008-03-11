@@ -6,6 +6,8 @@
 
 struct gvnc;
 
+struct gvnc_pixel_format;
+
 typedef void (rgb24_render_func)(void *, int, int, int, int, uint8_t *, int);
 
 struct gvnc_ops
@@ -19,6 +21,7 @@ struct gvnc_ops
 	gboolean (*bell)(void *);
 	gboolean (*server_cut_text)(void *, const void *, size_t);
 	gboolean (*resize)(void *, int, int);
+        gboolean (*pixel_format)(void *, struct gvnc_pixel_format *);
 	gboolean (*pointer_type_change)(void *, int);
 	gboolean (*local_cursor)(void *, int, int, int, int, uint8_t *);
 	gboolean (*auth_unsupported)(void *, unsigned int);
@@ -49,6 +52,7 @@ struct gvnc_framebuffer
 
 	int linesize;
 
+	uint16_t byte_order;
 	int depth;
 	int bpp;
 
@@ -84,11 +88,14 @@ typedef enum {
 
 	/* Pseudo encodings */
 	GVNC_ENCODING_DESKTOP_RESIZE = -223,
+        GVNC_ENCODING_WMVi = 0x574D5669,
+
 	GVNC_ENCODING_CURSOR_POS = -232,
 	GVNC_ENCODING_RICH_CURSOR = -239,
 	GVNC_ENCODING_XCURSOR = -240,
 
 	GVNC_ENCODING_POINTER_CHANGE = -257,
+	GVNC_ENCODING_EXT_KEY_EVENT = -258,
 } gvnc_encoding;
 
 typedef enum {
@@ -149,7 +156,8 @@ gboolean gvnc_client_cut_text(struct gvnc *gvnc,
 gboolean gvnc_pointer_event(struct gvnc *gvnc, uint8_t button_mask,
 			    uint16_t x, uint16_t y);
 
-gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag, uint32_t key);
+gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag,
+			uint32_t key, uint16_t scancode);
 
 gboolean gvnc_framebuffer_update_request(struct gvnc *gvnc,
 					 uint8_t incremental,
@@ -170,6 +178,9 @@ gboolean gvnc_shared_memory_enabled(struct gvnc *gvnc);
 const char *gvnc_get_name(struct gvnc *gvnc);
 int gvnc_get_width(struct gvnc *gvnc);
 int gvnc_get_height(struct gvnc *gvnc);
+
+/* HACK this is temporary */
+gboolean gvnc_using_raw_keycodes(struct gvnc *gvnc);
 
 #endif
 /*
