@@ -309,6 +309,36 @@ _wrap_vnc_display_set_lossy_encoding(PyGObject *self, PyObject *args, PyObject *
     return Py_None;
 }
 
+static PyObject *
+_wrap_vnc_display_set_scaling(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "enable", NULL };
+    int enable, ret;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_scaling", kwlist, &enable))
+        return NULL;
+    
+    ret = vnc_display_set_scaling(VNC_DISPLAY(self->obj), enable);
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
+_wrap_vnc_display_force_grab(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "enable", NULL };
+    int enable;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.force_grab", kwlist, &enable))
+        return NULL;
+    
+    vnc_display_force_grab(VNC_DISPLAY(self->obj), enable);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static const PyMethodDef _PyVncDisplay_methods[] = {
     { "open_fd", (PyCFunction)_wrap_vnc_display_open_fd, METH_VARARGS|METH_KEYWORDS,
       NULL },
@@ -343,6 +373,10 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
     { "client_cut_text", (PyCFunction)_wrap_vnc_display_client_cut_text, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { "set_lossy_encoding", (PyCFunction)_wrap_vnc_display_set_lossy_encoding, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "set_scaling", (PyCFunction)_wrap_vnc_display_set_scaling, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "force_grab", (PyCFunction)_wrap_vnc_display_force_grab, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { NULL, NULL, 0, NULL }
 };
@@ -436,7 +470,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 440 "vnc.c"
+#line 474 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }
