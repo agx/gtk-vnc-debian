@@ -4,12 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
+#include "config.h"
 
-static void set_title(VncDisplay *vnc, GtkWidget *window, gboolean grabbed)
+#if WITH_LIBVIEW
+#include <libview/autoDrawer.h>
+#endif
+
+static GtkWidget *vnc;
+
+static void set_title(VncDisplay *vncdisplay, GtkWidget *window,
+	gboolean grabbed)
 {
 	const char *name;
 	char title[1024];
@@ -20,17 +24,18 @@ static void set_title(VncDisplay *vnc, GtkWidget *window, gboolean grabbed)
 	else
 		subtitle = "";
 
-	name = vnc_display_get_name(VNC_DISPLAY(vnc));
+	name = vnc_display_get_name(VNC_DISPLAY(vncdisplay));
 	snprintf(title, sizeof(title), "%s%s - GVncViewer",
 		 subtitle, name);
 
 	gtk_window_set_title(GTK_WINDOW(window), title);
 }
 
-static gboolean vnc_screenshot(GtkWidget *window G_GNUC_UNUSED, GdkEvent *ev, GtkWidget *vnc)
+static gboolean vnc_screenshot(GtkWidget *window G_GNUC_UNUSED,
+	GdkEvent *ev, GtkWidget *vncdisplay)
 {
 	if (ev->key.keyval == GDK_F11) {
-		GdkPixbuf *pix = vnc_display_get_pixbuf(VNC_DISPLAY(vnc));
+		GdkPixbuf *pix = vnc_display_get_pixbuf(VNC_DISPLAY(vncdisplay));
 		gdk_pixbuf_save(pix, "gvncviewer.png", "png", NULL, "tEXt::Generator App", "gvncviewer", NULL);
 		gdk_pixbuf_unref(pix);
 		printf("Screenshot saved to gvncviewer.png\n");
@@ -38,73 +43,95 @@ static gboolean vnc_screenshot(GtkWidget *window G_GNUC_UNUSED, GdkEvent *ev, Gt
 	return FALSE;
 }
 
-static void vnc_grab(GtkWidget *vnc, GtkWidget *window)
+static void vnc_grab(GtkWidget *vncdisplay, GtkWidget *window)
 {
-	set_title(VNC_DISPLAY(vnc), window, TRUE);
+	set_title(VNC_DISPLAY(vncdisplay), window, TRUE);
 }
 
-static void vnc_ungrab(GtkWidget *vnc, GtkWidget *window)
+static void vnc_ungrab(GtkWidget *vncdisplay, GtkWidget *window)
 {
-	set_title(VNC_DISPLAY(vnc), window, FALSE);
+	set_title(VNC_DISPLAY(vncdisplay), window, FALSE);
 }
 
-static void vnc_connected(GtkWidget *vnc G_GNUC_UNUSED)
+static void vnc_connected(GtkWidget *vncdisplay G_GNUC_UNUSED)
 {
 	printf("Connected to server\n");
 }
 
-static void vnc_initialized(GtkWidget *vnc, GtkWidget *window)
+static void vnc_initialized(GtkWidget *vncdisplay, GtkWidget *window)
 {
 	printf("Connection initialized\n");
-	set_title(VNC_DISPLAY(vnc), window, FALSE);
+	set_title(VNC_DISPLAY(vncdisplay), window, FALSE);
 	gtk_widget_show_all(window);
 }
 
-static void vnc_auth_failure(GtkWidget *vnc, const char *msg)
+static void vnc_auth_failure(GtkWidget *vncdisplay G_GNUC_UNUSED,
+	const char *msg)
 {
 	printf("Authentication failed '%s'\n", msg ? msg : "");
 }
 
-static void vnc_desktop_resize(GtkWidget *vnc, int width, int height)
+static void vnc_desktop_resize(GtkWidget *vncdisplay G_GNUC_UNUSED,
+	int width, int height)
 {
 	printf("Remote desktop size changed to %dx%d\n", width, height);
 }
 
-static void vnc_disconnected(GtkWidget *vnc G_GNUC_UNUSED)
+static void vnc_disconnected(GtkWidget *vncdisplay G_GNUC_UNUSED)
 {
 	printf("Disconnected from server\n");
 	gtk_main_quit();
 }
 
-static void send_caf1(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vnc)
+static void send_caf1(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vncdisplay)
 {
 	guint keys[] = { GDK_Control_L, GDK_Alt_L, GDK_F1 };
 	printf("Sending Ctrl+Alt+F1\n");
-	vnc_display_send_keys(VNC_DISPLAY(vnc), keys, sizeof(keys)/sizeof(keys[0]));
+	vnc_display_send_keys(VNC_DISPLAY(vncdisplay), keys,
+		sizeof(keys)/sizeof(keys[0]));
 }
 
-static void send_caf7(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vnc)
+static void send_caf7(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vncdisplay)
 {
 	guint keys[] = { GDK_Control_L, GDK_Alt_L, GDK_F7 };
 	printf("Sending Ctrl+Alt+F7\n");
-	vnc_display_send_keys(VNC_DISPLAY(vnc), keys, sizeof(keys)/sizeof(keys[0]));
+	vnc_display_send_keys(VNC_DISPLAY(vncdisplay), keys,
+		sizeof(keys)/sizeof(keys[0]));
 }
 
-static void send_cad(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vnc)
+static void send_cad(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vncdisplay)
 {
 	guint keys[] = { GDK_Control_L, GDK_Alt_L, GDK_Delete };
 	printf("Sending Ctrl+Alt+Delete\n");
-	vnc_display_send_keys(VNC_DISPLAY(vnc), keys, sizeof(keys)/sizeof(keys[0]));
+	vnc_display_send_keys(VNC_DISPLAY(vncdisplay), keys,
+		sizeof(keys)/sizeof(keys[0]));
 }
 
-static void send_cab(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vnc)
+static void send_cab(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *vncdisplay)
 {
 	guint keys[] = { GDK_Control_L, GDK_Alt_L, GDK_BackSpace };
 	printf("Sending Ctrl+Alt+Backspace\n");
-	vnc_display_send_keys(VNC_DISPLAY(vnc), keys, sizeof(keys)/sizeof(keys[0]));
+	vnc_display_send_keys(VNC_DISPLAY(vncdisplay), keys,
+		sizeof(keys)/sizeof(keys[0]));
 }
 
-static void vnc_credential(GtkWidget *vnc, GValueArray *credList)
+static void do_fullscreen(GtkWidget *menu, GtkWidget *window)
+{
+	if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu)))
+		gtk_window_fullscreen(GTK_WINDOW(window));
+	else
+		gtk_window_unfullscreen(GTK_WINDOW(window));
+}
+
+static void do_scaling(GtkWidget *menu, GtkWidget *vncdisplay)
+{
+	if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu)))
+		vnc_display_set_scaling(VNC_DISPLAY(vncdisplay), TRUE);
+	else
+		vnc_display_set_scaling(VNC_DISPLAY(vncdisplay), FALSE);
+}
+
+static void vnc_credential(GtkWidget *vncdisplay, GValueArray *credList)
 {
 	GtkWidget *dialog = NULL;
 	int response;
@@ -148,17 +175,20 @@ static void vnc_credential(GtkWidget *vnc, GValueArray *credList)
 
 		for (i = 0, row =0 ; i < credList->n_values ; i++) {
 			GValue *cred = g_value_array_get_nth(credList, i);
+			entry[row] = gtk_entry_new();
 			switch (g_value_get_enum(cred)) {
 			case VNC_DISPLAY_CREDENTIAL_USERNAME:
 				label[row] = gtk_label_new("Username:");
 				break;
 			case VNC_DISPLAY_CREDENTIAL_PASSWORD:
 				label[row] = gtk_label_new("Password:");
+				gtk_entry_set_activates_default(GTK_ENTRY(entry[row]), TRUE);
 				break;
 			default:
 				continue;
 			}
-			entry[row] = gtk_entry_new();
+			if (g_value_get_enum (cred) == VNC_DISPLAY_CREDENTIAL_PASSWORD)
+				gtk_entry_set_visibility (GTK_ENTRY (entry[row]), FALSE);
 
 			gtk_table_attach(GTK_TABLE(box), label[i], 0, 1, row, row+1, GTK_SHRINK, GTK_SHRINK, 3, 3);
 			gtk_table_attach(GTK_TABLE(box), entry[i], 1, 2, row, row+1, GTK_SHRINK, GTK_SHRINK, 3, 3);
@@ -188,15 +218,15 @@ static void vnc_credential(GtkWidget *vnc, GValueArray *credList)
 	for (i = 0 ; i < credList->n_values ; i++) {
 		GValue *cred = g_value_array_get_nth(credList, i);
 		if (data[i]) {
-			if (vnc_display_set_credential(VNC_DISPLAY(vnc),
+			if (vnc_display_set_credential(VNC_DISPLAY(vncdisplay),
 						       g_value_get_enum(cred),
 						       data[i])) {
 				printf("Failed to set credential type %d\n", g_value_get_enum(cred));
-				vnc_display_close(VNC_DISPLAY(vnc));
+				vnc_display_close(VNC_DISPLAY(vncdisplay));
 			}
 		} else {
 			printf("Unsupported credential type %d\n", g_value_get_enum(cred));
-			vnc_display_close(VNC_DISPLAY(vnc));
+			vnc_display_close(VNC_DISPLAY(vncdisplay));
 		}
 	}
 
@@ -205,20 +235,42 @@ static void vnc_credential(GtkWidget *vnc, GValueArray *credList)
 		gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
+#if WITH_LIBVIEW
+static gboolean window_state_event(GtkWidget *widget,
+				   GdkEventWindowState *event,
+				   gpointer data)
+{
+	ViewAutoDrawer *drawer = VIEW_AUTODRAWER(data);
+
+	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
+		if (event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN) {
+			vnc_display_force_grab(VNC_DISPLAY(vnc), TRUE);
+			ViewAutoDrawer_SetActive(drawer, TRUE);
+		} else {
+			vnc_display_force_grab(VNC_DISPLAY(vnc), FALSE);
+			ViewAutoDrawer_SetActive(drawer, FALSE);
+		}
+	}
+
+	return FALSE;
+}
+#endif
+
 int main(int argc, char **argv)
 {
 	char port[1024], hostname[1024];
 	char *display;
 	GtkWidget *window;
-	GtkWidget *vnc;
 	GtkWidget *layout;
 	GtkWidget *menubar;
-	GtkWidget *sendkey;
+	GtkWidget *sendkey, *view;
 	GtkWidget *submenu;
 	GtkWidget *caf1;
 	GtkWidget *caf7;
 	GtkWidget *cad;
 	GtkWidget *cab;
+	GtkWidget *fullscreen;
+	GtkWidget *scaling;
 
 	if (argc != 2 && argc != 3) {
 		fprintf(stderr, "Usage: %s hostname[:display] [password]\n",
@@ -230,8 +282,14 @@ int main(int argc, char **argv)
 
 	vnc = vnc_display_new();
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	layout = gtk_vbox_new(FALSE, 3);
+#if WITH_LIBVIEW
+	layout = ViewAutoDrawer_New();
+#else
+	layout = gtk_vbox_new(FALSE, 0);
+#endif
 	menubar = gtk_menu_bar_new();
+
+	gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
 
 	sendkey = gtk_menu_item_new_with_mnemonic("_Send Key");
 	gtk_menu_bar_append(GTK_MENU_BAR(menubar), sendkey);
@@ -250,10 +308,28 @@ int main(int argc, char **argv)
 
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(sendkey), submenu);
 
+	view = gtk_menu_item_new_with_mnemonic("_View");
+	gtk_menu_bar_append(GTK_MENU_BAR(menubar), view);
+
+	submenu = gtk_menu_new();
+
+	fullscreen = gtk_check_menu_item_new_with_mnemonic("_Full Screen");
+	scaling = gtk_check_menu_item_new_with_mnemonic("OpenGL _Scaling");
+
+	gtk_menu_append(GTK_MENU(submenu), fullscreen);
+	gtk_menu_append(GTK_MENU(submenu), scaling);
+
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(view), submenu);
+
+#if WITH_LIBVIEW
+	ViewAutoDrawer_SetActive(VIEW_AUTODRAWER(layout), FALSE);
+	ViewOvBox_SetOver(VIEW_OV_BOX(layout), menubar);
+	ViewOvBox_SetUnder(VIEW_OV_BOX(layout), vnc);
+#else
+	gtk_box_pack_start(GTK_BOX(layout), menubar, FALSE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(layout), vnc, TRUE, TRUE, 0);
+#endif
 	gtk_container_add(GTK_CONTAINER(window), layout);
-	gtk_container_add(GTK_CONTAINER(layout), menubar);
-	gtk_container_add(GTK_CONTAINER(layout), vnc);
-	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
 	gtk_widget_realize(vnc);
 
 	if (argc == 3)
@@ -305,6 +381,14 @@ int main(int argc, char **argv)
 			   GTK_SIGNAL_FUNC(send_cad), vnc);
 	gtk_signal_connect(GTK_OBJECT(cab), "activate",
 			   GTK_SIGNAL_FUNC(send_cab), vnc);
+	gtk_signal_connect(GTK_OBJECT(fullscreen), "toggled",
+			   GTK_SIGNAL_FUNC(do_fullscreen), window);
+	gtk_signal_connect(GTK_OBJECT(scaling), "toggled",
+			   GTK_SIGNAL_FUNC(do_scaling), vnc);
+#if WITH_LIBVIEW
+	gtk_signal_connect(GTK_OBJECT(window), "window-state-event",
+			   GTK_SIGNAL_FUNC(window_state_event), layout);
+#endif
 
 	gtk_main();
 

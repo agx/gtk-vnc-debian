@@ -1,3 +1,31 @@
+gtk-vnc (0.3.4-1) unstable; urgency=low
+
+  * New Upstream Version
+  * drop from_upstream_grab_focus.patch included in new upstream version
+
+ -- Guido Guenther <agx@sigxcpu.org>  Tue, 11 Mar 2008 20:49:59 +0100
+
+gtk-vnc (0.3.3-2) unstable; urgency=low
+
+  * fix keyboard grab, many thanks to Emilio Pozuelo Monfort for
+    forwarding this
+
+ -- Guido Guenther <agx@sigxcpu.org>  Mon, 18 Feb 2008 21:39:06 +0100
+
+gtk-vnc (0.3.3-1) unstable; urgency=low
+
+  * New Upstream Version
+  * lower the build-dependencies of libgnutils-dev and python-gtk2-dev
+    as to what is specified in configure.ac
+
+ -- Guido Guenther <agx@sigxcpu.org>  Sun, 10 Feb 2008 21:10:28 +0100
+
+gtk-vnc (0.3.2-1) unstable; urgency=low
+
+  * New Upstream Version
+
+ -- Guido Guenther <agx@sigxcpu.org>  Wed, 02 Jan 2008 11:33:53 +0100
+
 gtk-vnc (0.3.1-2~bpo40+1) etch-backports; urgency=low
 
   * Rebuild for Etch backports.

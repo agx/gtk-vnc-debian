@@ -1,6 +1,72 @@
     GTK VNC News
     ============
 
+Mar 5, 2008: Release 0.3.4
+==========================
+
+Bug fixes:
+
+ o Fix cursor visibility when in relative pointer mode (Anthony Liguori)
+ o Fix vnc_auth_credential signal marshalling (Anthony Liguori, Saori Fukuta)
+ o Add missing break in key event handling (Marton Balint)
+ o Various build cleanups (Atsushi SAKAI)
+ o Fix key event tracking (Daniel Berrange)
+ o Fix big endian color conversion (Hiroyuki Kaguchi)
+ o More debug messages (Jonh Wendell)
+ o Add interface to explicitly force pointer grab (Anthony Liguori)
+ o Always emit signals from system coroutine (Anthony Liguori)
+ o Revert to 0.3.3 set_pointer_grab behavior (Anthony Liguori)
+ o spec file updates and configure support for Fedora 9 (Dan Berrange)
+
+New features:
+
+ o Focus widget on mouse click (Jonh Wendell)
+ o WMVi support (Stefano Stabellini)
+ o OpenGL based scaling (Anthony Liguori, Daniel Berrange)
+ o VNC scancode extension (Anthony Liguori)
+
+Feb 2, 2008: Release 0.3.3
+==========================
+
+Bug fixes:
+
+ o Track keystates to reset keyboard state on focus out (Daniel Berrange)
+ o Fix SEGV in vnc_display_close (Rich Jones)
+ o Compiler fixes for suncc (Halton Huo)
+ o More UltraVNC compatibility (Rich Jones)
+ o Big endian fixes (Anthony Liguori)
+ o Hide password characters in gvncviewer (Rich Jones)
+ o More debug on protocol error (Jonh Wendell)
+ o Fix SEGV on coroutine free (Anthony Liguori)
+ o Fix ZRLE encoding (Atsushi SAKAI)
+
+New features:
+
+ o Support got Tight encoding (Anthony Liguori)
+ o Mozilla browser plugin (Rich Jones)
+ o Output configure summary (Jonh Wendell)
+
+Dec 31, 2007: Release 0.3.2
+===========================
+
+Bug fixes:
+
+This release fixes a bug in the python bindings whereas send_keys() was not
+always returning a value.  It also fixed a bug in how mouse events get
+propagated and ensures that the right number of encodings are sent to the
+server.  This release also fixes the RichCursor encoding when the server is
+using a depth of less than 24.
+
+New features:
+
+A new interface was added (vnc_display_send_keys_ex) for passing key press and
+key release sequences directly and for sending pointer events directly
+(vnc_display_send_pointer).  Another interface was added
+(vnc_display_set_read_only) to prevent the user from being able to send any
+input at all to the server.  Support for the RRE encoding was added along
+with a GThread-based coroutine implementation to improve portability.  ZRLE
+support was also added.
+
 Dec 13, 2007: Release 0.3.1
 ===========================
 

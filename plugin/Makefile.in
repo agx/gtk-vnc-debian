@@ -33,10 +33,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@WITH_EXAMPLES_TRUE@bin_PROGRAMS = gvncviewer$(EXEEXT)
-@WITH_EXAMPLES_FALSE@noinst_PROGRAMS = gvncviewer$(EXEEXT)
-subdir = examples
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+subdir = plugin
+DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/configure.ac
@@ -45,15 +43,29 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-am_gvncviewer_OBJECTS = gvncviewer-gvncviewer.$(OBJEXT)
-gvncviewer_OBJECTS = $(am_gvncviewer_OBJECTS)
-gvncviewer_DEPENDENCIES = ../src/libgtk-vnc-1.0.la
-gvncviewer_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(gvncviewer_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+am__installdirs = "$(DESTDIR)$(plugindir)"
+pluginLTLIBRARIES_INSTALL = $(INSTALL)
+LTLIBRARIES = $(plugin_LTLIBRARIES)
+@ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_DEPENDENCIES =  \
+@ENABLE_PLUGIN_TRUE@	../src/libgtk-vnc-1.0.la
+am__gtk_vnc_plugin_la_SOURCES_DIST = gtk-vnc-plugin.c gtk-vnc-plugin.h \
+	npshell.c npunix.c
+@ENABLE_PLUGIN_TRUE@am_gtk_vnc_plugin_la_OBJECTS =  \
+@ENABLE_PLUGIN_TRUE@	gtk_vnc_plugin_la-gtk-vnc-plugin.lo \
+@ENABLE_PLUGIN_TRUE@	gtk_vnc_plugin_la-npshell.lo \
+@ENABLE_PLUGIN_TRUE@	gtk_vnc_plugin_la-npunix.lo
+gtk_vnc_plugin_la_OBJECTS = $(am_gtk_vnc_plugin_la_OBJECTS)
+gtk_vnc_plugin_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) \
+	$(gtk_vnc_plugin_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_PLUGIN_TRUE@am_gtk_vnc_plugin_la_rpath = -rpath $(plugindir)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -66,8 +78,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(gvncviewer_SOURCES)
-DIST_SOURCES = $(gvncviewer_SOURCES)
+SOURCES = $(gtk_vnc_plugin_la_SOURCES)
+DIST_SOURCES = $(am__gtk_vnc_plugin_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -220,14 +232,24 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-gvncviewer_SOURCES = gvncviewer.c
-gvncviewer_LDADD = ../src/libgtk-vnc-1.0.la @GTK_CFLAGS@ @GTKGLEXT_LIBS@ \
-		   @VIEW_LIBS@
+@ENABLE_PLUGIN_TRUE@plugindir = $(libdir)/mozilla/plugins
+@ENABLE_PLUGIN_TRUE@plugin_LTLIBRARIES = gtk-vnc-plugin.la
+@ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_SOURCES = \
+@ENABLE_PLUGIN_TRUE@	gtk-vnc-plugin.c gtk-vnc-plugin.h npshell.c npunix.c
 
-gvncviewer_CFLAGS = @GTK_CFLAGS@ @GTKGLEXT_CFLAGS@ @WARNING_CFLAGS@ \
-		    @VIEW_CFLAGS@ -I$(top_srcdir)/src/
+@ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_LIBADD = \
+@ENABLE_PLUGIN_TRUE@	../src/libgtk-vnc-1.0.la @GTK_LIBS@ @GTKGLEXT_LIBS@ \
+@ENABLE_PLUGIN_TRUE@	@FIREFOX_PLUGIN_LIBS@
 
-EXTRA_DIST = gvncviewer.py
+@ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_LDFLAGS = \
+@ENABLE_PLUGIN_TRUE@	-module -avoid-version
+
+@ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_CFLAGS = \
+@ENABLE_PLUGIN_TRUE@	-I$(top_srcdir)/src @GTK_CFLAGS@ @GTKGLEXT_CFLAGS@ \
+@ENABLE_PLUGIN_TRUE@	@FIREFOX_PLUGIN_CFLAGS@ @WARNING_CFLAGS@ @WERROR_CFLAGS@ @DEBUG_CFLAGS@
+
+@ENABLE_PLUGIN_TRUE@EXTRA_DIST = README
+@ENABLE_PLUGIN_TRUE@CLEANFILES = gtk-vnc-plugin.so
 all: all-am
 
 .SUFFIXES:
@@ -241,9 +263,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  examples/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  plugin/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  examples/Makefile
+	  $(AUTOMAKE) --gnu  plugin/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -261,44 +283,35 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-pluginLTLIBRARIES: $(plugin_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	     || test -f $$p1 \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	test -z "$(plugindir)" || $(MKDIR_P) "$(DESTDIR)$(plugindir)"
+	@list='$(plugin_LTLIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    f=$(am__strip_dir) \
+	    echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(pluginLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(plugindir)/$$f'"; \
+	    $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(pluginLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(plugindir)/$$f"; \
 	  else :; fi; \
 	done
 
-uninstall-binPROGRAMS:
+uninstall-pluginLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	@list='$(plugin_LTLIBRARIES)'; for p in $$list; do \
+	  p=$(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(plugindir)/$$p'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(plugindir)/$$p"; \
 	done
 
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
+clean-pluginLTLIBRARIES:
+	-test -z "$(plugin_LTLIBRARIES)" || rm -f $(plugin_LTLIBRARIES)
+	@list='$(plugin_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
 	done
-
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-gvncviewer$(EXEEXT): $(gvncviewer_OBJECTS) $(gvncviewer_DEPENDENCIES) 
-	@rm -f gvncviewer$(EXEEXT)
-	$(gvncviewer_LINK) $(gvncviewer_OBJECTS) $(gvncviewer_LDADD) $(LIBS)
+gtk-vnc-plugin.la: $(gtk_vnc_plugin_la_OBJECTS) $(gtk_vnc_plugin_la_DEPENDENCIES) 
+	$(gtk_vnc_plugin_la_LINK) $(am_gtk_vnc_plugin_la_rpath) $(gtk_vnc_plugin_la_OBJECTS) $(gtk_vnc_plugin_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -306,7 +319,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gvncviewer-gvncviewer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtk_vnc_plugin_la-gtk-vnc-plugin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtk_vnc_plugin_la-npshell.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtk_vnc_plugin_la-npunix.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -329,19 +344,26 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-gvncviewer-gvncviewer.o: gvncviewer.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gvncviewer_CFLAGS) $(CFLAGS) -MT gvncviewer-gvncviewer.o -MD -MP -MF $(DEPDIR)/gvncviewer-gvncviewer.Tpo -c -o gvncviewer-gvncviewer.o `test -f 'gvncviewer.c' || echo '$(srcdir)/'`gvncviewer.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/gvncviewer-gvncviewer.Tpo $(DEPDIR)/gvncviewer-gvncviewer.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gvncviewer.c' object='gvncviewer-gvncviewer.o' libtool=no @AMDEPBACKSLASH@
+gtk_vnc_plugin_la-gtk-vnc-plugin.lo: gtk-vnc-plugin.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) -MT gtk_vnc_plugin_la-gtk-vnc-plugin.lo -MD -MP -MF $(DEPDIR)/gtk_vnc_plugin_la-gtk-vnc-plugin.Tpo -c -o gtk_vnc_plugin_la-gtk-vnc-plugin.lo `test -f 'gtk-vnc-plugin.c' || echo '$(srcdir)/'`gtk-vnc-plugin.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/gtk_vnc_plugin_la-gtk-vnc-plugin.Tpo $(DEPDIR)/gtk_vnc_plugin_la-gtk-vnc-plugin.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk-vnc-plugin.c' object='gtk_vnc_plugin_la-gtk-vnc-plugin.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gvncviewer_CFLAGS) $(CFLAGS) -c -o gvncviewer-gvncviewer.o `test -f 'gvncviewer.c' || echo '$(srcdir)/'`gvncviewer.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) -c -o gtk_vnc_plugin_la-gtk-vnc-plugin.lo `test -f 'gtk-vnc-plugin.c' || echo '$(srcdir)/'`gtk-vnc-plugin.c
 
-gvncviewer-gvncviewer.obj: gvncviewer.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gvncviewer_CFLAGS) $(CFLAGS) -MT gvncviewer-gvncviewer.obj -MD -MP -MF $(DEPDIR)/gvncviewer-gvncviewer.Tpo -c -o gvncviewer-gvncviewer.obj `if test -f 'gvncviewer.c'; then $(CYGPATH_W) 'gvncviewer.c'; else $(CYGPATH_W) '$(srcdir)/gvncviewer.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/gvncviewer-gvncviewer.Tpo $(DEPDIR)/gvncviewer-gvncviewer.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gvncviewer.c' object='gvncviewer-gvncviewer.obj' libtool=no @AMDEPBACKSLASH@
+gtk_vnc_plugin_la-npshell.lo: npshell.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) -MT gtk_vnc_plugin_la-npshell.lo -MD -MP -MF $(DEPDIR)/gtk_vnc_plugin_la-npshell.Tpo -c -o gtk_vnc_plugin_la-npshell.lo `test -f 'npshell.c' || echo '$(srcdir)/'`npshell.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/gtk_vnc_plugin_la-npshell.Tpo $(DEPDIR)/gtk_vnc_plugin_la-npshell.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='npshell.c' object='gtk_vnc_plugin_la-npshell.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gvncviewer_CFLAGS) $(CFLAGS) -c -o gvncviewer-gvncviewer.obj `if test -f 'gvncviewer.c'; then $(CYGPATH_W) 'gvncviewer.c'; else $(CYGPATH_W) '$(srcdir)/gvncviewer.c'; fi`
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) -c -o gtk_vnc_plugin_la-npshell.lo `test -f 'npshell.c' || echo '$(srcdir)/'`npshell.c
+
+gtk_vnc_plugin_la-npunix.lo: npunix.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) -MT gtk_vnc_plugin_la-npunix.lo -MD -MP -MF $(DEPDIR)/gtk_vnc_plugin_la-npunix.Tpo -c -o gtk_vnc_plugin_la-npunix.lo `test -f 'npunix.c' || echo '$(srcdir)/'`npunix.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/gtk_vnc_plugin_la-npunix.Tpo $(DEPDIR)/gtk_vnc_plugin_la-npunix.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='npunix.c' object='gtk_vnc_plugin_la-npunix.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtk_vnc_plugin_la_CFLAGS) $(CFLAGS) -c -o gtk_vnc_plugin_la-npunix.lo `test -f 'npunix.c' || echo '$(srcdir)/'`npunix.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -424,9 +446,10 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+@ENABLE_PLUGIN_FALSE@all-local:
+all-am: Makefile $(LTLIBRARIES) all-local
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(plugindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -446,6 +469,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -453,10 +477,11 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@ENABLE_PLUGIN_FALSE@install-data-hook:
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool \
-	clean-noinstPROGRAMS mostlyclean-am
+clean-am: clean-generic clean-libtool clean-pluginLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -474,11 +499,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-pluginLTLIBRARIES
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 
 install-dvi: install-dvi-am
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-html: install-html-am
 
@@ -510,24 +537,34 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-pluginLTLIBRARIES
 
-.MAKE: install-am install-strip
+.MAKE: install-am install-data-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool clean-noinstPROGRAMS ctags \
+.PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
+	clean-generic clean-libtool clean-pluginLTLIBRARIES ctags \
 	distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
+	html-am info info-am install install-am install-data \
+	install-data-am install-data-hook install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS
+	install-pdf-am install-pluginLTLIBRARIES install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-pluginLTLIBRARIES
 
+
+@ENABLE_PLUGIN_TRUE@all-local: gtk-vnc-plugin.so
+
+@ENABLE_PLUGIN_TRUE@gtk-vnc-plugin.so: gtk-vnc-plugin.la
+@ENABLE_PLUGIN_TRUE@	cp .libs/gtk-vnc-plugin.so $@
+
+# Only leave the .so file in the plugins directory.
+@ENABLE_PLUGIN_TRUE@install-data-hook:
+@ENABLE_PLUGIN_TRUE@	rm -f $(plugindir)/gtk-vnc-plugin.a $(plugindir)/gtk-vnc-plugin.la
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

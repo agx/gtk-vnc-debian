@@ -2,8 +2,8 @@
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 2 as
- * published by the Free Software Foundation.
+ * it under the terms of the GNU Lesser General Public License version 2 or
+ * later as published by the Free Software Foundation.
  *
  *  GTK VNC Widget
  */
@@ -31,7 +31,7 @@ static int _coroutine_release(struct continuation *cc)
 
 	co->caller = NULL;
 
-	return munmap(cc->stack, cc->stack_size);
+	return 0;
 }
 
 static void coroutine_trampoline(struct continuation *cc)

@@ -3,12 +3,13 @@
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/utils.mk
 include /usr/share/cdbs/1/class/autotools.mk
+#include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 
 DEB_BUILDDIR := build
 DEB_CONFIGURE_EXTRA_FLAGS += --with-python
 DEB_CONFIGURE_EXTRA_FLAGS += --without-examples
 
-DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.1)'
+DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.4)'
 
 binary-install/python-gtk-vnc::
 	dh_pycentral

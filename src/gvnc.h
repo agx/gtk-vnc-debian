@@ -6,6 +6,10 @@
 
 struct gvnc;
 
+struct gvnc_pixel_format;
+
+typedef void (rgb24_render_func)(void *, int, int, int, int, uint8_t *, int);
+
 struct gvnc_ops
 {
 	gboolean (*auth_cred)(void *);
@@ -17,10 +21,12 @@ struct gvnc_ops
 	gboolean (*bell)(void *);
 	gboolean (*server_cut_text)(void *, const void *, size_t);
 	gboolean (*resize)(void *, int, int);
+        gboolean (*pixel_format)(void *, struct gvnc_pixel_format *);
 	gboolean (*pointer_type_change)(void *, int);
-	gboolean (*shared_memory_rmid)(void *, int);
 	gboolean (*local_cursor)(void *, int, int, int, int, uint8_t *);
 	gboolean (*auth_unsupported)(void *, unsigned int);
+	gboolean (*render_jpeg)(void *, rgb24_render_func *render, void *,
+				int, int, int, int, uint8_t *, int);
 };
 
 struct gvnc_pixel_format
@@ -41,13 +47,12 @@ struct gvnc_framebuffer
 {
 	uint8_t *data;
 
-	int shm_id;
-
 	int width;
 	int height;
 
 	int linesize;
 
+	uint16_t byte_order;
 	int depth;
 	int bpp;
 
@@ -66,15 +71,31 @@ typedef enum {
 	GVNC_ENCODING_RRE = 2,
 	GVNC_ENCODING_CORRE = 4,
 	GVNC_ENCODING_HEXTILE = 5,
+	GVNC_ENCODING_TIGHT = 7,
 	GVNC_ENCODING_ZRLE = 16,
 
+	/* Tight JPEG quality levels */
+	GVNC_ENCODING_TIGHT_JPEG0 = -32,
+	GVNC_ENCODING_TIGHT_JPEG1 = -31,
+	GVNC_ENCODING_TIGHT_JPEG2 = -30,
+	GVNC_ENCODING_TIGHT_JPEG3 = -29,
+	GVNC_ENCODING_TIGHT_JPEG4 = -28,
+	GVNC_ENCODING_TIGHT_JPEG5 = -27,
+	GVNC_ENCODING_TIGHT_JPEG6 = -26,
+	GVNC_ENCODING_TIGHT_JPEG7 = -25,
+	GVNC_ENCODING_TIGHT_JPEG8 = -24,
+	GVNC_ENCODING_TIGHT_JPEG9 = -23,
+
+	/* Pseudo encodings */
 	GVNC_ENCODING_DESKTOP_RESIZE = -223,
+        GVNC_ENCODING_WMVi = 0x574D5669,
+
 	GVNC_ENCODING_CURSOR_POS = -232,
 	GVNC_ENCODING_RICH_CURSOR = -239,
 	GVNC_ENCODING_XCURSOR = -240,
 
 	GVNC_ENCODING_POINTER_CHANGE = -257,
-	GVNC_ENCODING_SHARED_MEMORY = -258,
+	GVNC_ENCODING_EXT_KEY_EVENT = -258,
 } gvnc_encoding;
 
 typedef enum {
@@ -135,7 +156,8 @@ gboolean gvnc_client_cut_text(struct gvnc *gvnc,
 gboolean gvnc_pointer_event(struct gvnc *gvnc, uint8_t button_mask,
 			    uint16_t x, uint16_t y);
 
-gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag, uint32_t key);
+gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag,
+			uint32_t key, uint16_t scancode);
 
 gboolean gvnc_framebuffer_update_request(struct gvnc *gvnc,
 					 uint8_t incremental,
@@ -147,8 +169,6 @@ gboolean gvnc_set_encodings(struct gvnc *gvnc, int n_encoding, int32_t *encoding
 gboolean gvnc_set_pixel_format(struct gvnc *gvnc,
 			       const struct gvnc_pixel_format *fmt);
 
-gboolean gvnc_set_shared_buffer(struct gvnc *gvnc, int line_size, int shmid);
-
 gboolean gvnc_has_error(struct gvnc *gvnc);
 
 gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb);
@@ -158,6 +178,9 @@ gboolean gvnc_shared_memory_enabled(struct gvnc *gvnc);
 const char *gvnc_get_name(struct gvnc *gvnc);
 int gvnc_get_width(struct gvnc *gvnc);
 int gvnc_get_height(struct gvnc *gvnc);
+
+/* HACK this is temporary */
+gboolean gvnc_using_raw_keycodes(struct gvnc *gvnc);
 
 #endif
 /*

@@ -2,8 +2,8 @@
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 2 as
- * published by the Free Software Foundation.
+ * it under the terms of the GNU Lesser General Public License version 2 or
+ * later as published by the Free Software Foundation.
  *
  *  GTK VNC Widget
  */
@@ -31,9 +31,17 @@
 #include "coroutine.h"
 #include "d3des.h"
 
+#include "x_keymap.h"
+
 #include "utils.h"
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
+
+#include <zlib.h>
+
+#include <gdk/gdkkeysyms.h>
+
+#include "vnc_keycodes.h"
 
 struct wait_queue
 {
@@ -44,10 +52,26 @@ struct wait_queue
 
 typedef void gvnc_blt_func(struct gvnc *, uint8_t *, int, int, int, int, int);
 
+typedef void gvnc_fill_func(struct gvnc *, uint8_t *, int, int, int, int);
+
+typedef void gvnc_set_pixel_at_func(struct gvnc *, int, int, uint8_t *);
+
 typedef void gvnc_hextile_func(struct gvnc *gvnc, uint8_t flags,
 			       uint16_t x, uint16_t y,
 			       uint16_t width, uint16_t height,
 			       uint8_t *fg, uint8_t *bg);
+
+typedef void gvnc_rich_cursor_blt_func(struct gvnc *, uint8_t *, uint8_t *,
+				       uint8_t *, int, uint16_t, uint16_t);
+
+typedef void gvnc_rgb24_blt_func(struct gvnc *, int, int, int, int,
+				 uint8_t *, int);
+
+typedef void gvnc_tight_compute_predicted_func(struct gvnc *, uint8_t *,
+					       uint8_t *, uint8_t *,
+					       uint8_t *);
+
+typedef void gvnc_tight_sum_pixel_func(struct gvnc *, uint8_t *, uint8_t *);
 
 /*
  * A special GSource impl which allows us to wait on a certain
@@ -109,9 +133,13 @@ struct gvnc
 	int rls, gls, bls;
 
 	gvnc_blt_func *blt;
+	gvnc_fill_func *fill;
+	gvnc_set_pixel_at_func *set_pixel_at;
 	gvnc_hextile_func *hextile;
-
-	int shared_memory_enabled;
+	gvnc_rich_cursor_blt_func *rich_cursor_blt;
+	gvnc_rgb24_blt_func *rgb24_blt;
+	gvnc_tight_compute_predicted_func *tight_compute_predicted;
+	gvnc_tight_sum_pixel_func *tight_sum_pixel;
 
 	struct gvnc_ops ops;
 	gpointer ops_data;
@@ -124,6 +152,20 @@ struct gvnc
 	char *xmit_buffer;
 	int xmit_buffer_capacity;
 	int xmit_buffer_size;
+
+	z_stream *strm;
+	z_stream streams[5];
+
+	size_t uncompressed_length;
+	uint8_t uncompressed_buffer[4096];
+
+	size_t compressed_length;
+	uint8_t *compressed_buffer;
+
+	uint8_t zrle_pi;
+	int zrle_pi_bits;
+
+	gboolean has_ext_key_event;
 };
 
 #define nibhi(a) (((a) >> 4) & 0x0F)
@@ -244,7 +286,55 @@ static gboolean g_condition_wait(g_condition_wait_func func, gpointer data)
 	return TRUE;
 }
 
+static gboolean gvnc_use_compression(struct gvnc *gvnc)
+{
+	return gvnc->compressed_buffer != NULL;
+}
 
+static int gvnc_zread(struct gvnc *gvnc, void *buffer, size_t size)
+{
+	size_t offset = 0;
+
+	while (offset < size) {
+		/* if data is available in the uncompressed buffer, then
+		 * copy */
+		if (gvnc->uncompressed_length) {
+			size_t len = MIN(gvnc->uncompressed_length,
+					 size - offset);
+
+			memcpy(buffer + offset,
+			       gvnc->uncompressed_buffer,
+			       len);
+
+			gvnc->uncompressed_length -= len;
+			if (gvnc->uncompressed_length)
+				memmove(gvnc->uncompressed_buffer,
+					gvnc->uncompressed_buffer + len,
+					gvnc->uncompressed_length);
+			offset += len;
+		} else {
+			int err;
+
+			gvnc->strm->next_in = gvnc->compressed_buffer;
+			gvnc->strm->avail_in = gvnc->compressed_length;
+			gvnc->strm->next_out = gvnc->uncompressed_buffer;
+			gvnc->strm->avail_out = sizeof(gvnc->uncompressed_buffer);
+
+			/* inflate as much as possible */
+			err = inflate(gvnc->strm, Z_SYNC_FLUSH);
+			if (err != Z_OK) {
+				errno = EIO;
+				return -1;
+			}
+
+			gvnc->uncompressed_length = (uint8_t *)gvnc->strm->next_out - gvnc->uncompressed_buffer;
+			gvnc->compressed_length -= (uint8_t *)gvnc->strm->next_in - gvnc->compressed_buffer;
+			gvnc->compressed_buffer = gvnc->strm->next_in;
+		}
+	}
+
+	return offset;
+}
 
 /* IO functions */
 
@@ -259,7 +349,18 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 	while (offset < len) {
 		size_t tmp;
 
-		if (gvnc->read_offset == gvnc->read_size) {
+		/* compressed data is buffered independently of the read buffer
+		 * so we must by-pass it */
+		if (gvnc_use_compression(gvnc)) {
+			int ret = gvnc_zread(gvnc, data + offset, len);
+			if (ret == -1) {
+				GVNC_DEBUG("Closing the connection: gvnc_read() - gvnc_zread() failed\n");
+				gvnc->has_error = TRUE;
+				return -errno;
+			}
+			offset += ret;
+			continue;
+		} else if (gvnc->read_offset == gvnc->read_size) {
 			int ret;
 
 			if (gvnc->tls_session) {
@@ -286,11 +387,13 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 				case EINTR:
 					continue;
 				default:
+					GVNC_DEBUG("Closing the connection: gvnc_read() - ret=-1\n");
 					gvnc->has_error = TRUE;
 					return -errno;
 				}
 			}
 			if (ret == 0) {
+				GVNC_DEBUG("Closing the connection: gvnc_read() - ret=0\n");
 				gvnc->has_error = TRUE;
 				return -EPIPE;
 			}
@@ -339,11 +442,13 @@ static void gvnc_flush(struct gvnc *gvnc)
 			case EINTR:
 				continue;
 			default:
+				GVNC_DEBUG("Closing the connection: gvnc_flush\n");
 				gvnc->has_error = TRUE;
 				return;
 			}
 		}
 		if (ret == 0) {
+			GVNC_DEBUG("Closing the connection: gvnc_flush\n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -409,7 +514,15 @@ static ssize_t gvnc_tls_pull(gnutls_transport_ptr_t transport,
 	return ret;
 }
 
+static size_t gvnc_pixel_size(struct gvnc *gvnc)
+{
+	return gvnc->fmt.bits_per_pixel / 8;
+}
 
+static void gvnc_read_pixel(struct gvnc *gvnc, uint8_t *pixel)
+{
+	gvnc_read(gvnc, pixel, gvnc_pixel_size(gvnc));
+}
 
 static uint8_t gvnc_read_u8(struct gvnc *gvnc)
 {
@@ -710,22 +823,12 @@ gboolean gvnc_set_pixel_format(struct gvnc *gvnc,
 	return !gvnc_has_error(gvnc);
 }
 
-gboolean gvnc_set_shared_buffer(struct gvnc *gvnc, int line_size, int shmid)
-{
-	gvnc_write_u8(gvnc, 255);
-	gvnc_write_u8(gvnc, 0);
-	gvnc_write_u16(gvnc, line_size);
-	gvnc_write_u32(gvnc, shmid);
-	gvnc_flush(gvnc);
-
-	return !gvnc_has_error(gvnc);
-}
-
 gboolean gvnc_set_encodings(struct gvnc *gvnc, int n_encoding, int32_t *encoding)
 {
 	uint8_t pad[1] = {0};
 	int i;
 
+	gvnc->has_ext_key_event = FALSE;
 	gvnc_write_u8(gvnc, 2);
 	gvnc_write(gvnc, pad, 1);
 	gvnc_write_u16(gvnc, n_encoding);
@@ -790,14 +893,29 @@ static void gvnc_buffered_flush(struct gvnc *gvnc)
 	g_io_wakeup(&gvnc->wait);
 }
 
-gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag, uint32_t key)
+gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag,
+			uint32_t key, uint16_t scancode)
 {
 	uint8_t pad[2] = {0};
 
-	gvnc_buffered_write_u8(gvnc, 4);
-	gvnc_buffered_write_u8(gvnc, down_flag);
-	gvnc_buffered_write(gvnc, pad, 2);
-	gvnc_buffered_write_u32(gvnc, key);
+	if (gvnc->has_ext_key_event) {
+		if (key == GDK_Pause)
+			scancode = VKC_PAUSE;
+		else
+			scancode = x_keycode_to_pc_keycode(scancode);
+
+		gvnc_buffered_write_u8(gvnc, 255);
+		gvnc_buffered_write_u8(gvnc, 0);
+		gvnc_buffered_write_u16(gvnc, down_flag);
+		gvnc_buffered_write_u32(gvnc, key);
+		gvnc_buffered_write_u32(gvnc, scancode);
+	} else {
+		gvnc_buffered_write_u8(gvnc, 4);
+		gvnc_buffered_write_u8(gvnc, down_flag);
+		gvnc_buffered_write(gvnc, pad, 2);
+		gvnc_buffered_write_u32(gvnc, key);
+	}
+
 	gvnc_buffered_flush(gvnc);
 	return !gvnc_has_error(gvnc);
 }
@@ -818,11 +936,11 @@ gboolean gvnc_client_cut_text(struct gvnc *gvnc,
 {
 	uint8_t pad[3] = {0};
 
-	gvnc_write_u8(gvnc, 6);
-	gvnc_write(gvnc, pad, 3);
-	gvnc_write_u32(gvnc, length);
-	gvnc_write(gvnc, data, length);
-	gvnc_flush(gvnc);
+	gvnc_buffered_write_u8(gvnc, 6);
+	gvnc_buffered_write(gvnc, pad, 3);
+	gvnc_buffered_write_u32(gvnc, length);
+	gvnc_buffered_write(gvnc, data, length);
+	gvnc_buffered_flush(gvnc);
 	return !gvnc_has_error(gvnc);
 }
 
@@ -831,6 +949,31 @@ static inline uint8_t *gvnc_get_local(struct gvnc *gvnc, int x, int y)
 	return gvnc->local.data +
 		(y * gvnc->local.linesize) +
 		(x * gvnc->local.bpp);
+}
+
+static uint8_t gvnc_swap_8(struct gvnc *gvnc G_GNUC_UNUSED, uint8_t pixel)
+{
+	return pixel;
+}
+
+static uint16_t gvnc_swap_16(struct gvnc *gvnc, uint16_t pixel)
+{
+	if (gvnc->fmt.byte_order != gvnc->local.byte_order)
+		return  (((pixel >> 8) & 0xFF) << 0) |
+			(((pixel >> 0) & 0xFF) << 8);
+	else
+		return pixel;
+}
+
+static uint32_t gvnc_swap_32(struct gvnc *gvnc, uint32_t pixel)
+{
+	if (gvnc->fmt.byte_order != gvnc->local.byte_order)
+		return  (((pixel >> 24) & 0xFF) <<  0) |
+			(((pixel >> 16) & 0xFF) <<  8) |
+			(((pixel >>  8) & 0xFF) << 16) |
+			(((pixel >>  0) & 0xFF) << 24);
+	else
+		return pixel;
 }
 
 #define SPLICE_I(a, b) a ## b
@@ -864,6 +1007,54 @@ static gvnc_hextile_func *gvnc_hextile_table[3][3] = {
 	{ (gvnc_hextile_func *)gvnc_hextile_32x8,
 	  (gvnc_hextile_func *)gvnc_hextile_32x16,
 	  (gvnc_hextile_func *)gvnc_hextile_32x32 },
+};
+
+static gvnc_set_pixel_at_func *gvnc_set_pixel_at_table[3][3] = {
+	{ (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_8x8,
+	  (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_8x16,
+	  (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_8x32 },
+	{ (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_16x8,
+	  (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_16x16,
+	  (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_16x32 },
+	{ (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_32x8,
+	  (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_32x16,
+	  (gvnc_set_pixel_at_func *)gvnc_set_pixel_at_32x32 },
+};
+
+static gvnc_fill_func *gvnc_fill_table[3][3] = {
+	{ (gvnc_fill_func *)gvnc_fill_8x8,
+	  (gvnc_fill_func *)gvnc_fill_8x16,
+	  (gvnc_fill_func *)gvnc_fill_8x32 },
+	{ (gvnc_fill_func *)gvnc_fill_16x8,
+	  (gvnc_fill_func *)gvnc_fill_16x16,
+	  (gvnc_fill_func *)gvnc_fill_16x32 },
+	{ (gvnc_fill_func *)gvnc_fill_32x8,
+	  (gvnc_fill_func *)gvnc_fill_32x16,
+	  (gvnc_fill_func *)gvnc_fill_32x32 },
+};
+
+static gvnc_rich_cursor_blt_func *gvnc_rich_cursor_blt_table[3] = {
+	gvnc_rich_cursor_blt_8x32,
+	gvnc_rich_cursor_blt_16x32,
+	gvnc_rich_cursor_blt_32x32,
+};
+
+static gvnc_rgb24_blt_func *gvnc_rgb24_blt_table[3] = {
+	(gvnc_rgb24_blt_func *)gvnc_rgb24_blt_32x8,
+	(gvnc_rgb24_blt_func *)gvnc_rgb24_blt_32x16,
+	(gvnc_rgb24_blt_func *)gvnc_rgb24_blt_32x32,
+};
+
+static gvnc_tight_compute_predicted_func *gvnc_tight_compute_predicted_table[3] = {
+	(gvnc_tight_compute_predicted_func *)gvnc_tight_compute_predicted_8x8,
+	(gvnc_tight_compute_predicted_func *)gvnc_tight_compute_predicted_16x16,
+	(gvnc_tight_compute_predicted_func *)gvnc_tight_compute_predicted_32x32,
+};
+
+static gvnc_tight_sum_pixel_func *gvnc_tight_sum_pixel_table[3] = {
+	(gvnc_tight_sum_pixel_func *)gvnc_tight_sum_pixel_8x8,
+	(gvnc_tight_sum_pixel_func *)gvnc_tight_sum_pixel_16x16,
+	(gvnc_tight_sum_pixel_func *)gvnc_tight_sum_pixel_32x32,
 };
 
 /* a fast blit for the perfect match scenario */
@@ -908,6 +1099,7 @@ static void gvnc_raw_update(struct gvnc *gvnc,
 
 	dst = malloc(width * (gvnc->fmt.bits_per_pixel / 8));
 	if (dst == NULL) {
+		GVNC_DEBUG("Closing the connection: gvnc_raw_update\n");
 		gvnc->has_error = TRUE;
 		return;
 	}
@@ -968,12 +1160,566 @@ static void gvnc_hextile_update(struct gvnc *gvnc,
 	}
 }
 
+static void gvnc_fill(struct gvnc *gvnc, uint8_t *color,
+		      uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+	gvnc->fill(gvnc, color, x, y, width, height);
+}
+
+static void gvnc_set_pixel_at(struct gvnc *gvnc, int x, int y, uint8_t *pixel)
+{
+	gvnc->set_pixel_at(gvnc, x, y, pixel);
+}
+
+static void gvnc_rre_update(struct gvnc *gvnc,
+			    uint16_t x, uint16_t y,
+			    uint16_t width, uint16_t height)
+{
+	uint8_t bg[4];
+	uint32_t num;
+	uint32_t i;
+
+	num = gvnc_read_u32(gvnc);
+	gvnc_read_pixel(gvnc, bg);
+	gvnc_fill(gvnc, bg, x, y, width, height);
+
+	for (i = 0; i < num; i++) {
+		uint8_t fg[4];
+		uint16_t sub_x, sub_y, sub_w, sub_h;
+
+		gvnc_read_pixel(gvnc, fg);
+		sub_x = gvnc_read_u16(gvnc);
+		sub_y = gvnc_read_u16(gvnc);
+		sub_w = gvnc_read_u16(gvnc);
+		sub_h = gvnc_read_u16(gvnc);
+
+		gvnc_fill(gvnc, fg,
+			  x + sub_x, y + sub_y, sub_w, sub_h);
+	}
+}
+
+/* CPIXELs are optimized slightly.  32-bit pixel values are packed into 24-bit
+ * values. */
+static void gvnc_read_cpixel(struct gvnc *gvnc, uint8_t *pixel)
+{
+	int bpp = gvnc_pixel_size(gvnc);
+
+	memset(pixel, 0, bpp);
+
+	if (bpp == 4 && gvnc->fmt.true_color_flag && gvnc->fmt.depth == 24) {
+		bpp = 3;
+		if (gvnc->fmt.byte_order == __BIG_ENDIAN)
+			pixel += 1;
+	}
+
+	gvnc_read(gvnc, pixel, bpp);
+}
+
+static void gvnc_zrle_update_tile_blit(struct gvnc *gvnc,
+				       uint16_t x, uint16_t y,
+				       uint16_t width, uint16_t height)
+{
+	uint8_t blit_data[4 * 64 * 64];
+	int i, bpp;
+
+	bpp = gvnc_pixel_size(gvnc);
+
+	for (i = 0; i < width * height; i++)
+		gvnc_read_cpixel(gvnc, blit_data + (i * bpp));
+
+	gvnc_blt(gvnc, blit_data, width * bpp, x, y, width, height);
+}
+
+static uint8_t gvnc_read_zrle_pi(struct gvnc *gvnc, int palette_size)
+{
+	uint8_t pi = 0;
+
+	if (gvnc->zrle_pi_bits == 0) {
+		gvnc->zrle_pi = gvnc_read_u8(gvnc);
+		gvnc->zrle_pi_bits = 8;
+	}
+	if ( palette_size == 2) {
+		pi = (gvnc->zrle_pi >> (gvnc->zrle_pi_bits - 1)) & 1;
+		gvnc->zrle_pi_bits -= 1;
+	} else if ((palette_size == 3) || (palette_size == 4)) {
+		pi = (gvnc->zrle_pi >> (gvnc->zrle_pi_bits - 2)) & 3;
+		gvnc->zrle_pi_bits -= 2;
+	} else if ((palette_size >=5) && (palette_size <=16)){
+		pi = (gvnc->zrle_pi >> (gvnc->zrle_pi_bits - 4)) & 15;
+		gvnc->zrle_pi_bits -= 4;
+	}
+
+	return pi;
+}
+
+static void gvnc_zrle_update_tile_palette(struct gvnc *gvnc,
+					  uint8_t palette_size,
+					  uint16_t x, uint16_t y,
+					  uint16_t width, uint16_t height)
+{
+	uint8_t palette[128][4];
+	int i, j;
+
+	for (i = 0; i < palette_size; i++)
+		gvnc_read_cpixel(gvnc, palette[i]);
+
+	for (j = 0; j < height; j++) {
+		/* discard any padding bits */
+		gvnc->zrle_pi_bits = 0;
+
+		for (i = 0; i < width; i++) {
+			int ind = gvnc_read_zrle_pi(gvnc, palette_size);
+
+			gvnc_set_pixel_at(gvnc, x + i, y + j,
+					  palette[ind & 0x7F]);
+		}
+	}
+}
+
+static int gvnc_read_zrle_rl(struct gvnc *gvnc)
+{
+	int rl = 1;
+	uint8_t byte;
+
+	do {
+		byte = gvnc_read_u8(gvnc);
+		rl += byte;
+	} while (!gvnc_has_error(gvnc) && byte == 255);
+
+	return rl;
+}
+
+static void gvnc_zrle_update_tile_rle(struct gvnc *gvnc,
+				      uint16_t x, uint16_t y,
+				      uint16_t width, uint16_t height)
+{
+	int i, j, rl = 0;
+	uint8_t pixel[4];
+
+	for (j = 0; j < height; j++) {
+		for (i = 0; i < width; i++) {
+			if (rl == 0) {
+				gvnc_read_cpixel(gvnc, pixel);
+				rl = gvnc_read_zrle_rl(gvnc);
+			}
+			gvnc_set_pixel_at(gvnc, x + i, y + j, pixel);
+			rl -= 1;
+		}
+	}
+}
+
+static void gvnc_zrle_update_tile_prle(struct gvnc *gvnc,
+				       uint8_t palette_size,
+				       uint16_t x, uint16_t y,
+				       uint16_t width, uint16_t height)
+{
+	int i, j, rl = 0;
+	uint8_t palette[128][4];
+	uint8_t pi = 0;
+
+	for (i = 0; i < palette_size; i++)
+		gvnc_read_cpixel(gvnc, palette[i]);
+
+	for (j = 0; j < height; j++) {
+		for (i = 0; i < width; i++) {
+			if (rl == 0) {
+				pi = gvnc_read_u8(gvnc);
+				if (pi & 0x80) {
+					rl = gvnc_read_zrle_rl(gvnc);
+					pi &= 0x7F;
+				} else
+					rl = 1;
+			}
+
+			gvnc_set_pixel_at(gvnc, x + i, y + j, palette[pi]);
+			rl -= 1;
+		}
+	}
+}
+
+static void gvnc_zrle_update_tile(struct gvnc *gvnc, uint16_t x, uint16_t y,
+				  uint16_t width, uint16_t height)
+{
+	uint8_t subencoding = gvnc_read_u8(gvnc);
+	uint8_t pixel[4];
+
+	if (subencoding == 0 ) {
+		/* Raw pixel data */
+		gvnc_zrle_update_tile_blit(gvnc, x, y, width, height);
+	} else if (subencoding == 1) {
+		/* Solid tile of a single color */
+		gvnc_read_cpixel(gvnc, pixel);
+		gvnc_fill(gvnc, pixel, x, y, width, height);
+	} else if ((subencoding >= 2) && (subencoding <= 16)) {
+		/* Packed palette types */
+		gvnc_zrle_update_tile_palette(gvnc, subencoding,
+					      x, y, width, height);
+	} else if ((subencoding >= 17) && (subencoding <= 127)) {
+		/* FIXME raise error? */
+	} else if (subencoding == 128) {
+		/* Plain RLE */
+		gvnc_zrle_update_tile_rle(gvnc, x, y, width, height);
+	} else if (subencoding == 129) { 
+	
+	} else if (subencoding >= 130) {
+		/* Palette RLE */
+		gvnc_zrle_update_tile_prle(gvnc, subencoding - 128,
+					   x, y, width, height);
+	}
+}
+
+static void gvnc_zrle_update(struct gvnc *gvnc,
+			     uint16_t x, uint16_t y,
+			     uint16_t width, uint16_t height)
+
+{
+	uint32_t length;
+	uint32_t offset;
+	uint16_t i, j;
+	uint8_t *zlib_data;
+
+	length = gvnc_read_u32(gvnc);
+	zlib_data = malloc(length);
+	if (zlib_data == NULL) {
+		GVNC_DEBUG("Closing the connection: gvnc_zrle_update\n");
+		gvnc->has_error = TRUE;
+		return;
+	}
+
+	gvnc_read(gvnc, zlib_data, length);
+
+	/* setup subsequent calls to gvnc_read*() to use the compressed data */
+	gvnc->uncompressed_length = 0;
+	gvnc->compressed_length = length;
+	gvnc->compressed_buffer = zlib_data;
+	gvnc->strm = &gvnc->streams[0];
+
+	offset = 0;
+	for (j = 0; j < height; j += 64) {
+		for (i = 0; i < width; i += 64) {
+			uint16_t w, h;
+
+			w = MIN(width - i, 64);
+			h = MIN(height - j, 64);
+			gvnc_zrle_update_tile(gvnc, x + i, y + j, w, h);
+		}
+	}
+
+	gvnc->strm = NULL;
+	gvnc->uncompressed_length = 0;
+	gvnc->compressed_length = 0;
+	gvnc->compressed_buffer = NULL;
+
+	free(zlib_data);
+}
+
+static void gvnc_rgb24_blt(struct gvnc *gvnc, int x, int y,
+			   int width, int height, uint8_t *data, int pitch)
+{
+	gvnc->rgb24_blt(gvnc, x, y, width, height, data, pitch);
+}
+
+static uint32_t gvnc_read_cint(struct gvnc *gvnc)
+{
+	uint32_t value = 0;
+	uint8_t val;
+
+	val = gvnc_read_u8(gvnc);
+	value = (val & 0x7F);
+	if (!(val & 0x80))
+		return value;
+
+	val = gvnc_read_u8(gvnc);
+	value |= (val & 0x7F) << 7;
+
+	if (!(val & 0x80))
+		return value;
+
+	value |= gvnc_read_u8(gvnc) << 14;
+
+	return value;
+}
+
+static int gvnc_tpixel_size(struct gvnc *gvnc)
+{
+	if (gvnc->fmt.depth == 24)
+		return 3;
+	return gvnc->fmt.bits_per_pixel / 8;
+}
+
+static void gvnc_read_tpixel(struct gvnc *gvnc, uint8_t *pixel)
+{
+	if (gvnc->fmt.depth == 24) {
+		uint32_t val;
+		gvnc_read(gvnc, pixel, 3);
+		val = (pixel[0] << gvnc->fmt.red_shift)
+			| (pixel[1] << gvnc->fmt.green_shift)
+			| (pixel[2] << gvnc->fmt.blue_shift);
+
+		if (gvnc->fmt.byte_order != __BYTE_ORDER)
+			val =   (((val >>  0) & 0xFF) << 24) |
+				(((val >>  8) & 0xFF) << 16) |
+				(((val >> 16) & 0xFF) << 8) |
+				(((val >> 24) & 0xFF) << 0);
+
+		memcpy(pixel, &val, 4);
+	} else
+		gvnc_read_pixel(gvnc, pixel);
+}
+
+static void gvnc_tight_update_copy(struct gvnc *gvnc,
+				   uint16_t x, uint16_t y,
+				   uint16_t width, uint16_t height)
+{
+	uint8_t pixel[4];
+	int i, j;
+
+	for (j = 0; j < height; j++) {
+		for (i = 0; i < width; i++) {
+			gvnc_read_tpixel(gvnc, pixel);
+			gvnc_set_pixel_at(gvnc, x + i, y + j, pixel);
+		}
+	}
+}
+
+static int gvnc_tight_get_pi(struct gvnc *gvnc, uint8_t *ra,
+			     int i, uint8_t palette_size)
+{
+	if (palette_size == 2) {
+		if ((i % 8) == 0)
+			*ra = gvnc_read_u8(gvnc);
+		return (*ra >> (7 - (i % 8))) & 1;
+	}
+
+	return gvnc_read_u8(gvnc);
+}
+
+static void gvnc_tight_update_palette(struct gvnc *gvnc,
+				      int palette_size, uint8_t *palette,
+				      uint16_t x, uint16_t y,
+				      uint16_t width, uint16_t height)
+{
+	int i, j;
+
+	for (j = 0; j < height; j++) {
+		uint8_t ra = 0;
+
+		for (i = 0; i < width; i++) {
+			uint8_t ind;
+
+			ind = gvnc_tight_get_pi(gvnc, &ra, i, palette_size);
+			gvnc_set_pixel_at(gvnc, x + i, y + j,
+					  &palette[ind * 4]);
+		}
+	}
+}
+
+static void gvnc_tight_compute_predicted(struct gvnc *gvnc, uint8_t *ppixel,
+					  uint8_t *lp, uint8_t *cp,
+					  uint8_t *llp)
+{
+	gvnc->tight_compute_predicted(gvnc, ppixel, lp, cp, llp);
+}
+
+static void gvnc_tight_sum_pixel(struct gvnc *gvnc,
+				 uint8_t *lhs, uint8_t *rhs)
+{
+	gvnc->tight_sum_pixel(gvnc, lhs, rhs);
+}
+
+static void gvnc_tight_update_gradient(struct gvnc *gvnc,
+				       uint16_t x, uint16_t y,
+				       uint16_t width, uint16_t height)
+{
+	int i, j;
+	uint8_t zero_pixel[4];
+	uint8_t *last_row, *row;
+	int bpp;
+
+	bpp = gvnc_pixel_size(gvnc);
+	last_row = g_malloc(width * bpp);
+	row = g_malloc(width * bpp);
+
+	memset(last_row, 0, width * bpp);
+	memset(zero_pixel, 0, 4);
+
+	for (j = 0; j < height; j++) {
+		uint8_t *tmp_row;
+		uint8_t *llp, *lp;
+
+		/* use zero pixels for the edge cases */
+		llp = zero_pixel;
+		lp = zero_pixel;
+
+		for (i = 0; i < width; i++) {
+			uint8_t predicted_pixel[4];
+
+			/* compute predicted pixel value */
+			gvnc_tight_compute_predicted(gvnc, predicted_pixel,
+						     lp, last_row + i * bpp,
+						     llp);
+
+			/* read the difference pixel from the wire */
+			gvnc_read_tpixel(gvnc, row + i * bpp);
+
+			/* sum the predicted pixel and the difference to get
+			 * the original pixel value */
+			gvnc_tight_sum_pixel(gvnc, row + i * bpp,
+					     predicted_pixel);
+
+			llp = last_row + i * bpp;
+			lp = row + i * bpp;
+		}
+
+		/* write out row of pixel data */
+		gvnc_blt(gvnc, row, width * bpp, x, y + j, width, 1);
+
+		/* swap last row and current row */
+		tmp_row = last_row;
+		last_row = row;
+		row = tmp_row;
+	}
+
+	g_free(row);
+	g_free(last_row);
+}
+
+static void jpeg_draw(void *opaque, int x, int y, int w, int h,
+		      uint8_t *data, int stride)
+{
+	struct gvnc *gvnc = opaque;
+
+	gvnc_rgb24_blt(gvnc, x, y, w, h, data, stride);
+}
+
+static void gvnc_tight_update_jpeg(struct gvnc *gvnc, uint16_t x, uint16_t y,
+				   uint16_t width, uint16_t height,
+				   uint8_t *data, size_t length)
+{
+	if (gvnc->ops.render_jpeg == NULL)
+		return;
+
+	gvnc->ops.render_jpeg(gvnc->ops_data, jpeg_draw, gvnc,
+			      x, y, width, height, data, length);
+}
+
+static void gvnc_tight_update(struct gvnc *gvnc,
+			      uint16_t x, uint16_t y,
+			      uint16_t width, uint16_t height)
+{
+	uint8_t ccontrol;
+	uint8_t pixel[4];
+	int i;
+
+	ccontrol = gvnc_read_u8(gvnc);
+
+	for (i = 0; i < 4; i++) {
+		if (ccontrol & (1 << i)) {
+			inflateEnd(&gvnc->streams[i + 1]);
+			inflateInit(&gvnc->streams[i + 1]);
+		}
+	}
+
+	ccontrol >>= 4;
+	ccontrol &= 0x0F;
+
+	if (ccontrol <= 7) {
+		/* basic */
+		uint8_t filter_id = 0;
+		uint32_t data_size, zlib_length;
+		uint8_t *zlib_data = NULL;
+		uint8_t palette[256][4];
+		int palette_size = 0;
+
+		if (ccontrol & 0x04)
+			filter_id = gvnc_read_u8(gvnc);
+
+		gvnc->strm = &gvnc->streams[(ccontrol & 0x03) + 1];
+
+		if (filter_id == 1) {
+			palette_size = gvnc_read_u8(gvnc);
+			palette_size += 1;
+			for (i = 0; i < palette_size; i++)
+				gvnc_read_tpixel(gvnc, palette[i]);
+		}
+
+		if (filter_id == 1) {
+			if (palette_size == 2)
+				data_size = ((width + 7) / 8) * height;
+			else
+				data_size = width * height;
+		} else
+			data_size = width * height * gvnc_tpixel_size(gvnc);
+
+		if (data_size >= 12) {
+			zlib_length = gvnc_read_cint(gvnc);
+			zlib_data = g_malloc(zlib_length);
+
+			gvnc_read(gvnc, zlib_data, zlib_length);
+
+			gvnc->uncompressed_length = 0;
+			gvnc->compressed_length = zlib_length;
+			gvnc->compressed_buffer = zlib_data;
+		}
+
+		switch (filter_id) {
+		case 0: /* copy */
+			gvnc_tight_update_copy(gvnc, x, y, width, height);
+			break;
+		case 1: /* palette */
+			gvnc_tight_update_palette(gvnc, palette_size,
+						  (uint8_t *)palette,
+						  x, y, width, height);
+			break;
+		case 2: /* gradient */
+			gvnc_tight_update_gradient(gvnc, x, y, width, height);
+			break;
+		default: /* error */
+			GVNC_DEBUG("Closing the connection: gvnc_tight_update() - filter_id unknown\n");
+			gvnc->has_error = TRUE;
+			break;
+		}
+
+		if (data_size >= 12) {
+			gvnc->uncompressed_length = 0;
+			gvnc->compressed_length = 0;
+			gvnc->compressed_buffer = NULL;
+
+			g_free(zlib_data);
+		}
+
+		gvnc->strm = NULL;
+	} else if (ccontrol == 8) {
+		/* fill */
+		/* FIXME check each width; endianness */
+		gvnc_read_tpixel(gvnc, pixel);
+		gvnc_fill(gvnc, pixel, x, y, width, height);
+	} else if (ccontrol == 9) {
+		/* jpeg */
+		uint32_t length;
+		uint8_t *jpeg_data;
+
+		length = gvnc_read_cint(gvnc);
+		jpeg_data = g_malloc(length);
+		gvnc_read(gvnc, jpeg_data, length);
+		gvnc_tight_update_jpeg(gvnc, x, y, width, height,
+				       jpeg_data, length);
+		g_free(jpeg_data);
+	} else {
+		/* error */
+		GVNC_DEBUG("Closing the connection: gvnc_tight_update() - ccontrol unknown\n");
+		gvnc->has_error = TRUE;
+	}
+}
+
 static void gvnc_update(struct gvnc *gvnc, int x, int y, int width, int height)
 {
 	if (gvnc->has_error || !gvnc->ops.update)
 		return;
-	if (!gvnc->ops.update(gvnc->ops_data, x, y, width, height))
+	if (!gvnc->ops.update(gvnc->ops_data, x, y, width, height)) {
+		GVNC_DEBUG("Closing the connection: gvnc_update\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_set_color_map_entry(struct gvnc *gvnc, uint16_t color,
@@ -983,8 +1729,10 @@ static void gvnc_set_color_map_entry(struct gvnc *gvnc, uint16_t color,
 	if (gvnc->has_error || !gvnc->ops.set_color_map_entry)
 		return;
 	if (!gvnc->ops.set_color_map_entry(gvnc->ops_data, color,
-					    red, green, blue))
+					    red, green, blue)) {
+		GVNC_DEBUG("Closing the connection: gvnc_set_color_map_entry\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_bell(struct gvnc *gvnc)
@@ -994,8 +1742,10 @@ static void gvnc_bell(struct gvnc *gvnc)
 
 	GVNC_DEBUG("Server beep\n");
 
-	if (!gvnc->ops.bell(gvnc->ops_data))
+	if (!gvnc->ops.bell(gvnc->ops_data)) {
+		GVNC_DEBUG("Closing the connection: gvnc_bell\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
@@ -1004,56 +1754,46 @@ static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
 	if (gvnc->has_error || !gvnc->ops.server_cut_text)
 		return;
 
-	GVNC_DEBUG("Server cut text\n");
-
-	if (!gvnc->ops.server_cut_text(gvnc->ops_data, data, len))
+	if (!gvnc->ops.server_cut_text(gvnc->ops_data, data, len)) {
+		GVNC_DEBUG("Closing the connection: gvnc_server_cut_text\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
 static void gvnc_resize(struct gvnc *gvnc, int width, int height)
 {
 	if (gvnc->has_error || !gvnc->ops.resize)
 		return;
-	if (!gvnc->ops.resize(gvnc->ops_data, width, height))
+	if (!gvnc->ops.resize(gvnc->ops_data, width, height)) {
+		GVNC_DEBUG("Closing the connection: gvnc_resize\n");
 		gvnc->has_error = TRUE;
+	}
+}
+
+static void gvnc_pixel_format(struct gvnc *gvnc)
+{
+        if (gvnc->has_error || !gvnc->ops.pixel_format)
+                return;
+        if (!gvnc->ops.pixel_format(gvnc->ops_data, &gvnc->fmt))
+                gvnc->has_error = TRUE;
 }
 
 static void gvnc_pointer_type_change(struct gvnc *gvnc, int absolute)
 {
 	if (gvnc->has_error || !gvnc->ops.pointer_type_change)
 		return;
-	if (!gvnc->ops.pointer_type_change(gvnc->ops_data, absolute))
+	if (!gvnc->ops.pointer_type_change(gvnc->ops_data, absolute)) {
+		GVNC_DEBUG("Closing the connection: gvnc_pointer_type_change\n");
 		gvnc->has_error = TRUE;
+	}
 }
 
-static void gvnc_shared_memory_rmid(struct gvnc *gvnc, int shmid)
+static void gvnc_rich_cursor_blt(struct gvnc *gvnc, uint8_t *pixbuf,
+				 uint8_t *image, uint8_t *mask,
+				 int pitch, uint16_t width, uint16_t height)
 {
-	if (gvnc->has_error || !gvnc->ops.shared_memory_rmid)
-		return;
-	if (!gvnc->ops.shared_memory_rmid(gvnc->ops_data, shmid))
-		gvnc->has_error = TRUE;
+	gvnc->rich_cursor_blt(gvnc, pixbuf, image, mask, pitch, width, height);
 }
-
-#define RICH_CURSOR_BLIT(gvnc, pixbuf, image, mask, pitch, width, height, src_pixel_t) \
-	do {								\
-		int x1, y1;						\
-		uint8_t *src = image;					\
-		uint32_t *dst = (uint32_t*)pixbuf;			\
-		uint8_t *alpha = mask;					\
-		for (y1 = 0; y1 < height; y1++) {			\
-			src_pixel_t *sp = (src_pixel_t *)src;		\
-			uint8_t *mp = alpha;				\
-			for (x1 = 0; x1 < width; x1++) {		\
-				*dst++ = (((mp[x1 / 8] >> (7 - (x1 % 8))) & 1) ? (255 << 24) : 0) \
-					| (((*sp >> gvnc->fmt.red_shift) & (gvnc->fmt.red_max)) << 16) \
-					| (((*sp >> gvnc->fmt.green_shift) & (gvnc->fmt.green_max)) << 8) \
-					| (((*sp >> gvnc->fmt.blue_shift) & (gvnc->fmt.blue_max)) << 0); \
-				sp++;					\
-			}						\
-			src += pitch;					\
-			alpha += ((width + 7) / 8);			\
-		}							\
-	} while(0)
 
 static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int height)
 {
@@ -1068,12 +1808,14 @@ static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int hei
 
 		image = malloc(imagelen);
 		if (!image) {
+			GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !image \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
 		mask = malloc(masklen);
 		if (!mask) {
 			free(image);
+			GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !mask \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -1081,27 +1823,27 @@ static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int hei
 		if (!pixbuf) {
 			free(mask);
 			free(image);
+			GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !pixbuf \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
 		gvnc_read(gvnc, image, imagelen);
 		gvnc_read(gvnc, mask, masklen);
 
-		if (gvnc->fmt.bits_per_pixel == 8) {
-			RICH_CURSOR_BLIT(gvnc, pixbuf, image, mask, width * (gvnc->fmt.bits_per_pixel/8), width, height, uint8_t);
-		} else if (gvnc->fmt.bits_per_pixel == 16) {
-			RICH_CURSOR_BLIT(gvnc, pixbuf, image, mask, width * (gvnc->fmt.bits_per_pixel/8), width, height, uint16_t);
-		} else if (gvnc->fmt.bits_per_pixel == 24 || gvnc->fmt.bits_per_pixel == 32) {
-			RICH_CURSOR_BLIT(gvnc, pixbuf, image, mask, width * (gvnc->fmt.bits_per_pixel/8), width, height, uint32_t);
-		}
+		gvnc_rich_cursor_blt(gvnc, pixbuf, image, mask,
+				     width * (gvnc->fmt.bits_per_pixel/8),
+				     width, height);
+
 		free(image);
 		free(mask);
 	}
 
 	if (gvnc->has_error || !gvnc->ops.local_cursor)
 		return;
-	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf))
+	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf)) {
+		GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !ops.local_cursor() \n");
 		gvnc->has_error = TRUE;
+	}
 
 	free(pixbuf);
 }
@@ -1125,11 +1867,13 @@ static void gvnc_xcursor(struct gvnc *gvnc, int x, int y, int width, int height)
 
 		rowlen = ((width + 7)/8);
 		if (!(data = malloc(rowlen*height))) {
+			GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !data \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
 		if (!(mask = malloc(rowlen*height))) {
 			free(data);
+			GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !mask \n");
 			gvnc->has_error = TRUE;
 			return;
 		}
@@ -1151,12 +1895,12 @@ static void gvnc_xcursor(struct gvnc *gvnc, int x, int y, int width, int height)
 		free(mask);
 	}
 
-
-
 	if (gvnc->has_error || !gvnc->ops.local_cursor)
 		return;
-	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf))
+	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf)) {
+		GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !ops.local_cursor() \n");
 		gvnc->has_error = TRUE;
+	}
 
 	free(pixbuf);
 }
@@ -1176,8 +1920,17 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 	case GVNC_ENCODING_COPY_RECT:
 		gvnc_copyrect_update(gvnc, x, y, width, height);
 		break;
+	case GVNC_ENCODING_RRE:
+		gvnc_rre_update(gvnc, x, y, width, height);
+		break;
 	case GVNC_ENCODING_HEXTILE:
 		gvnc_hextile_update(gvnc, x, y, width, height);
+		break;
+	case GVNC_ENCODING_ZRLE:
+		gvnc_zrle_update(gvnc, x, y, width, height);
+		break;
+	case GVNC_ENCODING_TIGHT:
+		gvnc_tight_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_DESKTOP_RESIZE:
 		gvnc_resize(gvnc, width, height);
@@ -1185,28 +1938,21 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 	case GVNC_ENCODING_POINTER_CHANGE:
 		gvnc_pointer_type_change(gvnc, x);
 		break;
-	case GVNC_ENCODING_SHARED_MEMORY:
-		switch (gvnc_read_u32(gvnc)) {
-		case 0:
-			gvnc->shared_memory_enabled = 1;
-			break;
-		case 1:
-			gvnc_shared_memory_rmid(gvnc, gvnc_read_u32(gvnc));
-			break;
-		case 2:
-			gvnc_resize(gvnc, gvnc->width, gvnc->height);
-			break;
-		case 3:
-			break;
-		}
-		break;
+        case GVNC_ENCODING_WMVi:
+                gvnc_read_pixel_format(gvnc, &gvnc->fmt);
+                gvnc_pixel_format(gvnc);
+                break;
 	case GVNC_ENCODING_RICH_CURSOR:
 		gvnc_rich_cursor(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_XCURSOR:
 		gvnc_xcursor(gvnc, x, y, width, height);
 		break;
+	case GVNC_ENCODING_EXT_KEY_EVENT:
+		gvnc->has_ext_key_event = TRUE;
+		break;
 	default:
+		GVNC_DEBUG("Received an unknown encoding type: %d\n", etype);
 		gvnc->has_error = TRUE;
 		break;
 	}
@@ -1289,12 +2035,14 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 		gvnc_read(gvnc, pad, 3);
 		n_text = gvnc_read_u32(gvnc);
 		if (n_text > (32 << 20)) {
+			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText > allowed \n");
 			gvnc->has_error = TRUE;
 			break;
 		}
 
 		data = malloc(n_text + 1);
 		if (data == NULL) {
+			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText - !data \n");
 			gvnc->has_error = TRUE;
 			break;
 		}
@@ -1306,6 +2054,7 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 		free(data);
 	}	break;
 	default:
+		GVNC_DEBUG("Received an unknown message: %u\n", msg);
 		gvnc->has_error = TRUE;
 		break;
 	}
@@ -1860,6 +2609,8 @@ void gvnc_free(struct gvnc *gvnc)
 
 void gvnc_close(struct gvnc *gvnc)
 {
+	int i;
+
 	if (gvnc->tls_session) {
 		gnutls_bye(gvnc->tls_session, GNUTLS_SHUT_RDWR);
 		gvnc->tls_session = NULL;
@@ -1914,6 +2665,9 @@ void gvnc_close(struct gvnc *gvnc)
 		gvnc->cred_x509_key = NULL;
 	}
 
+	for (i = 0; i < 5; i++)
+		inflateEnd(&gvnc->streams[i]);
+
 	gvnc->auth_type = GVNC_AUTH_INVALID;
 	gvnc->auth_subtype = GVNC_AUTH_INVALID;
 
@@ -1951,10 +2705,9 @@ gboolean gvnc_is_initialized(struct gvnc *gvnc)
 	return FALSE;
 }
 
-
 gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 {
-	int ret;
+	int ret, i;
 	char version[13];
 	uint32_t n_name;
 
@@ -1976,6 +2729,9 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	    gvnc->minor != 7 &&
 	    gvnc->minor != 8)
 		goto fail;
+
+	/* For UltraVNC ... */
+	if  (gvnc->minor > 3 && gvnc->minor < 7) gvnc->minor = 3;
 
 	snprintf(version, 12, "RFB %03d.%03d\n", gvnc->major, gvnc->minor);
 	gvnc_write(gvnc, version, 12);
@@ -2005,6 +2761,12 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	gvnc_read(gvnc, gvnc->name, n_name);
 	gvnc->name[n_name] = 0;
 	GVNC_DEBUG("Display name '%s'\n", gvnc->name);
+
+	memset(&gvnc->strm, 0, sizeof(gvnc->strm));
+	/* FIXME what level? */
+	for (i = 0; i < 5; i++)
+		inflateInit(&gvnc->streams[i]);
+	gvnc->strm = NULL;
 
 	gvnc_resize(gvnc, gvnc->width, gvnc->height);
 	return !gvnc_has_error(gvnc);
@@ -2233,7 +2995,7 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 	    fb->red_shift == gvnc->fmt.red_shift &&
 	    fb->green_shift == gvnc->fmt.green_shift &&
 	    fb->blue_shift == gvnc->fmt.blue_shift &&
-	    __BYTE_ORDER == gvnc->fmt.byte_order)
+	    fb->byte_order == gvnc->fmt.byte_order)
 		gvnc->perfect_match = TRUE;
 	else
 		gvnc->perfect_match = FALSE;
@@ -2299,19 +3061,19 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 	if (j == 4) j = 3;
 
 	gvnc->blt = gvnc_blt_table[i - 1][j - 1];
+	gvnc->fill = gvnc_fill_table[i - 1][j - 1];
+	gvnc->set_pixel_at = gvnc_set_pixel_at_table[i - 1][j - 1];
 	gvnc->hextile = gvnc_hextile_table[i - 1][j - 1];
+	gvnc->rich_cursor_blt = gvnc_rich_cursor_blt_table[i - 1];
+	gvnc->rgb24_blt = gvnc_rgb24_blt_table[i - 1];
+	gvnc->tight_compute_predicted = gvnc_tight_compute_predicted_table[i - 1];
+	gvnc->tight_sum_pixel = gvnc_tight_sum_pixel_table[i - 1];
 
 	if (gvnc->perfect_match)
 		gvnc->blt = gvnc_blt_fast;
 
 	return !gvnc_has_error(gvnc);
 }
-
-gboolean gvnc_shared_memory_enabled(struct gvnc *gvnc)
-{
-	return gvnc->shared_memory_enabled;
-}
-
 
 const char *gvnc_get_name(struct gvnc *gvnc)
 {
@@ -2326,6 +3088,11 @@ int gvnc_get_width(struct gvnc *gvnc)
 int gvnc_get_height(struct gvnc *gvnc)
 {
 	return gvnc->height;
+}
+
+gboolean gvnc_using_raw_keycodes(struct gvnc *gvnc)
+{
+	return gvnc->has_ext_key_event;
 }
 
 /*
