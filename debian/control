@@ -3,7 +3,7 @@ Section: gnome
 Priority: optional
 XS-Python-Version: >= 2.4
 Maintainer: Guido Guenther <agx@sigxcpu.org>
-Standards-Version: 3.7.2
+Standards-Version: 3.7.3
 Build-Depends: cdbs, debhelper, python-central, libgtk2.0-dev,
  python-all-dev, libgnutls-dev (>= 1.4.0), python-gtk2-dev (>= 2.0),
  libgtkglext1-dev (>= 1.2.0), libxul-dev (>= 1.8), autotools-dev, quilt,
