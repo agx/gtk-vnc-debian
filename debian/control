@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 Build-Depends: cdbs, debhelper, python-central, libgtk2.0-dev,
  python-all-dev, libgnutls-dev (>= 1.4.0), python-gtk2-dev (>= 2.0),
  libgtkglext1-dev (>= 1.2.0), libxul-dev (>= 1.8), autotools-dev, quilt,
- automake, autoconf
+ automake, autoconf, libffi-dev
 
 Package: libgtk-vnc-1.0-0
 Architecture: any
