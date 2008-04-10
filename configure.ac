@@ -1,9 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gtk-vnc], [0.3.4], [anthony@codemonkey.ws])
+AC_INIT([gtk-vnc], [0.3.5], [anthony@codemonkey.ws])
 AC_CONFIG_SRCDIR([src/gvnc.c])
 
-GTK_REQUIRED=2.0.0
+GTK_REQUIRED=2.10.0
 AC_SUBST(GTK_REQUIRED)
 GNUTLS_REQUIRED=1.4.0
 AC_SUBST(GNUTLS_REQUIRED)
@@ -26,7 +26,7 @@ AC_CONFIG_HEADERS([config.h:config.hin])
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(gtk-vnc, 0.3.4)
+AM_INIT_AUTOMAKE(gtk-vnc, 0.3.5)
 
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
@@ -196,15 +196,6 @@ if test "$WITH_PYTHON" = "yes"; then
   fi
 fi
 
-dnl --enable-debug=(yes|no)
-AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging [default=no]],,enable_debug=no)
-if test "$enable_debug" = "yes"; then
-  DEBUG_CFLAGS="-DENABLE_DEBUG"
-else
-  DEBUG_CFLAGS=""
-fi
-AC_SUBST(DEBUG_CFLAGS)
-
 dnl --enable-plugin to enable the browser plugin.
 AC_ARG_ENABLE(plugin,
 	[  --enable-plugin=[no/yes] enable browser plugin [default=no]],,
@@ -251,6 +242,5 @@ Configure summary:
 	Python biding ..............:  ${WITH_PYTHON}
 	Install example programs ...:  ${WITH_EXAMPLES}
 	Browser plugin .............:  ${enable_plugin}
-	DEBUG messages..............:  ${enable_debug}
 	Scaling support.............:  ${with_scaling}
 "

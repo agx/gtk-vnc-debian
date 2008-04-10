@@ -129,7 +129,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEBUG_CFLAGS = @DEBUG_CFLAGS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
@@ -269,7 +268,7 @@ libgtk_vnc_1_0_la_LIBADD = @GTK_LIBS@ @GTKGLEXT_LIBS@ @GNUTLS_LIBS@ \
 libgtk_vnc_1_0_la_CFLAGS = @GTK_CFLAGS@ @GTKGLEXT_CFLAGS@ @GNUTLS_CFLAGS@ \
 			   @GTHREAD_CFLAGS@ @WARNING_CFLAGS@ \
 			   -DSYSCONFDIR=\""$(sysconfdir)"\" \
-                           @DEBUG_CFLAGS@
+                           -DG_LOG_DOMAIN=\"gtk-vnc\"
 
 libgtk_vnc_1_0_la_LDFLAGS = -Wl,--version-script=$(srcdir)/libgtk-vnc_sym.version \
                             -version-info 0:1:0
@@ -286,7 +285,7 @@ CLEANFILES = vncmarshal.c vncmarshal.h $(am__append_5)
 # Auto-generated C code for Python binding is full of compiler warnings :-(
 #gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @WARNING_CFLAGS@ @PYTHON_INCLUDES@ @PYGTK_CFLAGS@
 @WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @GTKGLEXT_CFLAGS@ @PYTHON_INCLUDES@ \
-@WITH_PYTHON_TRUE@		   @PYGTK_CFLAGS@ @DEBUG_CFLAGS@
+@WITH_PYTHON_TRUE@		   @PYGTK_CFLAGS@
 
 @WITH_PYTHON_TRUE@gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
 @WITH_PYTHON_TRUE@gtkvnc_la_SOURCES = vncmodule.c vncmodule.defs.c

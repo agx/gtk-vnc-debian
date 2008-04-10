@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "vncmarshal.h"
 #include "config.h"
+#include "x_keymap.h"
 
 #include <gtk/gtk.h>
 #include <string.h>
@@ -82,10 +83,10 @@ struct _VncDisplayPrivate
 	gboolean allow_scaling;
 };
 
-/* Delayed signal emmission.
+/* Delayed signal emission.
  *
  * We want signals to be delivered in the system coroutine.  This helps avoid
- * confusing applications.  This is particularily important when using
+ * confusing applications.  This is particularly important when using
  * GThread based coroutines since GTK gets very upset if a signal handler is
  * run in a different thread from the main loop if that signal handler isn't
  * written to use explicit locking.
@@ -105,6 +106,21 @@ struct signal_data
 };
 
 G_DEFINE_TYPE(VncDisplay, vnc_display, GTK_TYPE_DRAWING_AREA)
+
+/* Properties */
+enum
+{
+  PROP_0,
+  PROP_POINTER_LOCAL,
+  PROP_POINTER_GRAB,
+  PROP_KEYBOARD_GRAB,
+  PROP_READ_ONLY,
+  PROP_WIDTH,
+  PROP_HEIGHT,
+  PROP_NAME,
+  PROP_LOSSY_ENCODING,
+  PROP_SCALING
+};
 
 /* Signals */
 typedef enum
@@ -134,6 +150,91 @@ static guint signals[LAST_SIGNAL] = { 0, 0, 0, 0,
 				      0, 0, 0, 0,
 				      0, 0, 0, 0, 0,};
 static GParamSpec *signalCredParam;
+gboolean debug_enabled = FALSE;
+
+static const GOptionEntry gtk_vnc_args[] =
+{
+  { "gtk-vnc-debug", 0, 0, G_OPTION_ARG_NONE, &debug_enabled, "Enables debug output", 0 },
+  { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, 0 }
+};
+
+
+static void
+vnc_display_get_property (GObject    *object,
+			  guint       prop_id,
+			  GValue     *value,
+			  GParamSpec *pspec)
+{
+  VncDisplay *vnc = VNC_DISPLAY (object);
+
+  switch (prop_id)
+    {
+      case PROP_POINTER_LOCAL:
+        g_value_set_boolean (value, vnc->priv->local_pointer);
+	break;
+      case PROP_POINTER_GRAB:
+        g_value_set_boolean (value, vnc->priv->grab_pointer);
+	break;
+      case PROP_KEYBOARD_GRAB:
+        g_value_set_boolean (value, vnc->priv->grab_keyboard);
+	break;
+      case PROP_READ_ONLY:
+        g_value_set_boolean (value, vnc->priv->read_only);
+	break;
+      case PROP_WIDTH:
+        g_value_set_int (value, vnc_display_get_width (vnc));
+	break;
+      case PROP_HEIGHT:
+        g_value_set_int (value, vnc_display_get_height (vnc));
+	break;
+      case PROP_NAME:
+        g_value_set_string (value, vnc_display_get_name (vnc));
+	break;
+      case PROP_LOSSY_ENCODING:
+        g_value_set_boolean (value, vnc->priv->allow_lossy);
+	break;
+      case PROP_SCALING:
+        g_value_set_boolean (value, vnc->priv->allow_scaling);
+	break;
+      default:
+	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+	break;			
+    }
+}
+
+static void
+vnc_display_set_property (GObject      *object,
+			  guint         prop_id,
+			  const GValue *value,
+			  GParamSpec   *pspec)
+{
+  VncDisplay *vnc = VNC_DISPLAY (object);
+
+  switch (prop_id)
+    {
+      case PROP_POINTER_LOCAL:
+        vnc_display_set_pointer_local (vnc, g_value_get_boolean (value));
+        break;
+      case PROP_POINTER_GRAB:
+        vnc_display_set_pointer_grab (vnc, g_value_get_boolean (value));
+        break;
+      case PROP_KEYBOARD_GRAB:
+        vnc_display_set_keyboard_grab (vnc, g_value_get_boolean (value));
+        break;
+      case PROP_READ_ONLY:
+        vnc_display_set_read_only (vnc, g_value_get_boolean (value));
+        break;
+      case PROP_LOSSY_ENCODING:
+        vnc_display_set_lossy_encoding (vnc, g_value_get_boolean (value));
+        break;
+      case PROP_SCALING:
+        vnc_display_set_scaling (vnc, g_value_get_boolean (value));
+        break;
+      default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+        break;			
+    }
+}
 
 GtkWidget *vnc_display_new(void)
 {
@@ -224,7 +325,7 @@ static gboolean expose_event(GtkWidget *widget, GdkEventExpose *expose,
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, priv->fb.width);
 		glTexSubImage2D(GL_TEXTURE_2D, 0,
 				x, y, w, h,
-				GL_BGRA_EXT /* GL_RGB */,
+				GL_BGRA_EXT,
 				GL_UNSIGNED_BYTE,
 				priv->gl_tex_data +
 				y * 4 * priv->fb.width +
@@ -239,7 +340,7 @@ static gboolean expose_event(GtkWidget *widget, GdkEventExpose *expose,
 		glTexCoord2f(0,0);  glVertex3f(wx, wy+wh, 0);
 		glTexCoord2f(rx,0);  glVertex3f(wx+ww, wy+wh, 0);
 		glTexCoord2f(rx,ry);  glVertex3f(wx+ww, wy, 0);
-		glEnd();
+		glEnd();		
 		glDisable(GL_TEXTURE_2D);
 		glFlush();
 		gdk_gl_drawable_gl_end(priv->gl_drawable);
@@ -355,7 +456,7 @@ static void do_pointer_ungrab(VncDisplay *obj, gboolean quiet)
 {
 	VncDisplayPrivate *priv = obj->priv;
 
-	/* If we grabed keyboard upon pointer grab, then ungrab it now */
+	/* If we grabbed keyboard upon pointer grab, then ungrab it now */
 	if (!priv->grab_keyboard)
 		do_keyboard_ungrab(obj, quiet);
 
@@ -538,7 +639,7 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
 	GdkModifierType consumed;
 
 	if (priv->gvnc == NULL || !gvnc_is_initialized(priv->gvnc))
-		return TRUE;
+		return FALSE;
 
 	if (priv->read_only)
 		return FALSE;
@@ -567,6 +668,8 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
 					    &group,
 					    &level,
 					    &consumed);
+
+	keyval = x_keymap_get_keyval_from_keycode(key->hardware_keycode, keyval);
 
 	/*
 	 * More VNC suckiness with key state & modifiers in particular
@@ -617,7 +720,7 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
 			if (priv->down_scancode[i] == key->hardware_keycode) {
 				priv->down_keyval[i] = 0;
 				priv->down_scancode[i] = 0;
-				/* ..send the key releae event we're dealing with */
+				/* ..send the key release event we're dealing with */
 				gvnc_key_event(priv->gvnc, 0, keyval, key->hardware_keycode);
 				break;
 			}
@@ -633,7 +736,7 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key,
 			do_pointer_grab(VNC_DISPLAY(widget), FALSE);
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean enter_event(GtkWidget *widget, GdkEventCrossing *crossing,
@@ -683,7 +786,7 @@ static gboolean focus_event(GtkWidget *widget, GdkEventFocus *focus G_GNUC_UNUSE
 	for (i = 0 ; i < (int)(sizeof(priv->down_keyval)/sizeof(priv->down_keyval[0])) ; i++) {
 		/* We are currently pressed so... */
 		if (priv->down_scancode[i] != 0) {
-			/* ..send the fake key releae event to match */
+			/* ..send the fake key release event to match */
 			gvnc_key_event(priv->gvnc, 0,
 				       priv->down_keyval[i], priv->down_scancode[i]);
 			priv->down_keyval[i] = 0;
@@ -751,8 +854,16 @@ static void setup_gdk_image(VncDisplay *obj, gint width, gint height)
 	GdkVisual *visual;
 
 	visual = gdk_drawable_get_visual(GTK_WIDGET(obj)->window);
-	
+
 	priv->image = gdk_image_new(GDK_IMAGE_FASTEST, visual, width, height);
+	GVNC_DEBUG("Visual mask: %3d %3d %3d\n      shift: %3d %3d %3d\n",
+		   visual->red_mask,
+		   visual->green_mask,
+		   visual->blue_mask,
+		   visual->red_shift,
+		   visual->green_shift,
+		   visual->blue_shift);
+
 	priv->fb.red_mask = visual->red_mask >> visual->red_shift;
 	priv->fb.green_mask = visual->green_mask >> visual->green_shift;
 	priv->fb.blue_mask = visual->blue_mask >> visual->blue_shift;
@@ -765,7 +876,7 @@ static void setup_gdk_image(VncDisplay *obj, gint width, gint height)
 	priv->fb.height = priv->image->height;
 	priv->fb.linesize = priv->image->bpl;
 	priv->fb.data = (uint8_t *)priv->image->mem;
-	priv->fb.byte_order = priv->image->byte_order == GDK_LSB_FIRST ? __LITTLE_ENDIAN : __BIG_ENDIAN;
+	priv->fb.byte_order = priv->image->byte_order == GDK_LSB_FIRST ? G_LITTLE_ENDIAN : G_BIG_ENDIAN;
 
 	gtk_widget_set_size_request(GTK_WIDGET(obj), width, height);
 }
@@ -1059,8 +1170,8 @@ static void rescale_display(VncDisplay *obj, gint width, gint height)
 {
 	VncDisplayPrivate *priv = obj->priv;
 
-	if (priv->allow_scaling &&
-	    (priv->fb.height != width ||
+	if (priv->allow_scaling && 
+	    (priv->fb.width != width ||
 	     priv->fb.height != height))
 		scale_display(obj, width, height);
 	else if (priv->gl_enabled) {
@@ -1084,6 +1195,12 @@ static void rescale_display(VncDisplay *obj, gint width, gint height)
 static gboolean configure_event(GtkWidget *widget, GdkEventConfigure *configure,
 				gpointer data G_GNUC_UNUSED)
 {
+	VncDisplay *obj = VNC_DISPLAY(widget);
+	VncDisplayPrivate *priv = obj->priv;
+
+	if (priv->fb.data == NULL)
+		return FALSE;
+
 	rescale_display(VNC_DISPLAY(widget),
 			configure->width, configure->height);
 	
@@ -1351,6 +1468,8 @@ static void *vnc_coroutine(void *opaque)
 	}
 
 	GVNC_DEBUG("Started background coroutine\n");
+	x_keymap_set_keymap_entries();
+
 	if (priv->fd != -1) {
 		if (!gvnc_open_fd(priv->gvnc, priv->fd))
 			goto cleanup;
@@ -1368,7 +1487,7 @@ static void *vnc_coroutine(void *opaque)
 	emit_signal_delayed(obj, VNC_INITIALIZED, &s);
 
 	encodingsp = encodings;
-	n_encodings = ARRAY_SIZE(encodings);
+	n_encodings = G_N_ELEMENTS(encodings);
 
 	if (check_pixbuf_support("jpeg")) {
 		if (!priv->allow_lossy) {
@@ -1398,6 +1517,7 @@ static void *vnc_coroutine(void *opaque)
 	gvnc_close(priv->gvnc);
 	emit_signal_delayed(obj, VNC_DISCONNECTED, &s);
 	g_idle_add(delayed_unref_object, obj);
+	x_keymap_free_keymap_entries();
 	/* Co-routine exits now - the VncDisplay object may no longer exist,
 	   so don't do anything else now unless you like SEGVs */
 	return NULL;
@@ -1447,13 +1567,13 @@ gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *po
 	if (obj->priv->gvnc == NULL || gvnc_is_open(obj->priv->gvnc))
 		return FALSE;
 
-	obj->priv->host = strdup(host);
+	obj->priv->host = g_strdup(host);
 	if (!obj->priv->host) {
 		return FALSE;
 	}
-	obj->priv->port = strdup(port);
+	obj->priv->port = g_strdup(port);
 	if (!obj->priv->port) {
-		free(obj->priv->host);
+		g_free(obj->priv->host);
 		obj->priv->host = NULL;
 		return FALSE;
 	}
@@ -1588,7 +1708,7 @@ static void vnc_display_finalize (GObject *obj)
 
 	GVNC_DEBUG("Releasing VNC widget\n");
 	if (gvnc_is_open(priv->gvnc)) {
-		g_warning("VNC widget finalized before the connection finished shutting down");
+		g_warning("VNC widget finalized before the connection finished shutting down\n");
 	}
 	gvnc_free(priv->gvnc);
 	display->priv->gvnc = NULL;
@@ -1623,7 +1743,111 @@ static void vnc_display_class_init(VncDisplayClass *klass)
 	GtkObjectClass *gtkobject_class = GTK_OBJECT_CLASS (klass);
 
 	object_class->finalize = vnc_display_finalize;
+	object_class->get_property = vnc_display_get_property;
+	object_class->set_property = vnc_display_set_property;
+
 	gtkobject_class->destroy = vnc_display_destroy;
+
+	g_object_class_install_property (object_class,
+					 PROP_POINTER_LOCAL,
+					 g_param_spec_boolean ( "local-pointer",
+								"Local Pointer",
+								"Whether we should use the local pointer",
+								FALSE,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_POINTER_GRAB,
+					 g_param_spec_boolean ( "grab-pointer",
+								"Grab Pointer",
+								"Whether we should grab the pointer",
+								FALSE,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_KEYBOARD_GRAB,
+					 g_param_spec_boolean ( "grab-keyboard",
+								"Grab Keyboard",
+								"Whether we should grab the keyboard",
+								FALSE,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_READ_ONLY,
+					 g_param_spec_boolean ( "read-only",
+								"Read Only",
+								"Whether this connection is read-only mode",
+								FALSE,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_WIDTH,
+					 g_param_spec_int     ( "width",
+								"Width",
+								"The width of the remote screen",
+								0,
+								G_MAXINT,
+								0,
+								G_PARAM_READABLE |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_HEIGHT,
+					 g_param_spec_int     ( "height",
+								"Height",
+								"The height of the remote screen",
+								0,
+								G_MAXINT,
+								0,
+								G_PARAM_READABLE |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_NAME,
+					 g_param_spec_string  ( "name",
+								"Name",
+								"The screen name of the remote connection",
+								NULL,
+								G_PARAM_READABLE |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_LOSSY_ENCODING,
+					 g_param_spec_boolean ( "lossy-encoding",
+								"Lossy Encoding",
+								"Whether we should use a lossy encoding",
+								FALSE,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+	g_object_class_install_property (object_class,
+					 PROP_SCALING,
+					 g_param_spec_boolean ( "scaling",
+								"Scaling",
+								"Whether we should use scaling",
+								FALSE,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
 
 	signalCredParam = g_param_spec_enum("credential",
 					    "credential",
@@ -1786,13 +2010,6 @@ static void vnc_display_init(VncDisplay *display)
 	GtkObject *obj = GTK_OBJECT(display);
 	GtkWidget *widget = GTK_WIDGET(display);
 	VncDisplayPrivate *priv;
-#if WITH_GTKGLEXT
-	static const int attrib[] = { GDK_GL_RGBA,
-				      GDK_GL_RED_SIZE, 1,
-				      GDK_GL_GREEN_SIZE, 1,
-				      GDK_GL_BLUE_SIZE, 1,
-				      GDK_GL_ATTRIB_LIST_NONE };
-#endif
 
 	g_signal_connect(obj, "expose-event",
 			 G_CALLBACK(expose_event), NULL);
@@ -1840,10 +2057,17 @@ static void vnc_display_init(VncDisplay *display)
 	priv->last_y = -1;
 	priv->absolute = 1;
 	priv->fd = -1;
+	priv->read_only = FALSE;
+	priv->allow_lossy = FALSE;
+	priv->allow_scaling = FALSE;
+	priv->grab_pointer = FALSE;
+	priv->grab_keyboard = FALSE;
+	priv->local_pointer = FALSE;
 
 #if WITH_GTKGLEXT
 	if (gtk_gl_init_check(NULL, NULL)) {
-		priv->gl_config = gdk_gl_config_new(attrib);
+		priv->gl_config = gdk_gl_config_new_by_mode(GDK_GL_MODE_RGB |
+							    GDK_GL_MODE_DEPTH);
 		if (!gtk_widget_set_gl_capability(widget,
 						  priv->gl_config,
 						  NULL,
@@ -2084,6 +2308,65 @@ gboolean vnc_display_set_scaling(VncDisplay *obj G_GNUC_UNUSED,
 	return FALSE;
 }
 #endif
+
+gboolean vnc_display_get_scaling(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	return obj->priv->allow_scaling;
+}
+
+gboolean vnc_display_get_lossy_encoding(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	return obj->priv->allow_lossy;
+}
+
+gboolean vnc_display_get_pointer_local(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	return obj->priv->local_pointer;
+}
+
+gboolean vnc_display_get_pointer_grab(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	return obj->priv->grab_pointer;
+}
+
+gboolean vnc_display_get_keyboard_grab(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	return obj->priv->grab_keyboard;
+}
+
+gboolean vnc_display_get_read_only(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	return obj->priv->read_only;
+}
+
+gboolean vnc_display_is_pointer_absolute(VncDisplay *obj)
+{
+	return obj->priv->absolute;
+}
+
+GOptionGroup *
+vnc_display_get_option_group (void)
+{
+  GOptionGroup *group;
+
+  group = g_option_group_new ("gtk-vnc", "GTK-VNC Options", "Show GTK-VNC Options", NULL, NULL);
+
+  g_option_group_add_entries (group, gtk_vnc_args);
+  
+  return group;
+}
 
 /*
  * Local variables:

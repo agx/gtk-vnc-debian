@@ -26,7 +26,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <endian.h>
 
 #include "coroutine.h"
 #include "d3des.h"
@@ -75,9 +74,9 @@ typedef void gvnc_tight_sum_pixel_func(struct gvnc *, uint8_t *, uint8_t *);
 
 /*
  * A special GSource impl which allows us to wait on a certain
- * condition to be satisified. This is effectively a boolean test
+ * condition to be satisfied. This is effectively a boolean test
  * run on each iteration of the main loop. So whenever a file has
- * new I/O, or a timer occurrs, etc we'll do the check. This is
+ * new I/O, or a timer occurs, etc we'll do the check. This is
  * pretty efficient compared to a normal GLib Idle func which has
  * to busy wait on a timeout, since our condition is only checked
  * when some other source's state changes
@@ -235,7 +234,8 @@ static gboolean g_condition_wait_prepare(GSource *src,
  * Call immediately after the main loop does an iteration. Returns
  * true if the condition we're checking is ready for dispatch
  */
-static gboolean g_condition_wait_check(GSource *src) {
+static gboolean g_condition_wait_check(GSource *src)
+{
         struct g_condition_wait_source *vsrc = (struct g_condition_wait_source *)src;
         return vsrc->func(vsrc->data);
 }
@@ -767,7 +767,7 @@ static void gvnc_read_pixel_format(struct gvnc *gvnc, struct gvnc_pixel_format *
 
 	fmt->bits_per_pixel  = gvnc_read_u8(gvnc);
 	fmt->depth           = gvnc_read_u8(gvnc);
-	fmt->byte_order      = gvnc_read_u8(gvnc) ? __BIG_ENDIAN : __LITTLE_ENDIAN;
+	fmt->byte_order      = gvnc_read_u8(gvnc) ? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
 	fmt->true_color_flag = gvnc_read_u8(gvnc);
 
 	fmt->red_max         = gvnc_read_u16(gvnc);
@@ -805,7 +805,7 @@ gboolean gvnc_set_pixel_format(struct gvnc *gvnc,
 
 	gvnc_write_u8(gvnc, fmt->bits_per_pixel);
 	gvnc_write_u8(gvnc, fmt->depth);
-	gvnc_write_u8(gvnc, fmt->byte_order == __BIG_ENDIAN ? 1 : 0);
+	gvnc_write_u8(gvnc, fmt->byte_order == G_BIG_ENDIAN ? 1 : 0);
 	gvnc_write_u8(gvnc, fmt->true_color_flag);
 
 	gvnc_write_u16(gvnc, fmt->red_max);
@@ -826,14 +826,39 @@ gboolean gvnc_set_pixel_format(struct gvnc *gvnc,
 gboolean gvnc_set_encodings(struct gvnc *gvnc, int n_encoding, int32_t *encoding)
 {
 	uint8_t pad[1] = {0};
-	int i;
+	int i, skip_zrle=0;
+
+	/*
+	 * RealVNC server is broken for ZRLE in some pixel formats.
+	 * Specifically if you have a format with either R, G or B
+	 * components with a max value > 255, it still uses a CPIXEL
+	 * of 3 bytes, even though the colour requirs 4 bytes. It
+	 * thus messes up the colours of the server in a way we can't
+	 * recover from on the client. Most VNC clients don't see this
+	 * problem since they send a 'set pixel format' message instead
+	 * of running with the server's default format.
+	 *
+	 * So we kill off ZRLE encoding for problematic pixel formats
+	 */
+	for (i = 0; i < n_encoding; i++)
+		if (gvnc->fmt.depth == 32 &&
+		    (gvnc->fmt.red_max > 255 ||
+		     gvnc->fmt.blue_max > 255 ||
+		     gvnc->fmt.green_max > 255) &&
+		    encoding[i] == GVNC_ENCODING_ZRLE) {
+			GVNC_DEBUG("Dropping ZRLE encoding for broken pixel format\n");
+			skip_zrle++;
+		}
 
 	gvnc->has_ext_key_event = FALSE;
 	gvnc_write_u8(gvnc, 2);
 	gvnc_write(gvnc, pad, 1);
-	gvnc_write_u16(gvnc, n_encoding);
-	for (i = 0; i < n_encoding; i++)
+	gvnc_write_u16(gvnc, n_encoding - skip_zrle);
+	for (i = 0; i < n_encoding; i++) {
+		if (skip_zrle && encoding[i] == GVNC_ENCODING_ZRLE)
+			continue;
 		gvnc_write_s32(gvnc, encoding[i]);
+	}
 	gvnc_flush(gvnc);
 	return !gvnc_has_error(gvnc);
 }
@@ -951,23 +976,52 @@ static inline uint8_t *gvnc_get_local(struct gvnc *gvnc, int x, int y)
 		(x * gvnc->local.bpp);
 }
 
-static uint8_t gvnc_swap_8(struct gvnc *gvnc G_GNUC_UNUSED, uint8_t pixel)
+static uint8_t gvnc_swap_img_8(struct gvnc *gvnc G_GNUC_UNUSED, uint8_t pixel)
 {
 	return pixel;
 }
 
-static uint16_t gvnc_swap_16(struct gvnc *gvnc, uint16_t pixel)
+static uint8_t gvnc_swap_rfb_8(struct gvnc *gvnc G_GNUC_UNUSED, uint8_t pixel)
 {
-	if (gvnc->fmt.byte_order != gvnc->local.byte_order)
+	return pixel;
+}
+
+/* local host native format -> X server image format */
+static uint16_t gvnc_swap_img_16(struct gvnc *gvnc, uint16_t pixel)
+{
+	if (G_BYTE_ORDER != gvnc->local.byte_order)
 		return  (((pixel >> 8) & 0xFF) << 0) |
 			(((pixel >> 0) & 0xFF) << 8);
 	else
 		return pixel;
 }
 
-static uint32_t gvnc_swap_32(struct gvnc *gvnc, uint32_t pixel)
+/* VNC server RFB  format ->  local host native format */
+static uint16_t gvnc_swap_rfb_16(struct gvnc *gvnc, uint16_t pixel)
 {
-	if (gvnc->fmt.byte_order != gvnc->local.byte_order)
+	if (gvnc->fmt.byte_order != G_BYTE_ORDER)
+		return  (((pixel >> 8) & 0xFF) << 0) |
+			(((pixel >> 0) & 0xFF) << 8);
+	else
+		return pixel;
+}
+
+/* local host native format -> X server image format */
+static uint32_t gvnc_swap_img_32(struct gvnc *gvnc, uint32_t pixel)
+{
+	if (G_BYTE_ORDER != gvnc->local.byte_order)
+		return  (((pixel >> 24) & 0xFF) <<  0) |
+			(((pixel >> 16) & 0xFF) <<  8) |
+			(((pixel >>  8) & 0xFF) << 16) |
+			(((pixel >>  0) & 0xFF) << 24);			
+	else
+		return pixel;
+}
+
+/* VNC server RFB  format ->  local host native format */
+static uint32_t gvnc_swap_rfb_32(struct gvnc *gvnc, uint32_t pixel)
+{
+	if (gvnc->fmt.byte_order != G_BYTE_ORDER)
 		return  (((pixel >> 24) & 0xFF) <<  0) |
 			(((pixel >> 16) & 0xFF) <<  8) |
 			(((pixel >>  8) & 0xFF) << 16) |
@@ -1206,10 +1260,26 @@ static void gvnc_read_cpixel(struct gvnc *gvnc, uint8_t *pixel)
 
 	memset(pixel, 0, bpp);
 
-	if (bpp == 4 && gvnc->fmt.true_color_flag && gvnc->fmt.depth == 24) {
-		bpp = 3;
-		if (gvnc->fmt.byte_order == __BIG_ENDIAN)
-			pixel += 1;
+	if (bpp == 4 && gvnc->fmt.true_color_flag) {
+		int fitsInMSB = ((gvnc->fmt.red_shift > 7) &&
+				 (gvnc->fmt.green_shift > 7) &&
+				 (gvnc->fmt.blue_shift > 7));
+		int fitsInLSB = (((gvnc->fmt.red_max << gvnc->fmt.red_shift) < (1 << 24)) &&
+				 ((gvnc->fmt.green_max << gvnc->fmt.green_shift) < (1 << 24)) &&
+				 ((gvnc->fmt.blue_max << gvnc->fmt.blue_shift) < (1 << 24)));
+
+		/* 
+		 * We need to analyse the shifts to see if they fit in 3 bytes,
+		 * rather than looking at the declared  'depth' for the format
+		 * because despite what the RFB spec says, this is what RealVNC
+		 * server actually does in practice.
+		 */
+		if (fitsInMSB || fitsInLSB) {
+			bpp = 3;
+			if (gvnc->fmt.depth == 24 &&
+			    gvnc->fmt.byte_order == G_BIG_ENDIAN)
+				pixel++;
+		}
 	}
 
 	gvnc_read(gvnc, pixel, bpp);
@@ -1456,7 +1526,7 @@ static void gvnc_read_tpixel(struct gvnc *gvnc, uint8_t *pixel)
 			| (pixel[1] << gvnc->fmt.green_shift)
 			| (pixel[2] << gvnc->fmt.blue_shift);
 
-		if (gvnc->fmt.byte_order != __BYTE_ORDER)
+		if (gvnc->fmt.byte_order != G_BYTE_ORDER)
 			val =   (((val >>  0) & 0xFF) << 24) |
 				(((val >>  8) & 0xFF) << 16) |
 				(((val >> 16) & 0xFF) << 8) |
@@ -2115,7 +2185,8 @@ static gboolean gvnc_perform_auth_vnc(struct gvnc *gvnc)
 }
 
 
-static gboolean gvnc_start_tls(struct gvnc *gvnc, int anonTLS) {
+static gboolean gvnc_start_tls(struct gvnc *gvnc, int anonTLS)
+{
 	static const int cert_type_priority[] = { GNUTLS_CRT_X509, 0 };
 	static const int protocol_priority[]= { GNUTLS_TLS1_1, GNUTLS_TLS1_0, GNUTLS_SSL3, 0 };
 	static const int kx_priority[] = {GNUTLS_KX_DHE_DSS, GNUTLS_KX_RSA, GNUTLS_KX_DHE_RSA, GNUTLS_KX_SRP, 0};
@@ -2625,12 +2696,12 @@ void gvnc_close(struct gvnc *gvnc)
 	}
 
 	if (gvnc->host) {
-		free(gvnc->host);
+		g_free(gvnc->host);
 		gvnc->host = NULL;
 	}
 
 	if (gvnc->port) {
-		free(gvnc->port);
+		g_free(gvnc->port);
 		gvnc->port = NULL;
 	}
 
@@ -2640,28 +2711,28 @@ void gvnc_close(struct gvnc *gvnc)
 	}
 
 	if (gvnc->cred_username) {
-		free(gvnc->cred_username);
+		g_free(gvnc->cred_username);
 		gvnc->cred_username = NULL;
 	}
 	if (gvnc->cred_password) {
-		free(gvnc->cred_password);
+		g_free(gvnc->cred_password);
 		gvnc->cred_password = NULL;
 	}
 
 	if (gvnc->cred_x509_cacert) {
-		free(gvnc->cred_x509_cacert);
+		g_free(gvnc->cred_x509_cacert);
 		gvnc->cred_x509_cacert = NULL;
 	}
 	if (gvnc->cred_x509_cacrl) {
-		free(gvnc->cred_x509_cacrl);
+		g_free(gvnc->cred_x509_cacrl);
 		gvnc->cred_x509_cacrl = NULL;
 	}
 	if (gvnc->cred_x509_cert) {
-		free(gvnc->cred_x509_cert);
+		g_free(gvnc->cred_x509_cert);
 		gvnc->cred_x509_cert = NULL;
 	}
 	if (gvnc->cred_x509_key) {
-		free(gvnc->cred_x509_key);
+		g_free(gvnc->cred_x509_key);
 		gvnc->cred_x509_key = NULL;
 	}
 
@@ -2705,6 +2776,13 @@ gboolean gvnc_is_initialized(struct gvnc *gvnc)
 	return FALSE;
 }
 
+static gboolean gvnc_before_version (struct gvnc *gvnc, int major, int minor) {
+	return (gvnc->major < major) || (gvnc->major == major && gvnc->minor < minor);
+}
+static gboolean gvnc_after_version (struct gvnc *gvnc, int major, int minor) {
+	return !gvnc_before_version (gvnc, major, minor+1);
+}
+
 gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 {
 	int ret, i;
@@ -2717,26 +2795,27 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	version[12] = 0;
 
  	ret = sscanf(version, "RFB %03d.%03d\n", &gvnc->major, &gvnc->minor);
-	if (ret != 2)
+	if (ret != 2) {
+		GVNC_DEBUG("Error while getting server version\n");
 		goto fail;
+	}
 
-	if (gvnc->major != 3)
-		goto fail;
-	if (gvnc->minor != 3 &&
-	    gvnc->minor != 4 &&
-	    gvnc->minor != 5 &&
-	    gvnc->minor != 6 &&
-	    gvnc->minor != 7 &&
-	    gvnc->minor != 8)
-		goto fail;
+	GVNC_DEBUG("Server version: %d.%d\n", gvnc->major, gvnc->minor);
 
-	/* For UltraVNC ... */
-	if  (gvnc->minor > 3 && gvnc->minor < 7) gvnc->minor = 3;
+	if (gvnc_before_version(gvnc, 3, 3)) {
+		GVNC_DEBUG("Server version is not supported (%d.%d)\n", gvnc->major, gvnc->minor);
+		goto fail;
+	} else if (gvnc_before_version(gvnc, 3, 7)) {
+		gvnc->minor = 3;
+	} else if (gvnc_after_version(gvnc, 3, 8)) {
+		gvnc->major = 3;
+		gvnc->minor = 8;
+	}
 
 	snprintf(version, 12, "RFB %03d.%03d\n", gvnc->major, gvnc->minor);
 	gvnc_write(gvnc, version, 12);
 	gvnc_flush(gvnc);
-	GVNC_DEBUG("Negotiated protocol %d %d\n", gvnc->major, gvnc->minor);
+	GVNC_DEBUG("Using version: %d.%d\n", gvnc->major, gvnc->minor);
 
 	if (!gvnc_perform_auth(gvnc)) {
 		GVNC_DEBUG("Auth failed\n");
@@ -2779,18 +2858,26 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 gboolean gvnc_open_fd(struct gvnc *gvnc, int fd)
 {
 	int flags;
-	if (gvnc_is_open(gvnc))
+	if (gvnc_is_open(gvnc)) {
+		GVNC_DEBUG ("Error: already connected?\n");
 		return FALSE;
+	}
 
 	GVNC_DEBUG("Connecting to FD %d\n", fd);
-	if ((flags = fcntl(fd, F_GETFL)) < 0)
+	if ((flags = fcntl(fd, F_GETFL)) < 0) {
+		GVNC_DEBUG ("Failed to fcntl()\n");
 		return FALSE;
+	}
 	flags |= O_NONBLOCK;
-	if (fcntl(fd, F_SETFL, flags) < 0)
+	if (fcntl(fd, F_SETFL, flags) < 0) {
+		GVNC_DEBUG ("Failed to fcntl()\n");
 		return FALSE;
+	}
 
-	if (!(gvnc->channel = g_io_channel_unix_new(fd)))
+	if (!(gvnc->channel = g_io_channel_unix_new(fd))) {
+		GVNC_DEBUG ("Failed to g_io_channel_unix_new()\n");
 		return FALSE;
+	}
 	gvnc->fd = fd;
 
 	return !gvnc_has_error(gvnc);
@@ -2812,31 +2899,38 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = IPPROTO_TCP;
 
-        if ((ret = getaddrinfo(host, port, &hints, &ai)) != 0)
+        if ((ret = getaddrinfo(host, port, &hints, &ai)) != 0) {
+		GVNC_DEBUG ("Failed to resolve hostname\n");
 		return FALSE;
+	}
 
         runp = ai;
         while (runp != NULL) {
                 int flags, fd;
                 GIOChannel *chan;
 
-                if ((fd = socket(runp->ai_family, runp->ai_socktype,
-                                 runp->ai_protocol)) < 0)
-                        break;
+		if ((fd = socket(runp->ai_family, runp->ai_socktype,
+			runp->ai_protocol)) < 0) {
+			GVNC_DEBUG ("Failed to socket()\n");
+			break;
+		}
 
                 GVNC_DEBUG("Trying socket %d\n", fd);
                 if ((flags = fcntl(fd, F_GETFL)) < 0) {
                         close(fd);
+                        GVNC_DEBUG ("Failed to fcntl()\n");
                         break;
                 }
                 flags |= O_NONBLOCK;
                 if (fcntl(fd, F_SETFL, flags) < 0) {
                         close(fd);
+                        GVNC_DEBUG ("Failed to fcntl()\n");
                         break;
                 }
 
                 if (!(chan = g_io_channel_unix_new(fd))) {
                         close(fd);
+                        GVNC_DEBUG ("Failed to g_io_channel_unix_new()\n");
                         break;
                 }
 
@@ -2857,6 +2951,7 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
                            errno != EHOSTUNREACH) {
                         g_io_channel_unref(chan);
                         close(fd);
+                        GVNC_DEBUG ("Failed with errno = %d\n", errno);
                         break;
                 }
                 close(fd);
@@ -2912,8 +3007,8 @@ gboolean gvnc_set_credential_password(struct gvnc *gvnc, const char *password)
 {
         GVNC_DEBUG("Set password credential\n");
         if (gvnc->cred_password)
-                free(gvnc->cred_password);
-        if (!(gvnc->cred_password = strdup(password))) {
+                g_free(gvnc->cred_password);
+        if (!(gvnc->cred_password = g_strdup(password))) {
                 gvnc->has_error = TRUE;
                 return FALSE;
         }
@@ -2924,8 +3019,8 @@ gboolean gvnc_set_credential_username(struct gvnc *gvnc, const char *username)
 {
         GVNC_DEBUG("Set username credential %s\n", username);
         if (gvnc->cred_username)
-                free(gvnc->cred_username);
-        if (!(gvnc->cred_username = strdup(username))) {
+                g_free(gvnc->cred_username);
+        if (!(gvnc->cred_username = g_strdup(username))) {
                 gvnc->has_error = TRUE;
                 return FALSE;
         }
@@ -2936,8 +3031,8 @@ gboolean gvnc_set_credential_x509_cacert(struct gvnc *gvnc, const char *file)
 {
         GVNC_DEBUG("Set x509 cacert %s\n", file);
         if (gvnc->cred_x509_cacert)
-                free(gvnc->cred_x509_cacert);
-        if (!(gvnc->cred_x509_cacert = strdup(file))) {
+                g_free(gvnc->cred_x509_cacert);
+        if (!(gvnc->cred_x509_cacert = g_strdup(file))) {
                 gvnc->has_error = TRUE;
                 return FALSE;
         }
@@ -2948,8 +3043,8 @@ gboolean gvnc_set_credential_x509_cacrl(struct gvnc *gvnc, const char *file)
 {
         GVNC_DEBUG("Set x509 cacrl %s\n", file);
         if (gvnc->cred_x509_cacrl)
-                free(gvnc->cred_x509_cacrl);
-        if (!(gvnc->cred_x509_cacrl = strdup(file))) {
+                g_free(gvnc->cred_x509_cacrl);
+        if (!(gvnc->cred_x509_cacrl = g_strdup(file))) {
                 gvnc->has_error = TRUE;
                 return FALSE;
         }
@@ -2960,8 +3055,8 @@ gboolean gvnc_set_credential_x509_key(struct gvnc *gvnc, const char *file)
 {
         GVNC_DEBUG("Set x509 key %s\n", file);
         if (gvnc->cred_x509_key)
-                free(gvnc->cred_x509_key);
-        if (!(gvnc->cred_x509_key = strdup(file))) {
+                g_free(gvnc->cred_x509_key);
+        if (!(gvnc->cred_x509_key = g_strdup(file))) {
                 gvnc->has_error = TRUE;
                 return FALSE;
         }
@@ -2972,8 +3067,8 @@ gboolean gvnc_set_credential_x509_cert(struct gvnc *gvnc, const char *file)
 {
         GVNC_DEBUG("Set x509 cert %s\n", file);
         if (gvnc->cred_x509_cert)
-                free(gvnc->cred_x509_cert);
-        if (!(gvnc->cred_x509_cert = strdup(file))) {
+                g_free(gvnc->cred_x509_cert);
+        if (!(gvnc->cred_x509_cert = g_strdup(file))) {
                 gvnc->has_error = TRUE;
                 return FALSE;
         }
@@ -2995,7 +3090,8 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 	    fb->red_shift == gvnc->fmt.red_shift &&
 	    fb->green_shift == gvnc->fmt.green_shift &&
 	    fb->blue_shift == gvnc->fmt.blue_shift &&
-	    fb->byte_order == gvnc->fmt.byte_order)
+	    fb->byte_order == G_BYTE_ORDER &&
+	    gvnc->fmt.byte_order == G_BYTE_ORDER)
 		gvnc->perfect_match = TRUE;
 	else
 		gvnc->perfect_match = FALSE;
@@ -3014,7 +3110,7 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 		   gvnc->fmt.red_max, gvnc->fmt.green_max, gvnc->fmt.blue_max,
 		   gvnc->rm, gvnc->gm, gvnc->bm);
 
-	/* Setup shifts assuming matched bpp (but not neccessarily match rgb order)*/
+	/* Setup shifts assuming matched bpp (but not necessarily match rgb order)*/
 	gvnc->rrs = gvnc->fmt.red_shift;
 	gvnc->grs = gvnc->fmt.green_shift;
 	gvnc->brs = gvnc->fmt.blue_shift;
@@ -3022,18 +3118,6 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 	gvnc->rls = gvnc->local.red_shift;
 	gvnc->gls = gvnc->local.green_shift;
 	gvnc->bls = gvnc->local.blue_shift;
-
-
-	/* This adjusts for server/client endianness mismatch */
-	if (__BYTE_ORDER != gvnc->fmt.byte_order) {
-		gvnc->rrs = gvnc->fmt.bits_per_pixel - gvnc->rrs - (gvnc->fmt.bits_per_pixel - gvnc->fmt.depth);
-		gvnc->grs = gvnc->fmt.bits_per_pixel - gvnc->grs - (gvnc->fmt.bits_per_pixel - gvnc->fmt.depth);
-		gvnc->brs = gvnc->fmt.bits_per_pixel - gvnc->brs - (gvnc->fmt.bits_per_pixel - gvnc->fmt.depth);
-
-		GVNC_DEBUG("Flipped shifts red: %3d, green: %3d, blue: %3d\n",
-			   gvnc->rrs, gvnc->grs, gvnc->brs);
-	}
-
 
 	/* This adjusts for remote having more bpp than local */
 	for (n = gvnc->fmt.red_max; n > gvnc->local.red_mask ; n>>= 1)
