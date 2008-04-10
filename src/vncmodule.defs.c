@@ -187,6 +187,18 @@ _wrap_vnc_display_set_pointer_local(PyGObject *self, PyObject *args, PyObject *k
 }
 
 static PyObject *
+_wrap_vnc_display_get_pointer_local(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_pointer_local(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
 _wrap_vnc_display_set_pointer_grab(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "enable", NULL };
@@ -199,6 +211,18 @@ _wrap_vnc_display_set_pointer_grab(PyGObject *self, PyObject *args, PyObject *kw
     
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+static PyObject *
+_wrap_vnc_display_get_pointer_grab(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_pointer_grab(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
 }
 
 static PyObject *
@@ -217,6 +241,18 @@ _wrap_vnc_display_set_keyboard_grab(PyGObject *self, PyObject *args, PyObject *k
 }
 
 static PyObject *
+_wrap_vnc_display_get_keyboard_grab(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_keyboard_grab(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
 _wrap_vnc_display_set_read_only(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "enable", NULL };
@@ -229,6 +265,18 @@ _wrap_vnc_display_set_read_only(PyGObject *self, PyObject *args, PyObject *kwarg
     
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+static PyObject *
+_wrap_vnc_display_get_read_only(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_read_only(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
 }
 
 static PyObject *
@@ -310,6 +358,18 @@ _wrap_vnc_display_set_lossy_encoding(PyGObject *self, PyObject *args, PyObject *
 }
 
 static PyObject *
+_wrap_vnc_display_get_lossy_encoding(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_lossy_encoding(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
 _wrap_vnc_display_set_scaling(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "enable", NULL };
@@ -319,6 +379,18 @@ _wrap_vnc_display_set_scaling(PyGObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     
     ret = vnc_display_set_scaling(VNC_DISPLAY(self->obj), enable);
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
+_wrap_vnc_display_get_scaling(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_scaling(VNC_DISPLAY(self->obj));
     
     return PyBool_FromLong(ret);
 
@@ -339,6 +411,18 @@ _wrap_vnc_display_force_grab(PyGObject *self, PyObject *args, PyObject *kwargs)
     return Py_None;
 }
 
+static PyObject *
+_wrap_vnc_display_is_pointer_absolute(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_is_pointer_absolute(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
 static const PyMethodDef _PyVncDisplay_methods[] = {
     { "open_fd", (PyCFunction)_wrap_vnc_display_open_fd, METH_VARARGS|METH_KEYWORDS,
       NULL },
@@ -356,11 +440,19 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
       NULL },
     { "set_pointer_local", (PyCFunction)_wrap_vnc_display_set_pointer_local, METH_VARARGS|METH_KEYWORDS,
       NULL },
+    { "get_pointer_local", (PyCFunction)_wrap_vnc_display_get_pointer_local, METH_NOARGS,
+      NULL },
     { "set_pointer_grab", (PyCFunction)_wrap_vnc_display_set_pointer_grab, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "get_pointer_grab", (PyCFunction)_wrap_vnc_display_get_pointer_grab, METH_NOARGS,
       NULL },
     { "set_keyboard_grab", (PyCFunction)_wrap_vnc_display_set_keyboard_grab, METH_VARARGS|METH_KEYWORDS,
       NULL },
+    { "get_keyboard_grab", (PyCFunction)_wrap_vnc_display_get_keyboard_grab, METH_NOARGS,
+      NULL },
     { "set_read_only", (PyCFunction)_wrap_vnc_display_set_read_only, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "get_read_only", (PyCFunction)_wrap_vnc_display_get_read_only, METH_NOARGS,
       NULL },
     { "get_pixbuf", (PyCFunction)_wrap_vnc_display_get_pixbuf, METH_NOARGS,
       NULL },
@@ -374,9 +466,15 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
       NULL },
     { "set_lossy_encoding", (PyCFunction)_wrap_vnc_display_set_lossy_encoding, METH_VARARGS|METH_KEYWORDS,
       NULL },
+    { "get_lossy_encoding", (PyCFunction)_wrap_vnc_display_get_lossy_encoding, METH_NOARGS,
+      NULL },
     { "set_scaling", (PyCFunction)_wrap_vnc_display_set_scaling, METH_VARARGS|METH_KEYWORDS,
       NULL },
+    { "get_scaling", (PyCFunction)_wrap_vnc_display_get_scaling, METH_NOARGS,
+      NULL },
     { "force_grab", (PyCFunction)_wrap_vnc_display_force_grab, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "is_pointer_absolute", (PyCFunction)_wrap_vnc_display_is_pointer_absolute, METH_NOARGS,
       NULL },
     { NULL, NULL, 0, NULL }
 };
@@ -470,7 +568,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 474 "vnc.c"
+#line 572 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }
