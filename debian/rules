@@ -9,7 +9,7 @@ DEB_BUILDDIR := build
 DEB_CONFIGURE_EXTRA_FLAGS += --with-python --with-gtkglext --enable-plugin=yes
 DEB_CONFIGURE_EXTRA_FLAGS += --without-examples
 
-DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.4)'
+DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.5)'
 DEB_DH_MAKESHLIBS_ARGS_mozilla-gtk-vnc += --noscripts
 
 binary-install/python-gtk-vnc::
