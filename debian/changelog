@@ -1,3 +1,10 @@
+gtk-vnc (0.3.5-3) unstable; urgency=low
+
+  * disable scaling support, works around #477199 until the problem is fixed 
+    in libgtkglext.
+
+ -- Guido Guenther <agx@sigxcpu.org>  Tue, 22 Apr 2008 16:55:52 +0200
+
 gtk-vnc (0.3.5-2) unstable; urgency=low
 
   * fix typo in dependencies  (Closes: #475647)
