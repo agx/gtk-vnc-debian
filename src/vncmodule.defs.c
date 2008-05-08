@@ -397,6 +397,33 @@ _wrap_vnc_display_get_scaling(PyGObject *self)
 }
 
 static PyObject *
+_wrap_vnc_display_set_shared_flag(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "shared", NULL };
+    int shared;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_shared_flag", kwlist, &shared))
+        return NULL;
+    
+    vnc_display_set_shared_flag(VNC_DISPLAY(self->obj), shared);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+_wrap_vnc_display_get_shared_flag(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_shared_flag(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
 _wrap_vnc_display_force_grab(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "enable", NULL };
@@ -471,6 +498,10 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
     { "set_scaling", (PyCFunction)_wrap_vnc_display_set_scaling, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { "get_scaling", (PyCFunction)_wrap_vnc_display_get_scaling, METH_NOARGS,
+      NULL },
+    { "set_shared_flag", (PyCFunction)_wrap_vnc_display_set_shared_flag, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "get_shared_flag", (PyCFunction)_wrap_vnc_display_get_shared_flag, METH_NOARGS,
       NULL },
     { "force_grab", (PyCFunction)_wrap_vnc_display_force_grab, METH_VARARGS|METH_KEYWORDS,
       NULL },
@@ -568,7 +599,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 572 "vnc.c"
+#line 603 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }
