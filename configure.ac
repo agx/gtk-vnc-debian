@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gtk-vnc], [0.3.5], [anthony@codemonkey.ws])
+AC_INIT([gtk-vnc], [0.3.6], [anthony@codemonkey.ws])
 AC_CONFIG_SRCDIR([src/gvnc.c])
 
 GTK_REQUIRED=2.10.0
@@ -26,7 +26,7 @@ AC_CONFIG_HEADERS([config.h:config.hin])
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(gtk-vnc, 0.3.5)
+AM_INIT_AUTOMAKE(gtk-vnc, 0.3.6)
 
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
@@ -87,6 +87,17 @@ AC_ARG_WITH(examples,
    *)      AC_MSG_ERROR([bad value ${withval} for examples option]) ;;
  esac],[withval=no])
 WITH_EXAMPLES=$withval
+
+ 
+dnl check ld support --version-script
+ld --help>/tmp/$$ 2>&1
+if `cat /tmp/$$|grep version-script>/dev/null 2>&1`; then
+LD_VERSION_SCRIPT_SUPPORT='--version-script=$(srcdir)/libgtk-vnc_sym.version'
+else
+LD_VERSION_SCRIPT_SUPPORT="export-symbols-regex 'vnc_'"
+fi
+rm /tmp/$$
+AC_SUBST(LD_VERSION_SCRIPT_SUPPORT)
 
 PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK_REQUIRED)
 AC_SUBST(GTK_CFLAGS)
@@ -239,7 +250,7 @@ Configure summary:
 	Compiler Flags .............:  ${CFLAGS}
 	Prefix......................:  ${prefix}
 
-	Python biding ..............:  ${WITH_PYTHON}
+	Python binding .............:  ${WITH_PYTHON}
 	Install example programs ...:  ${WITH_EXAMPLES}
 	Browser plugin .............:  ${enable_plugin}
 	Scaling support.............:  ${with_scaling}
