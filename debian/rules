@@ -8,7 +8,7 @@ include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 DEB_BUILDDIR := build
 DEB_CONFIGURE_EXTRA_FLAGS += --with-python --with-gtkglext --with-examples --enable-plugin=yes 
 
-DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.5)'
+DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.6)'
 DEB_DH_MAKESHLIBS_ARGS_mozilla-gtk-vnc += --noscripts
 
 binary-install/python-gtk-vnc::
