@@ -6,8 +6,7 @@ include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 
 DEB_BUILDDIR := build
-DEB_CONFIGURE_EXTRA_FLAGS += --with-python --without-gtkglext --enable-plugin=yes
-DEB_CONFIGURE_EXTRA_FLAGS += --without-examples
+DEB_CONFIGURE_EXTRA_FLAGS += --with-python --with-gtkglext --with-examples --enable-plugin=yes 
 
 DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.5)'
 DEB_DH_MAKESHLIBS_ARGS_mozilla-gtk-vnc += --noscripts
