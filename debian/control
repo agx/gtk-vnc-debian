@@ -6,7 +6,7 @@ Maintainer: Guido Guenther <agx@sigxcpu.org>
 Standards-Version: 3.7.3
 Build-Depends: cdbs, debhelper, python-central, libgtk2.0-dev,
  python-all-dev, libgnutls-dev (>= 1.4.0), python-gtk2-dev (>= 2.0),
- libgtkglext1-dev (>= 1.2.0), libxul-dev (>= 1.8), autotools-dev, quilt,
+ libgtkglext1-dev (>= 1.2.0), iceape-dev (>= 1.1.9-5), autotools-dev, quilt,
  automake, autoconf, libffi-dev, libtool
 Build-Conflicts: libffi4-dev
 
