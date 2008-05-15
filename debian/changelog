@@ -1,3 +1,11 @@
+gtk-vnc (0.3.6-2) unstable; urgency=low
+
+  * add libgtk-vnc debug package
+  * don't build depend on libxul-dev  (Closes: #480810) - thanks to Mike
+    Hommey for the patch
+
+ -- Guido Guenther <agx@sigxcpu.org>  Thu, 15 May 2008 14:48:42 +0200
+
 gtk-vnc (0.3.6-1) unstable; urgency=low
 
   * Add gvncviewer package
