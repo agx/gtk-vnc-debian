@@ -1,0 +1,26 @@
+diff --git a/configure.ac b/configure.ac
+index a0816a4..2bf4557 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
+ AC_INIT([gtk-vnc], [0.3.6], [anthony@codemonkey.ws])
+ AC_CONFIG_SRCDIR([src/gvnc.c])
+ 
+-GTK_REQUIRED=2.10.0
++GTK_REQUIRED=2.8.0
+ AC_SUBST(GTK_REQUIRED)
+ GNUTLS_REQUIRED=1.4.0
+ AC_SUBST(GNUTLS_REQUIRED)
+diff --git a/examples/gvncviewer.c b/examples/gvncviewer.c
+index 62fdfd1..590c6f1 100644
+--- a/examples/gvncviewer.c
++++ b/examples/gvncviewer.c
+@@ -370,7 +370,7 @@ int main(int argc, char **argv)
+ 	vnc_display_set_keyboard_grab(VNC_DISPLAY(vnc), TRUE);
+ 	vnc_display_set_pointer_grab(VNC_DISPLAY(vnc), TRUE);
+ 
+-	if (!gtk_widget_is_composited(window)) {
++	if (0) {
+ 		vnc_display_set_scaling(VNC_DISPLAY(vnc), TRUE);
+ 		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(scaling), TRUE);
+ 	}
