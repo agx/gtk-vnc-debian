@@ -1,0 +1,22 @@
+diff --git a/configure.ac b/configure.ac
+index 6871585..96b9e6f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -18,7 +18,7 @@
+
+ NSPR_REQUIRED=4.0.0
+ FIREFOX_PLUGIN_REQUIRED=2.0.0
+-MOZILLA_PLUGIN_REQUIRED=1.8
++MOZILLA_PLUGIN_REQUIRED=1.0
+
+
+ AC_CONFIG_HEADERS([config.h:config.hin])
+@@ -216,7 +216,7 @@ if test "x$enable_plugin" = "xyes"; then
+     PKG_CHECK_MODULES(FIREFOX_PLUGIN,
+                      firefox-plugin >= $FIREFOX_PLUGIN_REQUIRED, ,[
+         PKG_CHECK_MODULES(MOZILLA_PLUGIN,
+-                          mozilla-plugin >= $MOZILLA_PLUGIN_REQUIRED)
++                          iceape-plugin >= $MOZILLA_PLUGIN_REQUIRED)
+         FIREFOX_PLUGIN_CFLAGS="$MOZILLA_PLUGIN_CFLAGS"
+         FIREFOX_PLUGIN_LIBS="$MOZILLA_PLUGIN_LIBS"
+     ])

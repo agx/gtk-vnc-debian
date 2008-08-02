@@ -91,9 +91,16 @@ void		vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask)
 gboolean	vnc_display_set_credential(VncDisplay *obj, int type, const gchar *data);
 
 void		vnc_display_set_pointer_local(VncDisplay *obj, gboolean enable);
+gboolean	vnc_display_get_pointer_local(VncDisplay *obj);
+
 void		vnc_display_set_pointer_grab(VncDisplay *obj, gboolean enable);
+gboolean	vnc_display_get_pointer_grab(VncDisplay *obj);
+
 void		vnc_display_set_keyboard_grab(VncDisplay *obj, gboolean enable);
+gboolean	vnc_display_get_keyboard_grab(VncDisplay *obj);
+
 void		vnc_display_set_read_only(VncDisplay *obj, gboolean enable);
+gboolean	vnc_display_get_read_only(VncDisplay *obj);
 
 GdkPixbuf *	vnc_display_get_pixbuf(VncDisplay *obj);
 
@@ -104,10 +111,19 @@ const char *	vnc_display_get_name(VncDisplay *obj);
 void		vnc_display_client_cut_text(VncDisplay *obj, const gchar *text);
 
 void		vnc_display_set_lossy_encoding(VncDisplay *obj, gboolean enable);
+gboolean	vnc_display_get_lossy_encoding(VncDisplay *obj);
 
 gboolean	vnc_display_set_scaling(VncDisplay *obj, gboolean enable);
+gboolean	vnc_display_get_scaling(VncDisplay *obj);
+
+void		vnc_display_set_shared_flag(VncDisplay *obj, gboolean shared);
+gboolean	vnc_display_get_shared_flag(VncDisplay *obj);
 
 void		vnc_display_force_grab(VncDisplay *obj, gboolean enable);
+
+gboolean	vnc_display_is_pointer_absolute(VncDisplay *obj);
+
+GOptionGroup *  vnc_display_get_option_group(void);
 
 G_END_DECLS
 
