@@ -6,8 +6,7 @@ Maintainer: Guido Guenther <agx@sigxcpu.org>
 Standards-Version: 3.7.3
 Build-Depends: cdbs, debhelper, python-central, libgtk2.0-dev,
  python-all-dev, libgnutls-dev (>= 1.4.0), python-gtk2-dev (>= 2.0),
- libgtkglext1-dev (>= 1.2.0), iceape-dev (>= 1.1.9-5), autotools-dev, quilt,
- automake, autoconf, libffi-dev, libtool
+ autotools-dev, quilt, automake, autoconf, libtool
 Build-Conflicts: libffi4-dev
 
 Package: libgtk-vnc-1.0-0
@@ -45,7 +44,7 @@ Package: libgtk-vnc-1.0-dev
 Architecture: any
 Section: libdevel
 Depends: ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version}),
- libgtk2.0-dev (>= 2.0), libgnutls-dev (>= 1.4.0), libgtkglext1-dev (>= 1.2.0)
+ libgtk2.0-dev (>= 2.0), libgnutls-dev (>= 1.4.0)
 Description: A VNC viewer widget for GTK+ (development files)
  It is built using coroutines, allowing it to be completely asynchronous while
  remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
@@ -73,22 +72,6 @@ Description: A VNC viewer widget for GTK+ (Python binding)
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
  This package contains the Python binding.
-
-Package: mozilla-gtk-vnc
-Architecture: any
-Section: web
-Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version}),
- iceweasel | iceape-browser
-Description: A VNC viewer widget for GTK+ (mozilla plugin)
- It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
- certificate authentication.
- .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
- .
- This package contains the experimental mozilla plugin.
 
 Package: gvncviewer
 Architecture: any
