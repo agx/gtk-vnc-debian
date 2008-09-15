@@ -6,7 +6,7 @@
 
 Summary: A GTK widget for VNC clients
 Name: gtk-vnc
-Version: 0.3.6
+Version: 0.3.7
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
