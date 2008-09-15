@@ -1,3 +1,12 @@
+gtk-vnc (0.3.7-1) experimental; urgency=low
+
+  * [88cc5c2] New Upstream version 0.3.7
+  * [91aca37] add README.source
+  * [0aa45ba] bump standards version
+  * [9cccbca] bump shlibs to 0.3.7
+
+ -- Guido Guenther <agx@sigxcpu.org>  Mon, 15 Sep 2008 17:37:53 +0200
+
 gtk-vnc (0.3.6-2) unstable; urgency=low
 
   * add libgtk-vnc debug package
