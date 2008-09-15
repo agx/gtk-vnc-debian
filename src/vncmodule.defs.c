@@ -4,7 +4,7 @@
 
 
 
-#line 3 "./vnc.override"
+#line 3 "../../src/vnc.override"
 #include <Python.h>
 #include "pygobject.h"
 #include "vncdisplay.h"
@@ -98,7 +98,7 @@ _wrap_vnc_display_close(PyGObject *self)
     return Py_None;
 }
 
-#line 16 "./vnc.override"
+#line 16 "../../src/vnc.override"
 static PyObject*
 _wrap_vnc_display_send_keys(PyGObject *self,
                             PyObject *args, PyObject *kwargs) 
@@ -397,6 +397,33 @@ _wrap_vnc_display_get_scaling(PyGObject *self)
 }
 
 static PyObject *
+_wrap_vnc_display_set_force_size(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "enable", NULL };
+    int enable;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_force_size", kwlist, &enable))
+        return NULL;
+    
+    vnc_display_set_force_size(VNC_DISPLAY(self->obj), enable);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+_wrap_vnc_display_get_force_size(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_get_force_size(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
 _wrap_vnc_display_set_shared_flag(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "shared", NULL };
@@ -499,6 +526,10 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
       NULL },
     { "get_scaling", (PyCFunction)_wrap_vnc_display_get_scaling, METH_NOARGS,
       NULL },
+    { "set_force_size", (PyCFunction)_wrap_vnc_display_set_force_size, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "get_force_size", (PyCFunction)_wrap_vnc_display_get_force_size, METH_NOARGS,
+      NULL },
     { "set_shared_flag", (PyCFunction)_wrap_vnc_display_set_shared_flag, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { "get_shared_flag", (PyCFunction)_wrap_vnc_display_get_shared_flag, METH_NOARGS,
@@ -599,7 +630,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 603 "vnc.c"
+#line 634 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }
