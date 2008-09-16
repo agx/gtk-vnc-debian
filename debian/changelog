@@ -1,3 +1,9 @@
+gtk-vnc (0.3.7-2) experimental; urgency=low
+
+  * [dfea636] new patch plugindir.diff: fix path to builddir (Closes: #499112)
+
+ -- Guido Guenther <agx@sigxcpu.org>  Tue, 16 Sep 2008 21:09:29 +0200
+
 gtk-vnc (0.3.7-1) experimental; urgency=low
 
   * [88cc5c2] New Upstream version 0.3.7
