@@ -1,3 +1,9 @@
+gtk-vnc (0.3.7-3) unstable; urgency=low
+
+  * upload to unstable
+
+ -- Guido Guenther <agx@sigxcpu.org>  Fri, 26 Sep 2008 09:05:45 +0200
+
 gtk-vnc (0.3.7-2) experimental; urgency=low
 
   * [dfea636] new patch plugindir.diff: fix path to builddir (Closes: #499112)
