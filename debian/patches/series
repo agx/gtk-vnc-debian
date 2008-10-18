@@ -1,2 +1,3 @@
 xulrunner-not-mozilla.diff
 plugindir.diff
+gtk-vnc-ungrab.diff

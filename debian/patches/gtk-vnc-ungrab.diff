@@ -1,0 +1,40 @@
+Author: Daniel P. Berrange
+Hg: 1bae3a18e487
+
+The 0.3.7 release has a nasty bug where if the server transitions from
+relative pointer mode, to absolute pointer mode while the mouse grab is
+active, it'll never let you ungrab. Unfortunately this happens during
+boot of many VMs.
+
+The change causing this was this:
+
+changeset:   219:e7d57ece8227
+user:        Jonh Wendell <wendell@bani.com.br>
+date:        Thu May 29 15:51:23 2008 -0300
+files:       src/vncdisplay.c
+description:
+Ignore CTRL-ALT key combination if we are autograbbing and pointer is absolute
+
+The motivation was right, but we need to tweak its handling slightly, so 
+that it honours an ungrab request if the grab is currently active. The
+attached patch fixes this
+
+diff -r cf0e849385e0 src/vncdisplay.c
+--- a/src/vncdisplay.c	Thu Sep 11 17:07:42 2008 +0100
++++ b/src/vncdisplay.c	Wed Sep 24 20:56:01 2008 +0100
+@@ -703,13 +703,12 @@
+ 		}
+ 	}
+ 
+-	if ((!priv->grab_keyboard || !priv->absolute) &&
+-	    key->type == GDK_KEY_PRESS &&
++	if (key->type == GDK_KEY_PRESS &&
+ 	    ((keyval == GDK_Control_L && (key->state & GDK_MOD1_MASK)) ||
+ 	     (keyval == GDK_Alt_L && (key->state & GDK_CONTROL_MASK)))) {
+ 		if (priv->in_pointer_grab)
+ 			do_pointer_ungrab(VNC_DISPLAY(widget), FALSE);
+-		else
++		else if (!priv->grab_keyboard || !priv->absolute)
+ 			do_pointer_grab(VNC_DISPLAY(widget), FALSE);
+ 	}
+ 
