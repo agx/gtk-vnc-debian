@@ -1,3 +1,4 @@
 xulrunner-not-mozilla.diff
 plugindir.diff
 gtk-vnc-ungrab.diff
+fix-bogus-screen-updates.diff
