@@ -1,3 +1,11 @@
+gtk-vnc (0.3.7-4) unstable; urgency=low
+
+  * [1e928cf] fix ungrab when switching from absolute to relativ pointer
+    mode (Closes: #503318)
+  * [090c84f] fix bogus screen updates
+
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 29 Oct 2008 08:59:00 +0100
+
 gtk-vnc (0.3.7-3) unstable; urgency=low
 
   * upload to unstable
