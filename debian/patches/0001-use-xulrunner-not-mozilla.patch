@@ -1,17 +1,26 @@
+From fbe6e6d81d41c547a20eac4f1580f45b0e6653ad Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Sat, 3 Jan 2009 18:25:03 +0100
+Subject: [PATCH] use xulrunner not mozilla
+
+---
+ configure.ac |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
 diff --git a/configure.ac b/configure.ac
-index 6871585..96b9e6f 100644
+index b37a251..6f6c09e 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -18,7 +18,7 @@
-
+@@ -15,7 +15,7 @@ PYTHON_REQUIRED=2.4
+ 
  NSPR_REQUIRED=4.0.0
  FIREFOX_PLUGIN_REQUIRED=2.0.0
 -MOZILLA_PLUGIN_REQUIRED=1.8
 +MOZILLA_PLUGIN_REQUIRED=1.0
-
-
+ 
+ 
  AC_CONFIG_HEADERS([config.h:config.hin])
-@@ -216,7 +216,7 @@ if test "x$enable_plugin" = "xyes"; then
+@@ -219,7 +219,7 @@ if test "x$enable_plugin" = "xyes"; then
      PKG_CHECK_MODULES(FIREFOX_PLUGIN,
                       firefox-plugin >= $FIREFOX_PLUGIN_REQUIRED, ,[
          PKG_CHECK_MODULES(MOZILLA_PLUGIN,
@@ -20,3 +29,6 @@ index 6871585..96b9e6f 100644
          FIREFOX_PLUGIN_CFLAGS="$MOZILLA_PLUGIN_CFLAGS"
          FIREFOX_PLUGIN_LIBS="$MOZILLA_PLUGIN_LIBS"
      ])
+-- 
+1.6.0.3
+

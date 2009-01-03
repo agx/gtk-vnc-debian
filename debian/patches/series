@@ -1,4 +1,1 @@
-xulrunner-not-mozilla.diff
-plugindir.diff
-gtk-vnc-ungrab.diff
-fix-bogus-screen-updates.diff
+0001-use-xulrunner-not-mozilla.patch
