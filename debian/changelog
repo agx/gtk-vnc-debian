@@ -1,3 +1,15 @@
+gtk-vnc (0.3.8-1) experimental; urgency=low
+
+  * [71aacfd] Imported Upstream version 0.3.8
+  * [d0fe410] add Vcs-{Git,Browser}
+  * [ce11a4d] use cairo instead of gtkglext
+  * [a803bd0] drop patches fixed upstream: 
+      * fix-bogus-screen-updates.diff 
+      * gtk-vnc-ungrab.diff
+      * plugindir.diff
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 03 Jan 2009 19:57:09 +0100
+
 gtk-vnc (0.3.7-4) unstable; urgency=low
 
   * [1e928cf] fix ungrab when switching from absolute to relativ pointer
