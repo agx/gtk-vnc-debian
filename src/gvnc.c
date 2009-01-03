@@ -1,12 +1,24 @@
 /*
+ * GTK VNC Widget
+ *  
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 2 or
- * later as published by the Free Software Foundation.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.0 of the License, or (at your option) any later version.
  *
- *  GTK VNC Widget
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
+
+#include <config.h>
 
 #include "gvnc.h"
 
@@ -14,7 +26,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <netdb.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -39,7 +50,14 @@
 
 #include <gdk/gdkkeysyms.h>
 
-#include "vnc_keycodes.h"
+#include "getaddrinfo.h"
+
+/* AI_ADDRCONFIG is missing on some systems and gnulib won't provide it
+   even if its emulated getaddrinfo() for us . */
+#ifndef AI_ADDRCONFIG
+# define AI_ADDRCONFIG 0
+#endif
+
 
 struct wait_queue
 {
@@ -164,6 +182,7 @@ struct gvnc
 	int zrle_pi_bits;
 
 	gboolean has_ext_key_event;
+	const uint8_t const *keycode_map;
 };
 
 #define nibhi(a) (((a) >> 4) & 0x0F)
@@ -185,7 +204,6 @@ static GIOCondition g_io_wait(GIOChannel *channel, GIOCondition cond)
 
 	g_io_add_watch(channel, cond | G_IO_HUP | G_IO_ERR | G_IO_NVAL, g_io_wait_helper, coroutine_self());
 	ret = coroutine_yield(NULL);
-
 	return *ret;
 }
 
@@ -339,12 +357,11 @@ static int gvnc_zread(struct gvnc *gvnc, void *buffer, size_t size)
 
 static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 {
-	int fd = g_io_channel_unix_get_fd(gvnc->channel);
 	char *ptr = data;
 	size_t offset = 0;
 
 	if (gvnc->has_error) return -EINVAL;
-	
+
 	while (offset < len) {
 		size_t tmp;
 
@@ -372,11 +389,11 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 					ret = -1;
 				}
 			} else
-				ret = read(fd, gvnc->read_buffer, 4096);
+				ret = recv (gvnc->fd, gvnc->read_buffer, 4096, 0);
 
 			if (ret == -1) {
 				switch (errno) {
-				case EAGAIN:
+				case EWOULDBLOCK:
 					if (gvnc->wait_interruptable) {
 						if (!g_io_wait_interruptable(&gvnc->wait,
 									     gvnc->channel, G_IO_IN))
@@ -386,7 +403,7 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 				case EINTR:
 					continue;
 				default:
-					GVNC_DEBUG("Closing the connection: gvnc_read() - ret=-1\n");
+					GVNC_DEBUG("Closing the connection: gvnc_read() - errno=%d\n", errno);
 					gvnc->has_error = TRUE;
 					return -errno;
 				}
@@ -414,7 +431,6 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 
 static void gvnc_flush(struct gvnc *gvnc)
 {
-	int fd = g_io_channel_unix_get_fd(gvnc->channel);
 	size_t offset = 0;
 	while (offset < gvnc->write_offset) {
 		int ret;
@@ -431,17 +447,17 @@ static void gvnc_flush(struct gvnc *gvnc)
 				ret = -1;
 			}
 		} else
-			ret = write(fd,
+			ret = send (gvnc->fd,
 				    gvnc->write_buffer+offset,
-				    gvnc->write_offset-offset);
+				    gvnc->write_offset-offset, 0);
 		if (ret == -1) {
 			switch (errno) {
-			case EAGAIN:
+			case EWOULDBLOCK:
 				g_io_wait(gvnc->channel, G_IO_OUT);
 			case EINTR:
 				continue;
 			default:
-				GVNC_DEBUG("Closing the connection: gvnc_flush\n");
+				GVNC_DEBUG("Closing the connection: gvnc_flush %d\n", errno);
 				gvnc->has_error = TRUE;
 				return;
 			}
@@ -482,11 +498,10 @@ static ssize_t gvnc_tls_push(gnutls_transport_ptr_t transport,
 			      const void *data,
 			      size_t len) {
 	struct gvnc *gvnc = (struct gvnc *)transport;
-	int fd = g_io_channel_unix_get_fd(gvnc->channel);
 	int ret;
 
  retry:
-	ret = write(fd, data, len);
+	ret = write(gvnc->fd, data, len);
 	if (ret < 0) {
 		if (errno == EINTR)
 			goto retry;
@@ -500,11 +515,10 @@ static ssize_t gvnc_tls_pull(gnutls_transport_ptr_t transport,
 			     void *data,
 			     size_t len) {
 	struct gvnc *gvnc = (struct gvnc *)transport;
-	int fd = g_io_channel_unix_get_fd(gvnc->channel);
 	int ret;
 
  retry:
-	ret = read(fd, data, len);
+	ret = read(gvnc->fd, data, len);
 	if (ret < 0) {
 		if (errno == EINTR)
 			goto retry;
@@ -922,11 +936,9 @@ gboolean gvnc_key_event(struct gvnc *gvnc, uint8_t down_flag,
 {
 	uint8_t pad[2] = {0};
 
+	GVNC_DEBUG("Key event %d %d %d %d", key, scancode, down_flag, gvnc->has_ext_key_event);
 	if (gvnc->has_ext_key_event) {
-		if (key == GDK_Pause)
-			scancode = VKC_PAUSE;
-		else
-			scancode = x_keycode_to_pc_keycode(scancode);
+		scancode = x_keycode_to_pc_keycode(gvnc->keycode_map, scancode);
 
 		gvnc_buffered_write_u8(gvnc, 255);
 		gvnc_buffered_write_u8(gvnc, 0);
@@ -1341,12 +1353,12 @@ static void gvnc_zrle_update_tile_palette(struct gvnc *gvnc,
 static int gvnc_read_zrle_rl(struct gvnc *gvnc)
 {
 	int rl = 1;
-	uint8_t byte;
+	uint8_t b;
 
 	do {
-		byte = gvnc_read_u8(gvnc);
-		rl += byte;
-	} while (!gvnc_has_error(gvnc) && byte == 255);
+		b = gvnc_read_u8(gvnc);
+		rl += b;
+	} while (!gvnc_has_error(gvnc) && b == 255);
 
 	return rl;
 }
@@ -1818,8 +1830,15 @@ static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
 
 static void gvnc_resize(struct gvnc *gvnc, int width, int height)
 {
-	if (gvnc->has_error || !gvnc->ops.resize)
+	if (gvnc->has_error)
 		return;
+
+	gvnc->width = width;
+	gvnc->height = height;
+
+	if (!gvnc->ops.resize)
+		return;
+
 	if (!gvnc->ops.resize(gvnc->ops_data, width, height)) {
 		GVNC_DEBUG("Closing the connection: gvnc_resize\n");
 		gvnc->has_error = TRUE;
@@ -1935,6 +1954,11 @@ static void gvnc_xcursor(struct gvnc *gvnc, int x, int y, int width, int height)
 	g_free(pixbuf);
 }
 
+static void gvnc_ext_key_event(struct gvnc *gvnc)
+{
+	gvnc->has_ext_key_event = TRUE;
+	gvnc->keycode_map = x_keycode_to_pc_keycode_map();
+}
 
 static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 				    uint16_t x, uint16_t y,
@@ -1946,21 +1970,27 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 	switch (etype) {
 	case GVNC_ENCODING_RAW:
 		gvnc_raw_update(gvnc, x, y, width, height);
+		gvnc_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_COPY_RECT:
 		gvnc_copyrect_update(gvnc, x, y, width, height);
+		gvnc_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_RRE:
 		gvnc_rre_update(gvnc, x, y, width, height);
+		gvnc_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_HEXTILE:
 		gvnc_hextile_update(gvnc, x, y, width, height);
+		gvnc_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_ZRLE:
 		gvnc_zrle_update(gvnc, x, y, width, height);
+		gvnc_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_TIGHT:
 		gvnc_tight_update(gvnc, x, y, width, height);
+		gvnc_update(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_DESKTOP_RESIZE:
 		gvnc_resize(gvnc, width, height);
@@ -1979,15 +2009,13 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 		gvnc_xcursor(gvnc, x, y, width, height);
 		break;
 	case GVNC_ENCODING_EXT_KEY_EVENT:
-		gvnc->has_ext_key_event = TRUE;
+		gvnc_ext_key_event(gvnc);
 		break;
 	default:
 		GVNC_DEBUG("Received an unknown encoding type: %d\n", etype);
 		gvnc->has_error = TRUE;
 		break;
 	}
-
-	gvnc_update(gvnc, x, y, width, height);
 }
 
 gboolean gvnc_server_message(struct gvnc *gvnc)
@@ -2802,12 +2830,12 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	if (gvnc_has_error(gvnc))
 		return FALSE;
 
-	if (!gvnc->fmt.true_color_flag && gvnc->ops.get_preferred_pixel_format)
+	if (!gvnc->fmt.true_color_flag && gvnc->ops.get_preferred_pixel_format) {
 		if (gvnc->ops.get_preferred_pixel_format(gvnc->ops_data, &gvnc->fmt))
 			gvnc_set_pixel_format(gvnc, &gvnc->fmt);
 		else
 			goto fail;
-
+	}
 	memset(&gvnc->strm, 0, sizeof(gvnc->strm));
 	/* FIXME what level? */
 	for (i = 0; i < 5; i++)
@@ -2822,15 +2850,10 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	return !gvnc_has_error(gvnc);
 }
 
-gboolean gvnc_open_fd(struct gvnc *gvnc, int fd)
+static gboolean gvnc_set_nonblock(int fd)
 {
+#ifndef WIN32
 	int flags;
-	if (gvnc_is_open(gvnc)) {
-		GVNC_DEBUG ("Error: already connected?\n");
-		return FALSE;
-	}
-
-	GVNC_DEBUG("Connecting to FD %d\n", fd);
 	if ((flags = fcntl(fd, F_GETFL)) < 0) {
 		GVNC_DEBUG ("Failed to fcntl()\n");
 		return FALSE;
@@ -2841,7 +2864,41 @@ gboolean gvnc_open_fd(struct gvnc *gvnc, int fd)
 		return FALSE;
 	}
 
-	if (!(gvnc->channel = g_io_channel_unix_new(fd))) {
+#else /* WIN32 */
+	unsigned long flag = 1;
+
+	/* This is actually Gnulib's replacement rpl_ioctl function.
+	 * We can't call ioctlsocket directly in any case.
+	 */
+	if (ioctl (fd, FIONBIO, (void *) &flag) == -1) {
+		GVNC_DEBUG ("Failed to set nonblocking flag, winsock error = %d",
+			    WSAGetLastError ());
+		return FALSE;
+	}
+#endif /* WIN32 */
+
+	return TRUE;
+}
+
+gboolean gvnc_open_fd(struct gvnc *gvnc, int fd)
+{
+	if (gvnc_is_open(gvnc)) {
+		GVNC_DEBUG ("Error: already connected?\n");
+		return FALSE;
+	}
+
+	GVNC_DEBUG("Connecting to FD %d\n", fd);
+
+	if (!gvnc_set_nonblock(fd))
+		return FALSE;
+
+	if (!(gvnc->channel =
+#ifdef WIN32
+	      g_io_channel_win32_new_socket(_get_osfhandle(fd))
+#else
+	      g_io_channel_unix_new(fd)
+#endif
+	      )) {
 		GVNC_DEBUG ("Failed to g_io_channel_unix_new()\n");
 		return FALSE;
 	}
@@ -2873,7 +2930,7 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 
         runp = ai;
         while (runp != NULL) {
-                int flags, fd;
+                int fd;
                 GIOChannel *chan;
 
 		if ((fd = socket(runp->ai_family, runp->ai_socktype,
@@ -2883,19 +2940,16 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 		}
 
                 GVNC_DEBUG("Trying socket %d\n", fd);
-                if ((flags = fcntl(fd, F_GETFL)) < 0) {
-                        close(fd);
-                        GVNC_DEBUG ("Failed to fcntl()\n");
-                        break;
-                }
-                flags |= O_NONBLOCK;
-                if (fcntl(fd, F_SETFL, flags) < 0) {
-                        close(fd);
-                        GVNC_DEBUG ("Failed to fcntl()\n");
-                        break;
-                }
+		if (!gvnc_set_nonblock(fd))
+			break;
 
-                if (!(chan = g_io_channel_unix_new(fd))) {
+                if (!(chan =
+#ifdef WIN32
+		      g_io_channel_win32_new_socket(_get_osfhandle(fd))
+#else
+		      g_io_channel_unix_new(fd)
+#endif
+		      )) {
                         close(fd);
                         GVNC_DEBUG ("Failed to g_io_channel_unix_new()\n");
                         break;
@@ -2904,14 +2958,15 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
         reconnect:
                 /* FIXME: Better handle EINPROGRESS/EISCONN return values,
                    as explained in connect(2) man page */
-                if ( (connect(fd, runp->ai_addr, runp->ai_addrlen) == 0) || errno == EISCONN) {
+                if ((connect(fd, runp->ai_addr, runp->ai_addrlen) == 0) ||
+		    errno == EISCONN) {
                         gvnc->channel = chan;
                         gvnc->fd = fd;
                         freeaddrinfo(ai);
                         return !gvnc_has_error(gvnc);
                 }
-
-                if (errno == EINPROGRESS) {
+                if (errno == EINPROGRESS ||
+                    errno == EWOULDBLOCK) {
                         g_io_wait(chan, G_IO_OUT|G_IO_ERR|G_IO_HUP);
                         goto reconnect;
                 } else if (errno != ECONNREFUSED &&
