@@ -1,17 +1,14 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gtk-vnc], [0.3.7], [anthony@codemonkey.ws])
+AC_INIT([gtk-vnc], [0.3.8], [anthony@codemonkey.ws])
 AC_CONFIG_SRCDIR([src/gvnc.c])
 
 GTK_REQUIRED=2.10.0
 AC_SUBST(GTK_REQUIRED)
 GNUTLS_REQUIRED=1.4.0
 AC_SUBST(GNUTLS_REQUIRED)
-GTKGLEXT_REQUIRED=1.2.0
-AC_SUBST(GTKGLEXT_REQUIRED)
 
 PYGTK_REQUIRED=2.0.0
-GTKGLEXT_REQUIRED=1.2.0
 VIEW_REQUIRED=0.6.0
 GTHREAD_REQUIRED=2.0.0
 PYTHON_REQUIRED=2.4
@@ -23,14 +20,28 @@ MOZILLA_PLUGIN_REQUIRED=1.8
 
 AC_CONFIG_HEADERS([config.h:config.hin])
 
-
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(gtk-vnc, 0.3.7)
+AM_INIT_AUTOMAKE(gtk-vnc, 0.3.8)
+
+
+dnl gl_INIT uses m4_foreach_w, yet that is not defined in autoconf-2.59.
+dnl In order to accommodate developers with such old tools, here's a
+dnl replacement definition.
+m4_ifndef([m4_foreach_w],
+  [m4_define([m4_foreach_w],
+    [m4_foreach([$1], m4_split(m4_normalize([$2]), [ ]), [$3])])])
+
+gl_EARLY
+gl_INIT
 
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
+AC_LIBTOOL_WIN32_DLL
+
 AC_PROG_LIBTOOL
+
+AC_CHECK_HEADERS([pwd.h winsock2.h])
 
 AC_ARG_WITH(python,
 [  --with-python           build python bindings],
@@ -103,26 +114,16 @@ PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK_REQUIRED)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 
-AC_ARG_WITH(gtkglext,
-[  --with-gtkglext         enable gtkgl support],
-[case "${withval}" in
-   yes|no) ;;
-   *)	   AC_MSG_ERROR([bad value ${withval} for gtkglext option]) ;;
- esac],[withval=yes])
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS="$CFLAGS $GTK_CFLAGS"
+LIBS="$LIBS $GTK_LIBS"
+AC_CHECK_FUNC([gdk_cairo_create], [WITH_GTK_CAIRO=1], [WITH_GTK_CAIRO=0])
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
 
-WITH_GTKGLEXT=0
-if test "${withval}" = "yes"; then
-  PKG_CHECK_MODULES(GTKGLEXT, gtkglext-1.0 >= $GTKGLEXT_REQUIRED,
-	            [WITH_GTKGLEXT=1], [WITH_GTKGLEXT=0])
-fi
-AC_DEFINE_UNQUOTED(WITH_GTKGLEXT,[$WITH_GTKGLEXT], [Whether to use gtkglext])
-AC_SUBST(GTKGLEXT_CFLAGS)
-AC_SUBST(GTKGLEXT_LIBS)
-if test $WITH_GTKGLEXT -eq 0; then
-  with_scaling="no"
-else
-  with_scaling="yes"
-fi
+AC_DEFINE_UNQUOTED(WITH_GTK_CAIRO, [$WITH_GTK_CAIRO], [Whether to use cairo for GTK rendering])
+
 
 AC_ARG_WITH(libview,
 [  --with-libview          enable libview support in gvncviewer],
@@ -234,14 +235,23 @@ AM_CONDITIONAL(ENABLE_PLUGIN, [test "$enable_plugin" = "yes"])
 
 AC_CONFIG_FILES(
   Makefile
+  gnulib/lib/Makefile
+  gnulib/tests/Makefile
   src/Makefile
   examples/Makefile
   plugin/Makefile
   gtk-vnc-1.0.pc
   gtk-vnc.spec
+  mingw32-gtk-vnc.spec
   )
 
 AC_OUTPUT
+
+if [ test "$WITH_GTK_CAIRO" = 1 ]; then
+  with_scaling=yes
+else
+  with_scaling=no
+fi
 
 echo "
 Configure summary:
