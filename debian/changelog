@@ -1,3 +1,11 @@
+gtk-vnc (0.3.8-2) unstable; urgency=low
+
+  * upload to unstable
+     * uses cairo, since the OpenGL code is racy (Closes: #511023)
+     * uses cairo, since it works with compiz (Closes: #511423)
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 10 Jan 2009 20:01:59 +0100
+
 gtk-vnc (0.3.8-1) experimental; urgency=low
 
   * [71aacfd] Imported Upstream version 0.3.8
