@@ -17,6 +17,3 @@ DEB_DH_MAKESHLIBS_ARGS_mozilla-gtk-vnc += --noscripts
 
 binary-install/python-gtk-vnc::
 	dh_pycentral
-
-post-patches::
-	autoreconf
