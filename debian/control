@@ -29,7 +29,7 @@ Description: A VNC viewer widget for GTK+ (runtime libraries)
 
 Package: libgtk-vnc-1.0-0-dbg
 Architecture: any
-Section: libs
+Section: debug
 Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-vnc-1.0-0 (=${binary:Version})
 Priority: extra
 Description: A VNC viewer widget for GTK+ (runtime libraries)
