@@ -1,3 +1,10 @@
+gtk-vnc (0.3.8-3) unstable; urgency=low
+
+  [ Laurent Léonard ]
+  * [d96aec9] Fix libtool issue. (Closes: #529767)
+
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 29 Jul 2009 13:00:58 +0200
+
 gtk-vnc (0.3.8-2) unstable; urgency=low
 
   * upload to unstable
