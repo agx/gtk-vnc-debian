@@ -12,7 +12,7 @@ DEB_CONFIGURE_EXTRA_FLAGS += --with-python --with-gtkglext --with-examples --ena
 DEB_DBG_PACKAGES = libgtk-vnc-1.0-0-dbg
 DEB_DBG_PACKAGE_libgtk-vnc-1.0-0 = libgtk-vnc-1.0-0-dbg
 
-DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.7)'
+DEB_DH_MAKESHLIBS_ARGS_libgtk-vnc-1.0-0 += -V 'libgtk-vnc-1.0-0 (>= 0.3.9)'
 DEB_DH_MAKESHLIBS_ARGS_mozilla-gtk-vnc += --noscripts
 
 binary-install/python-gtk-vnc::
