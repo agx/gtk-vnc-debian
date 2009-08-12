@@ -1,6 +1,6 @@
 /*
  * GTK VNC Widget
- *  
+ *
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
  *
  * This library is free software; you can redistribute it and/or
@@ -46,11 +46,16 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
+#if HAVE_SASL
+#include <sasl/sasl.h>
+#endif
+
 #include <zlib.h>
 
 #include <gdk/gdkkeysyms.h>
 
 #include "getaddrinfo.h"
+#include "dh.h"
 
 /* AI_ADDRCONFIG is missing on some systems and gnulib won't provide it
    even if its emulated getaddrinfo() for us . */
@@ -133,6 +138,16 @@ struct gvnc
 	char *cred_x509_cacrl;
 	char *cred_x509_cert;
 	char *cred_x509_key;
+	gboolean want_cred_username;
+	gboolean want_cred_password;
+	gboolean want_cred_x509;
+
+#if HAVE_SASL
+	sasl_conn_t *saslconn;      /* SASL context */
+	const char *saslDecoded;
+	unsigned int saslDecodedLength;
+	unsigned int saslDecodedOffset;
+#endif
 
 	char read_buffer[4096];
 	size_t read_offset;
@@ -355,6 +370,135 @@ static int gvnc_zread(struct gvnc *gvnc, void *buffer, size_t size)
 
 /* IO functions */
 
+
+/*
+ * Read at least 1 more byte of data straight off the wire
+ * into the requested buffer.
+ */
+static int gvnc_read_wire(struct gvnc *gvnc, void *data, size_t len)
+{
+	int ret;
+
+ reread:
+	if (gvnc->tls_session) {
+		ret = gnutls_read(gvnc->tls_session, data, len);
+		if (ret < 0) {
+			if (ret == GNUTLS_E_AGAIN)
+				errno = EAGAIN;
+			else
+				errno = EIO;
+			ret = -1;
+		}
+	} else
+		ret = recv (gvnc->fd, data, len, 0);
+
+	if (ret == -1) {
+		switch (errno) {
+		case EWOULDBLOCK:
+			if (gvnc->wait_interruptable) {
+				if (!g_io_wait_interruptable(&gvnc->wait,
+							     gvnc->channel, G_IO_IN)) {
+					GVNC_DEBUG("Read blocking interrupted %d", gvnc->has_error);
+					return -EAGAIN;
+				}
+			} else
+				g_io_wait(gvnc->channel, G_IO_IN);
+		case EINTR:
+			goto reread;
+
+		default:
+			GVNC_DEBUG("Closing the connection: gvnc_read() - errno=%d", errno);
+			gvnc->has_error = TRUE;
+			return -errno;
+		}
+	}
+	if (ret == 0) {
+		GVNC_DEBUG("Closing the connection: gvnc_read() - ret=0");
+		gvnc->has_error = TRUE;
+		return -EPIPE;
+	}
+	//GVNC_DEBUG("Read wire %p %d -> %d", data, len, ret);
+
+	return ret;
+}
+
+
+#if HAVE_SASL
+/*
+ * Read at least 1 more byte of data out of the SASL decrypted
+ * data buffer, into the internal read buffer
+ */
+static int gvnc_read_sasl(struct gvnc *gvnc)
+{
+	size_t want;
+	//GVNC_DEBUG("Read SASL %p size %d offset %d", gvnc->saslDecoded,
+	//	   gvnc->saslDecodedLength, gvnc->saslDecodedOffset);
+	if (gvnc->saslDecoded == NULL) {
+		char encoded[8192];
+		int encodedLen = sizeof(encoded);
+		int err, ret;
+
+		ret = gvnc_read_wire(gvnc, encoded, encodedLen);
+		if (ret < 0) {
+			return ret;
+		}
+
+		err = sasl_decode(gvnc->saslconn, encoded, ret,
+				  &gvnc->saslDecoded, &gvnc->saslDecodedLength);
+		if (err != SASL_OK) {
+			GVNC_DEBUG("Failed to decode SASL data %s",
+				   sasl_errstring(err, NULL, NULL));
+			gvnc->has_error = TRUE;
+			return -EINVAL;
+		}
+		gvnc->saslDecodedOffset = 0;
+	}
+
+	want = gvnc->saslDecodedLength - gvnc->saslDecodedOffset;
+	if (want > sizeof(gvnc->read_buffer))
+		want = sizeof(gvnc->read_buffer);
+
+	memcpy(gvnc->read_buffer,
+	       gvnc->saslDecoded + gvnc->saslDecodedOffset,
+	       want);
+	gvnc->saslDecodedOffset += want;
+	if (gvnc->saslDecodedOffset == gvnc->saslDecodedLength) {
+		gvnc->saslDecodedLength = gvnc->saslDecodedOffset = 0;
+		gvnc->saslDecoded = NULL;
+	}
+	//GVNC_DEBUG("Done read write %d - %d", want, gvnc->has_error);
+	return want;
+}
+#endif
+
+
+/*
+ * Read at least 1 more byte of data straight off the wire
+ * into the internal read buffer
+ */
+static int gvnc_read_plain(struct gvnc *gvnc)
+{
+	//GVNC_DEBUG("Read plain %d", sizeof(gvnc->read_buffer));
+	return gvnc_read_wire(gvnc, gvnc->read_buffer, sizeof(gvnc->read_buffer));
+}
+
+/*
+ * Read at least 1 more byte of data into the internal read_buffer
+ */
+static int gvnc_read_buf(struct gvnc *gvnc)
+{
+	//GVNC_DEBUG("Start read %d", gvnc->has_error);
+#if HAVE_SASL
+	if (gvnc->saslconn)
+		return gvnc_read_sasl(gvnc);
+	else
+#endif
+		return gvnc_read_plain(gvnc);
+}
+
+/*
+ * Fill the 'data' buffer up with exactly 'len' bytes worth of data
+ */
 static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 {
 	char *ptr = data;
@@ -370,50 +514,17 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 		if (gvnc_use_compression(gvnc)) {
 			int ret = gvnc_zread(gvnc, data + offset, len);
 			if (ret == -1) {
-				GVNC_DEBUG("Closing the connection: gvnc_read() - gvnc_zread() failed\n");
+				GVNC_DEBUG("Closing the connection: gvnc_read() - gvnc_zread() failed");
 				gvnc->has_error = TRUE;
 				return -errno;
 			}
 			offset += ret;
 			continue;
 		} else if (gvnc->read_offset == gvnc->read_size) {
-			int ret;
+			int ret = gvnc_read_buf(gvnc);
 
-			if (gvnc->tls_session) {
-				ret = gnutls_read(gvnc->tls_session, gvnc->read_buffer, 4096);
-				if (ret < 0) {
-					if (ret == GNUTLS_E_AGAIN)
-						errno = EAGAIN;
-					else
-						errno = EIO;
-					ret = -1;
-				}
-			} else
-				ret = recv (gvnc->fd, gvnc->read_buffer, 4096, 0);
-
-			if (ret == -1) {
-				switch (errno) {
-				case EWOULDBLOCK:
-					if (gvnc->wait_interruptable) {
-						if (!g_io_wait_interruptable(&gvnc->wait,
-									     gvnc->channel, G_IO_IN))
-							return -EAGAIN;
-					} else
-						g_io_wait(gvnc->channel, G_IO_IN);
-				case EINTR:
-					continue;
-				default:
-					GVNC_DEBUG("Closing the connection: gvnc_read() - errno=%d\n", errno);
-					gvnc->has_error = TRUE;
-					return -errno;
-				}
-			}
-			if (ret == 0) {
-				GVNC_DEBUG("Closing the connection: gvnc_read() - ret=0\n");
-				gvnc->has_error = TRUE;
-				return -EPIPE;
-			}
-
+			if (ret < 0)
+				return ret;
 			gvnc->read_offset = 0;
 			gvnc->read_size = ret;
 		}
@@ -429,16 +540,23 @@ static int gvnc_read(struct gvnc *gvnc, void *data, size_t len)
 	return 0;
 }
 
-static void gvnc_flush(struct gvnc *gvnc)
+/*
+ * Write all 'data' of length 'datalen' bytes out to
+ * the wire
+ */
+static void gvnc_flush_wire(struct gvnc *gvnc,
+			    const void *data,
+			    size_t datalen)
 {
 	size_t offset = 0;
-	while (offset < gvnc->write_offset) {
+	//GVNC_DEBUG("Flush write %p %d", data, datalen);
+	while (offset < datalen) {
 		int ret;
 
 		if (gvnc->tls_session) {
 			ret = gnutls_write(gvnc->tls_session,
-					   gvnc->write_buffer+offset,
-					   gvnc->write_offset-offset);
+					   data+offset,
+					   datalen-offset);
 			if (ret < 0) {
 				if (ret == GNUTLS_E_AGAIN)
 					errno = EAGAIN;
@@ -448,8 +566,8 @@ static void gvnc_flush(struct gvnc *gvnc)
 			}
 		} else
 			ret = send (gvnc->fd,
-				    gvnc->write_buffer+offset,
-				    gvnc->write_offset-offset, 0);
+				    data+offset,
+				    datalen-offset, 0);
 		if (ret == -1) {
 			switch (errno) {
 			case EWOULDBLOCK:
@@ -457,18 +575,71 @@ static void gvnc_flush(struct gvnc *gvnc)
 			case EINTR:
 				continue;
 			default:
-				GVNC_DEBUG("Closing the connection: gvnc_flush %d\n", errno);
+				GVNC_DEBUG("Closing the connection: gvnc_flush %d", errno);
 				gvnc->has_error = TRUE;
 				return;
 			}
 		}
 		if (ret == 0) {
-			GVNC_DEBUG("Closing the connection: gvnc_flush\n");
+			GVNC_DEBUG("Closing the connection: gvnc_flush");
 			gvnc->has_error = TRUE;
 			return;
 		}
 		offset += ret;
 	}
+}
+
+
+#if HAVE_SASL
+/*
+ * Encode all buffered data, write all encrypted data out
+ * to the wire
+ */
+static void gvnc_flush_sasl(struct gvnc *gvnc)
+{
+	const char *output;
+	unsigned int outputlen;
+	int err;
+
+	err = sasl_encode(gvnc->saslconn,
+			  gvnc->write_buffer,
+			  gvnc->write_offset,
+			  &output, &outputlen);
+	if (err != SASL_OK) {
+		GVNC_DEBUG("Failed to encode SASL data %s",
+			   sasl_errstring(err, NULL, NULL));
+		gvnc->has_error = TRUE;
+		return;
+	}
+	//GVNC_DEBUG("Flush SASL %d: %p %d", gvnc->write_offset, output, outputlen);
+	gvnc_flush_wire(gvnc, output, outputlen);
+}
+#endif
+
+/*
+ * Write all buffered data straight out to the wire
+ */
+static void gvnc_flush_plain(struct gvnc *gvnc)
+{
+	//GVNC_DEBUG("Flush plain %d", gvnc->write_offset);
+	gvnc_flush_wire(gvnc,
+			gvnc->write_buffer,
+			gvnc->write_offset);
+}
+
+
+/*
+ * Write all buffered data out to the wire
+ */
+static void gvnc_flush(struct gvnc *gvnc)
+{
+	//GVNC_DEBUG("STart write %d", gvnc->has_error);
+#if HAVE_SASL
+	if (gvnc->saslconn)
+		gvnc_flush_sasl(gvnc);
+	else
+#endif
+		gvnc_flush_plain(gvnc);
 	gvnc->write_offset = 0;
 }
 
@@ -602,6 +773,12 @@ static void gvnc_write_s32(struct gvnc *gvnc, int32_t value)
 #define DH_BITS 1024
 static gnutls_dh_params_t dh_params;
 
+#if 0
+static void gvnc_debug_gnutls_log(int level, const char* str) {
+	GVNC_DEBUG("%d %s", level, str);
+}
+#endif
+
 static gboolean gvnc_tls_initialize(void)
 {
 	static int tlsinitialized = 0;
@@ -617,6 +794,13 @@ static gboolean gvnc_tls_initialize(void)
 	if (gnutls_dh_params_generate2 (dh_params, DH_BITS) < 0)
 		return FALSE;
 
+#if 0
+	if (debug_enabled) {
+		gnutls_global_set_log_level(10);
+		gnutls_global_set_log_function(gvnc_debug_gnutls_log);
+	}
+#endif
+
 	tlsinitialized = TRUE;
 
 	return TRUE;
@@ -628,7 +812,7 @@ static gnutls_anon_client_credentials gvnc_tls_initialize_anon_cred(void)
 	int ret;
 
 	if ((ret = gnutls_anon_allocate_client_credentials(&anon_cred)) < 0) {
-		GVNC_DEBUG("Cannot allocate credentials %s\n", gnutls_strerror(ret));
+		GVNC_DEBUG("Cannot allocate credentials %s", gnutls_strerror(ret));
 		return NULL;
 	}
 
@@ -641,18 +825,18 @@ static gnutls_certificate_credentials_t gvnc_tls_initialize_cert_cred(struct gvn
 	int ret;
 
 	if ((ret = gnutls_certificate_allocate_credentials(&x509_cred)) < 0) {
-		GVNC_DEBUG("Cannot allocate credentials %s\n", gnutls_strerror(ret));
+		GVNC_DEBUG("Cannot allocate credentials %s", gnutls_strerror(ret));
 		return NULL;
 	}
 	if (vnc->cred_x509_cacert) {
 		if ((ret = gnutls_certificate_set_x509_trust_file(x509_cred,
 								  vnc->cred_x509_cacert,
 								  GNUTLS_X509_FMT_PEM)) < 0) {
-			GVNC_DEBUG("Cannot load CA certificate %s\n", gnutls_strerror(ret));
+			GVNC_DEBUG("Cannot load CA certificate %s", gnutls_strerror(ret));
 			return NULL;
 		}
 	} else {
-		GVNC_DEBUG("No CA certificate provided\n");
+		GVNC_DEBUG("No CA certificate provided");
 		return NULL;
 	}
 
@@ -661,22 +845,22 @@ static gnutls_certificate_credentials_t gvnc_tls_initialize_cert_cred(struct gvn
 								 vnc->cred_x509_cert,
 								 vnc->cred_x509_key,
 								 GNUTLS_X509_FMT_PEM)) < 0) {
-			GVNC_DEBUG("Cannot load certificate & key %s\n", gnutls_strerror(ret));
+			GVNC_DEBUG("Cannot load certificate & key %s", gnutls_strerror(ret));
 			return NULL;
 		}
 	} else {
-		GVNC_DEBUG("No client cert or key provided\n");
+		GVNC_DEBUG("No client cert or key provided");
 	}
 
 	if (vnc->cred_x509_cacrl) {
 		if ((ret = gnutls_certificate_set_x509_crl_file(x509_cred,
 								vnc->cred_x509_cacrl,
 								GNUTLS_X509_FMT_PEM)) < 0) {
-			GVNC_DEBUG("Cannot load CRL %s\n", gnutls_strerror(ret));
+			GVNC_DEBUG("Cannot load CRL %s", gnutls_strerror(ret));
 			return NULL;
 		}
 	} else {
-		GVNC_DEBUG("No CA revocation list provided\n");
+		GVNC_DEBUG("No CA revocation list provided");
 	}
 
 	gnutls_certificate_set_dh_params (x509_cred, dh_params);
@@ -692,9 +876,9 @@ static int gvnc_validate_certificate(struct gvnc *vnc)
 	unsigned int nCerts, i;
 	time_t now;
 
-	GVNC_DEBUG("Validating\n");
+	GVNC_DEBUG("Validating");
 	if ((ret = gnutls_certificate_verify_peers2 (vnc->tls_session, &status)) < 0) {
-		GVNC_DEBUG("Verify failed %s\n", gnutls_strerror(ret));
+		GVNC_DEBUG("Verify failed %s", gnutls_strerror(ret));
 		return FALSE;
 	}
 
@@ -704,20 +888,20 @@ static int gvnc_validate_certificate(struct gvnc *vnc)
 
 	if (status != 0) {
 		if (status & GNUTLS_CERT_INVALID)
-			GVNC_DEBUG ("The certificate is not trusted.\n");
+			GVNC_DEBUG ("The certificate is not trusted.");
 
 		if (status & GNUTLS_CERT_SIGNER_NOT_FOUND)
-			GVNC_DEBUG ("The certificate hasn't got a known issuer.\n");
+			GVNC_DEBUG ("The certificate hasn't got a known issuer.");
 
 		if (status & GNUTLS_CERT_REVOKED)
-			GVNC_DEBUG ("The certificate has been revoked.\n");
+			GVNC_DEBUG ("The certificate has been revoked.");
 
 		if (status & GNUTLS_CERT_INSECURE_ALGORITHM)
-			GVNC_DEBUG ("The certificate uses an insecure algorithm\n");
+			GVNC_DEBUG ("The certificate uses an insecure algorithm");
 
 		return FALSE;
 	} else {
-		GVNC_DEBUG("Certificate is valid!\n");
+		GVNC_DEBUG("Certificate is valid.");
 	}
 
 	if (gnutls_certificate_type_get(vnc->tls_session) != GNUTLS_CRT_X509)
@@ -728,7 +912,7 @@ static int gvnc_validate_certificate(struct gvnc *vnc)
 
 	for (i = 0 ; i < nCerts ; i++) {
 		gnutls_x509_crt_t cert;
-		GVNC_DEBUG ("Checking chain %d\n", i);
+		GVNC_DEBUG ("Checking chain %d", i);
 		if (gnutls_x509_crt_init (&cert) < 0)
 			return FALSE;
 
@@ -738,31 +922,31 @@ static int gvnc_validate_certificate(struct gvnc *vnc)
 		}
 
 		if (gnutls_x509_crt_get_expiration_time (cert) < now) {
-			GVNC_DEBUG("The certificate has expired\n");
+			GVNC_DEBUG("The certificate has expired");
 			gnutls_x509_crt_deinit (cert);
 			return FALSE;
 		}
 
 		if (gnutls_x509_crt_get_activation_time (cert) > now) {
-			GVNC_DEBUG("The certificate is not yet activated\n");
+			GVNC_DEBUG("The certificate is not yet activated");
 			gnutls_x509_crt_deinit (cert);
 			return FALSE;
 		}
 
 		if (gnutls_x509_crt_get_activation_time (cert) > now) {
-			GVNC_DEBUG("The certificate is not yet activated\n");
+			GVNC_DEBUG("The certificate is not yet activated");
 			gnutls_x509_crt_deinit (cert);
 			return FALSE;
 		}
 
 		if (i == 0) {
 			if (!vnc->host) {
-				GVNC_DEBUG ("No hostname provided for certificate verification\n");
+				GVNC_DEBUG ("No hostname provided for certificate verification");
 				gnutls_x509_crt_deinit (cert);
 				return FALSE;
 			}
 			if (!gnutls_x509_crt_check_hostname (cert, vnc->host)) {
-				GVNC_DEBUG ("The certificate's owner does not match hostname '%s'\n",
+				GVNC_DEBUG ("The certificate's owner does not match hostname '%s'",
 					    vnc->host);
 				gnutls_x509_crt_deinit (cert);
 				return FALSE;
@@ -795,7 +979,7 @@ static void gvnc_read_pixel_format(struct gvnc *gvnc, struct gvnc_pixel_format *
 
 	GVNC_DEBUG("Pixel format BPP: %d,  Depth: %d, Byte order: %d, True color: %d\n"
 		   "             Mask  red: %3d, green: %3d, blue: %3d\n"
-		   "             Shift red: %3d, green: %3d, blue: %3d\n",
+		   "             Shift red: %3d, green: %3d, blue: %3d",
 		   fmt->bits_per_pixel, fmt->depth, fmt->byte_order, fmt->true_color_flag,
 		   fmt->red_max, fmt->green_max, fmt->blue_max,
 		   fmt->red_shift, fmt->green_shift, fmt->blue_shift);
@@ -859,7 +1043,7 @@ gboolean gvnc_set_encodings(struct gvnc *gvnc, int n_encoding, int32_t *encoding
 		     gvnc->fmt.blue_max > 255 ||
 		     gvnc->fmt.green_max > 255) &&
 		    encoding[i] == GVNC_ENCODING_ZRLE) {
-			GVNC_DEBUG("Dropping ZRLE encoding for broken pixel format\n");
+			GVNC_DEBUG("Dropping ZRLE encoding for broken pixel format");
 			skip_zrle++;
 		}
 
@@ -964,7 +1148,7 @@ gboolean gvnc_pointer_event(struct gvnc *gvnc, uint8_t button_mask,
 	gvnc_buffered_write_u16(gvnc, x);
 	gvnc_buffered_write_u16(gvnc, y);
 	gvnc_buffered_flush(gvnc);
-	return !gvnc_has_error(gvnc);	
+	return !gvnc_has_error(gvnc);
 }
 
 gboolean gvnc_client_cut_text(struct gvnc *gvnc,
@@ -1024,7 +1208,7 @@ static uint32_t gvnc_swap_img_32(struct gvnc *gvnc, uint32_t pixel)
 		return  (((pixel >> 24) & 0xFF) <<  0) |
 			(((pixel >> 16) & 0xFF) <<  8) |
 			(((pixel >>  8) & 0xFF) << 16) |
-			(((pixel >>  0) & 0xFF) << 24);			
+			(((pixel >>  0) & 0xFF) << 24);
 	else
 		return pixel;
 }
@@ -1178,16 +1362,16 @@ static void gvnc_copyrect_update(struct gvnc *gvnc,
 	uint8_t *dst, *src;
 	int pitch = gvnc->local.linesize;
 	int i;
-	
+
 	src_x = gvnc_read_u16(gvnc);
 	src_y = gvnc_read_u16(gvnc);
-	
+
 	if (src_y < dst_y) {
 		pitch = -pitch;
 		src_y += (height - 1);
 		dst_y += (height - 1);
 	}
-	
+
 	dst = gvnc_get_local(gvnc, dst_x, dst_y);
 	src = gvnc_get_local(gvnc, src_x, src_y);
 	for (i = 0; i < height; i++) {
@@ -1272,7 +1456,7 @@ static void gvnc_read_cpixel(struct gvnc *gvnc, uint8_t *pixel)
 				 ((gvnc->fmt.green_max << gvnc->fmt.green_shift) < (1 << 24)) &&
 				 ((gvnc->fmt.blue_max << gvnc->fmt.blue_shift) < (1 << 24)));
 
-		/* 
+		/*
 		 * We need to analyse the shifts to see if they fit in 3 bytes,
 		 * rather than looking at the declared  'depth' for the format
 		 * because despite what the RFB spec says, this is what RealVNC
@@ -1433,8 +1617,8 @@ static void gvnc_zrle_update_tile(struct gvnc *gvnc, uint16_t x, uint16_t y,
 	} else if (subencoding == 128) {
 		/* Plain RLE */
 		gvnc_zrle_update_tile_rle(gvnc, x, y, width, height);
-	} else if (subencoding == 129) { 
-	
+	} else if (subencoding == 129) {
+
 	} else if (subencoding >= 130) {
 		/* Palette RLE */
 		gvnc_zrle_update_tile_prle(gvnc, subencoding - 128,
@@ -1743,7 +1927,7 @@ static void gvnc_tight_update(struct gvnc *gvnc,
 			gvnc_tight_update_gradient(gvnc, x, y, width, height);
 			break;
 		default: /* error */
-			GVNC_DEBUG("Closing the connection: gvnc_tight_update() - filter_id unknown\n");
+			GVNC_DEBUG("Closing the connection: gvnc_tight_update() - filter_id unknown");
 			gvnc->has_error = TRUE;
 			break;
 		}
@@ -1775,7 +1959,7 @@ static void gvnc_tight_update(struct gvnc *gvnc,
 		g_free(jpeg_data);
 	} else {
 		/* error */
-		GVNC_DEBUG("Closing the connection: gvnc_tight_update() - ccontrol unknown\n");
+		GVNC_DEBUG("Closing the connection: gvnc_tight_update() - ccontrol unknown");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1785,7 +1969,7 @@ static void gvnc_update(struct gvnc *gvnc, int x, int y, int width, int height)
 	if (gvnc->has_error || !gvnc->ops.update)
 		return;
 	if (!gvnc->ops.update(gvnc->ops_data, x, y, width, height)) {
-		GVNC_DEBUG("Closing the connection: gvnc_update\n");
+		GVNC_DEBUG("Closing the connection: gvnc_update");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1798,7 +1982,7 @@ static void gvnc_set_color_map_entry(struct gvnc *gvnc, uint16_t color,
 		return;
 	if (!gvnc->ops.set_color_map_entry(gvnc->ops_data, color,
 					    red, green, blue)) {
-		GVNC_DEBUG("Closing the connection: gvnc_set_color_map_entry\n");
+		GVNC_DEBUG("Closing the connection: gvnc_set_color_map_entry");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1808,10 +1992,10 @@ static void gvnc_bell(struct gvnc *gvnc)
 	if (gvnc->has_error || !gvnc->ops.bell)
 		return;
 
-	GVNC_DEBUG("Server beep\n");
+	GVNC_DEBUG("Server beep");
 
 	if (!gvnc->ops.bell(gvnc->ops_data)) {
-		GVNC_DEBUG("Closing the connection: gvnc_bell\n");
+		GVNC_DEBUG("Closing the connection: gvnc_bell");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1823,7 +2007,7 @@ static void gvnc_server_cut_text(struct gvnc *gvnc, const void *data,
 		return;
 
 	if (!gvnc->ops.server_cut_text(gvnc->ops_data, data, len)) {
-		GVNC_DEBUG("Closing the connection: gvnc_server_cut_text\n");
+		GVNC_DEBUG("Closing the connection: gvnc_server_cut_text");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1840,7 +2024,7 @@ static void gvnc_resize(struct gvnc *gvnc, int width, int height)
 		return;
 
 	if (!gvnc->ops.resize(gvnc->ops_data, width, height)) {
-		GVNC_DEBUG("Closing the connection: gvnc_resize\n");
+		GVNC_DEBUG("Closing the connection: gvnc_resize");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1858,7 +2042,7 @@ static void gvnc_pointer_type_change(struct gvnc *gvnc, int absolute)
 	if (gvnc->has_error || !gvnc->ops.pointer_type_change)
 		return;
 	if (!gvnc->ops.pointer_type_change(gvnc->ops_data, absolute)) {
-		GVNC_DEBUG("Closing the connection: gvnc_pointer_type_change\n");
+		GVNC_DEBUG("Closing the connection: gvnc_pointer_type_change");
 		gvnc->has_error = TRUE;
 	}
 }
@@ -1899,7 +2083,7 @@ static void gvnc_rich_cursor(struct gvnc *gvnc, int x, int y, int width, int hei
 	if (gvnc->has_error || !gvnc->ops.local_cursor)
 		return;
 	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf)) {
-		GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !ops.local_cursor() \n");
+		GVNC_DEBUG("Closing the connection: gvnc_rich_cursor() - !ops.local_cursor()");
 		gvnc->has_error = TRUE;
 	}
 
@@ -1947,7 +2131,7 @@ static void gvnc_xcursor(struct gvnc *gvnc, int x, int y, int width, int height)
 	if (gvnc->has_error || !gvnc->ops.local_cursor)
 		return;
 	if (!gvnc->ops.local_cursor(gvnc->ops_data, x, y, width, height, pixbuf)) {
-		GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !ops.local_cursor() \n");
+		GVNC_DEBUG("Closing the connection: gvnc_xcursor() - !ops.local_cursor()");
 		gvnc->has_error = TRUE;
 	}
 
@@ -1964,7 +2148,7 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 				    uint16_t x, uint16_t y,
 				    uint16_t width, uint16_t height)
 {
-	GVNC_DEBUG("FramebufferUpdate(%d, %d, %d, %d, %d)\n",
+	GVNC_DEBUG("FramebufferUpdate(%d, %d, %d, %d, %d)",
 		   etype, x, y, width, height);
 
 	switch (etype) {
@@ -2012,7 +2196,7 @@ static void gvnc_framebuffer_update(struct gvnc *gvnc, int32_t etype,
 		gvnc_ext_key_event(gvnc);
 		break;
 	default:
-		GVNC_DEBUG("Received an unknown encoding type: %d\n", etype);
+		GVNC_DEBUG("Received an unknown encoding type: %d", etype);
 		gvnc->has_error = TRUE;
 		break;
 	}
@@ -2035,7 +2219,7 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 	} while ((ret = gvnc_read_u8_interruptable(gvnc, &msg)) == -EAGAIN);
 
 	if (ret < 0) {
-		GVNC_DEBUG("Aborting message processing on error\n");
+		GVNC_DEBUG("Aborting message processing on error");
 		return !gvnc_has_error(gvnc);
 	}
 
@@ -2093,14 +2277,14 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 		gvnc_read(gvnc, pad, 3);
 		n_text = gvnc_read_u32(gvnc);
 		if (n_text > (32 << 20)) {
-			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText > allowed \n");
+			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText > allowed");
 			gvnc->has_error = TRUE;
 			break;
 		}
 
 		data = g_new(char, n_text + 1);
 		if (data == NULL) {
-			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText - !data \n");
+			GVNC_DEBUG("Closing the connection: gvnc_server_message() - cutText - !data");
 			gvnc->has_error = TRUE;
 			break;
 		}
@@ -2112,7 +2296,7 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 		g_free(data);
 	}	break;
 	default:
-		GVNC_DEBUG("Received an unknown message: %u\n", msg);
+		GVNC_DEBUG("Received an unknown message: %u", msg);
 		gvnc->has_error = TRUE;
 		break;
 	}
@@ -2120,13 +2304,71 @@ gboolean gvnc_server_message(struct gvnc *gvnc)
 	return !gvnc_has_error(gvnc);
 }
 
+gboolean gvnc_wants_credential_password(struct gvnc *gvnc)
+{
+	return gvnc->want_cred_password;
+}
+
+gboolean gvnc_wants_credential_username(struct gvnc *gvnc)
+{
+	return gvnc->want_cred_username;
+}
+
+gboolean gvnc_wants_credential_x509(struct gvnc *gvnc)
+{
+	return gvnc->want_cred_x509;
+}
+
+static gboolean gvnc_has_credentials(gpointer data)
+{
+	struct gvnc *gvnc = (struct gvnc *)data;
+
+	if (gvnc->has_error)
+		return TRUE;
+	if (gvnc_wants_credential_username(gvnc) && !gvnc->cred_username)
+		return FALSE;
+	if (gvnc_wants_credential_password(gvnc) && !gvnc->cred_password)
+		return FALSE;
+	/*
+	 * For x509 we require a minimum of the CA cert.
+	 * Anything else is a bonus - though the server
+	 * may reject auth if it decides it wants a client
+	 * cert. We can't express that based on auth type
+	 * alone though - we'll merely find out when TLS
+	 * negotiation takes place.
+	 */
+	if (gvnc_wants_credential_x509(gvnc) && !gvnc->cred_x509_cacert)
+		return FALSE;
+	return TRUE;
+}
+
+static gboolean gvnc_gather_credentials(struct gvnc *gvnc)
+{
+	if (!gvnc_has_credentials(gvnc)) {
+		GVNC_DEBUG("Requesting missing credentials");
+		if (gvnc->has_error || !gvnc->ops.auth_cred) {
+			gvnc->has_error = TRUE;
+			return FALSE;
+		}
+		if (!gvnc->ops.auth_cred(gvnc->ops_data))
+		    gvnc->has_error = TRUE;
+		if (gvnc->has_error)
+			return FALSE;
+		GVNC_DEBUG("Waiting for missing credentials");
+		g_condition_wait(gvnc_has_credentials, gvnc);
+		GVNC_DEBUG("Got all credentials");
+	}
+	return !gvnc_has_error(gvnc);
+}
+
+
 static gboolean gvnc_check_auth_result(struct gvnc *gvnc)
 {
 	uint32_t result;
-	GVNC_DEBUG("Checking auth result\n");
+	GVNC_DEBUG("Checking auth result");
 	result = gvnc_read_u32(gvnc);
 	if (!result) {
-		GVNC_DEBUG("Success\n");
+		GVNC_DEBUG("Success");
 		return TRUE;
 	}
 
@@ -2138,11 +2380,11 @@ static gboolean gvnc_check_auth_result(struct gvnc *gvnc)
 			return FALSE;
 		gvnc_read(gvnc, reason, len);
 		reason[len] = '\0';
-		GVNC_DEBUG("Fail %s\n", reason);
+		GVNC_DEBUG("Fail %s", reason);
 		if (!gvnc->has_error && gvnc->ops.auth_failure)
 			gvnc->ops.auth_failure(gvnc->ops_data, reason);
 	} else {
-		GVNC_DEBUG("Fail\n");
+		GVNC_DEBUG("Fail auth no result");
 		if (!gvnc->has_error && gvnc->ops.auth_failure)
 			gvnc->ops.auth_failure(gvnc->ops_data, NULL);
 	}
@@ -2154,7 +2396,13 @@ static gboolean gvnc_perform_auth_vnc(struct gvnc *gvnc)
 	uint8_t challenge[16];
 	uint8_t key[8];
 
-	GVNC_DEBUG("Do Challenge\n");
+	GVNC_DEBUG("Do Challenge");
+	gvnc->want_cred_password = TRUE;
+	gvnc->want_cred_username = FALSE;
+	gvnc->want_cred_x509 = FALSE;
+	if (!gvnc_gather_credentials(gvnc))
+		return FALSE;
+
 	if (!gvnc->cred_password)
 		return FALSE;
 
@@ -2172,6 +2420,554 @@ static gboolean gvnc_perform_auth_vnc(struct gvnc *gvnc)
 	return gvnc_check_auth_result(gvnc);
 }
 
+/*
+ *   marscha@2006 - Martin Scharpf
+ *   Encrypt bytes[length] in memory using key.
+ *   Key has to be 8 bytes, length a multiple of 8 bytes.
+ */
+static void
+vncEncryptBytes2(unsigned char *where, const int length, unsigned char *key) {
+       int i, j;
+       deskey(key, EN0);
+       for (i = 0; i< 8; i++)
+               where[i] ^= key[i];
+       des(where, where);
+       for (i = 8; i < length; i += 8) {
+               for (j = 0; j < 8; j++)
+                       where[i + j] ^= where[i + j - 8];
+               des(where + i, where + i);
+       }
+}
+
+static gboolean gvnc_perform_auth_mslogon(struct gvnc *gvnc)
+{
+       struct gvnc_dh *dh;
+       guchar gen[8], mod[8], resp[8], pub[8], key[8];
+       gcry_mpi_t genmpi, modmpi, respmpi, pubmpi, keympi;
+       guchar username[256], password[64];
+       guint passwordLen, usernameLen;
+
+       GVNC_DEBUG("Do Challenge");
+       gvnc->want_cred_password = TRUE;
+       gvnc->want_cred_username = TRUE;
+       gvnc->want_cred_x509 = FALSE;
+       if (!gvnc_gather_credentials(gvnc))
+	       return FALSE;
+
+       gvnc_read(gvnc, gen, sizeof(gen));
+       gvnc_read(gvnc, mod, sizeof(mod));
+       gvnc_read(gvnc, resp, sizeof(resp));
+
+       genmpi = gvnc_bytes_to_mpi(gen);
+       modmpi = gvnc_bytes_to_mpi(mod);
+       respmpi = gvnc_bytes_to_mpi(resp);
+
+       dh = gvnc_dh_new(genmpi, modmpi);
+
+       pubmpi = gvnc_dh_gen_secret(dh);
+       gvnc_mpi_to_bytes(pubmpi, pub);
+
+       gvnc_write(gvnc, pub, sizeof(pub));
+
+       keympi = gvnc_dh_gen_key(dh, respmpi);
+       gvnc_mpi_to_bytes(keympi, key);
+
+       passwordLen = strlen(gvnc->cred_password);
+       usernameLen = strlen(gvnc->cred_username);
+       if (passwordLen > sizeof(password))
+               passwordLen = sizeof(password);
+       if (usernameLen > sizeof(username))
+               usernameLen = sizeof(username);
+
+       memset(password, 0, sizeof password);
+       memset(username, 0, sizeof username);
+       memcpy(password, gvnc->cred_password, passwordLen);
+       memcpy(username, gvnc->cred_username, usernameLen);
+
+       vncEncryptBytes2(username, sizeof(username), key);
+       vncEncryptBytes2(password, sizeof(password), key);
+
+       gvnc_write(gvnc, username, sizeof(username));
+       gvnc_write(gvnc, password, sizeof(password));
+       gvnc_flush(gvnc);
+
+       gcry_mpi_release(genmpi);
+       gcry_mpi_release(modmpi);
+       gcry_mpi_release(respmpi);
+       gvnc_dh_free (dh);
+
+       return gvnc_check_auth_result(gvnc);
+}
+
+#if HAVE_SASL
+/*
+ * NB, keep in sync with similar method in qemud/remote.c
+ */
+static char *gvnc_addr_to_string(struct sockaddr_storage *sa, socklen_t salen)
+{
+    char host[NI_MAXHOST], port[NI_MAXSERV];
+    char *addr;
+    int err;
+
+    if ((err = getnameinfo((struct sockaddr *)sa, salen,
+                           host, sizeof(host),
+                           port, sizeof(port),
+                           NI_NUMERICHOST | NI_NUMERICSERV)) != 0) {
+	    GVNC_DEBUG("Cannot resolve address %d: %s",
+		       err, gai_strerror(err));
+        return NULL;
+    }
+
+    addr = g_malloc0(strlen(host) + 1 + strlen(port) + 1);
+    strcpy(addr, host);
+    strcat(addr, ";");
+    strcat(addr, port);
+    return addr;
+}
+
+
+
+static gboolean
+gvnc_gather_sasl_credentials(struct gvnc *gvnc,
+			     sasl_interact_t *interact)
+{
+	int ninteract;
+
+	gvnc->want_cred_password = FALSE;
+	gvnc->want_cred_username = FALSE;
+	gvnc->want_cred_x509 = FALSE;
+
+	for (ninteract = 0 ; interact[ninteract].id != 0 ; ninteract++) {
+		switch (interact[ninteract].id) {
+		case SASL_CB_AUTHNAME:
+		case SASL_CB_USER:
+			gvnc->want_cred_username = TRUE;
+			break;
+
+		case SASL_CB_PASS:
+			gvnc->want_cred_password = TRUE;
+			break;
+
+		default:
+			GVNC_DEBUG("Unsupported credential %lu",
+				   interact[ninteract].id);
+			/* Unsupported */
+			return FALSE;
+		}
+	}
+
+	if ((gvnc->want_cred_password ||
+	     gvnc->want_cred_username) &&
+	    !gvnc_gather_credentials(gvnc)) {
+		GVNC_DEBUG("%s", "cannot gather sasl credentials");
+		return FALSE;
+	}
+
+	for (ninteract = 0 ; interact[ninteract].id != 0 ; ninteract++) {
+		switch (interact[ninteract].id) {
+		case SASL_CB_AUTHNAME:
+		case SASL_CB_USER:
+			interact[ninteract].result = gvnc->cred_username;
+			interact[ninteract].len = strlen(gvnc->cred_username);
+			GVNC_DEBUG("Gather Username %s", gvnc->cred_username);
+			break;
+
+		case SASL_CB_PASS:
+			interact[ninteract].result =  gvnc->cred_password;
+			interact[ninteract].len = strlen(gvnc->cred_password);
+			//GVNC_DEBUG("Gather Password %s", gvnc->cred_password);
+			break;
+		}
+	}
+
+	GVNC_DEBUG("%s", "Filled SASL interact");
+
+	return TRUE;
+}
+
+
+
+/*
+ *
+ * Init msg from server
+ *
+ *  u32 mechlist-length
+ *  u8-array mechlist-string
+ *
+ * Start msg to server
+ *
+ *  u32 mechname-length
+ *  u8-array mechname-string
+ *  u32 clientout-length
+ *  u8-array clientout-string
+ *
+ * Start msg from server
+ *
+ *  u32 serverin-length
+ *  u8-array serverin-string
+ *  u8 continue
+ *
+ * Step msg to server
+ *
+ *  u32 clientout-length
+ *  u8-array clientout-string
+ *
+ * Step msg from server
+ *
+ *  u32 serverin-length
+ *  u8-array serverin-string
+ *  u8 continue
+ */
+
+#define SASL_MAX_MECHLIST_LEN 300
+#define SASL_MAX_MECHNAME_LEN 100
+#define SASL_MAX_DATA_LEN (1024 * 1024)
+
+/* Perform the SASL authentication process
+ */
+static gboolean gvnc_perform_auth_sasl(struct gvnc *gvnc)
+{
+	sasl_conn_t *saslconn = NULL;
+	sasl_security_properties_t secprops;
+	const char *clientout;
+	char *serverin = NULL;
+	unsigned int clientoutlen, serverinlen;
+	int err, complete;
+	struct sockaddr_storage sa;
+	socklen_t salen;
+	char *localAddr = NULL, *remoteAddr = NULL;
+	const void *val;
+	sasl_ssf_t ssf;
+	sasl_callback_t saslcb[] = {
+		{ .id = SASL_CB_AUTHNAME },
+		//		{ .id = SASL_CB_USER },
+		{ .id = SASL_CB_PASS },
+		{ .id = 0 },
+	};
+	sasl_interact_t *interact = NULL;
+	guint32 mechlistlen;
+        char *mechlist;
+	const char *mechname;
+	gboolean ret;
+
+	/* Sets up the SASL library as a whole */
+	err = sasl_client_init(NULL);
+	GVNC_DEBUG("Client initialize SASL authentication %d", err);
+	if (err != SASL_OK) {
+		GVNC_DEBUG("failed to initialize SASL library: %d (%s)",
+			   err, sasl_errstring(err, NULL, NULL));
+		goto error;
+	}
+
+	/* Get local address in form  IPADDR:PORT */
+	salen = sizeof(sa);
+	if (getsockname(gvnc->fd, (struct sockaddr*)&sa, &salen) < 0) {
+		GVNC_DEBUG("failed to get sock address %d (%s)",
+			   errno, strerror(errno));
+		goto error;
+	}
+	if ((sa.ss_family == AF_INET ||
+	     sa.ss_family == AF_INET6) &&
+	    (localAddr = gvnc_addr_to_string(&sa, salen)) == NULL)
+		goto error;
+
+	/* Get remote address in form  IPADDR:PORT */
+	salen = sizeof(sa);
+	if (getpeername(gvnc->fd, (struct sockaddr*)&sa, &salen) < 0) {
+		GVNC_DEBUG("failed to get peer address %d (%s)",
+			   errno, strerror(errno));
+		g_free(localAddr);
+		goto error;
+	}
+	if ((sa.ss_family == AF_INET ||
+	     sa.ss_family == AF_INET6) &&
+	    (remoteAddr = gvnc_addr_to_string(&sa, salen)) == NULL) {
+		g_free(localAddr);
+		goto error;
+	}
+
+	GVNC_DEBUG("Client SASL new host:'%s' local:'%s' remote:'%s'", gvnc->host, localAddr, remoteAddr);
+
+	/* Setup a handle for being a client */
+	err = sasl_client_new("vnc",
+			      gvnc->host,
+			      localAddr,
+			      remoteAddr,
+			      saslcb,
+			      SASL_SUCCESS_DATA,
+			      &saslconn);
+	g_free(localAddr);
+	g_free(remoteAddr);
+
+	if (err != SASL_OK) {
+		GVNC_DEBUG("Failed to create SASL client context: %d (%s)",
+			   err, sasl_errstring(err, NULL, NULL));
+		goto error;
+	}
+
+	/* Initialize some connection props we care about */
+	if (gvnc->tls_session) {
+		gnutls_cipher_algorithm_t cipher;
+
+		cipher = gnutls_cipher_get(gvnc->tls_session);
+		if (!(ssf = (sasl_ssf_t)gnutls_cipher_get_key_size(cipher))) {
+			GVNC_DEBUG("%s", "invalid cipher size for TLS session");
+			goto error;
+		}
+		ssf *= 8; /* key size is bytes, sasl wants bits */
+
+		GVNC_DEBUG("Setting external SSF %d", ssf);
+		err = sasl_setprop(saslconn, SASL_SSF_EXTERNAL, &ssf);
+		if (err != SASL_OK) {
+			GVNC_DEBUG("cannot set external SSF %d (%s)",
+				   err, sasl_errstring(err, NULL, NULL));
+			goto error;
+		}
+	}
+
+	memset (&secprops, 0, sizeof secprops);
+	/* If we've got TLS, we don't care about SSF */
+	secprops.min_ssf = gvnc->tls_session ? 0 : 56; /* Equiv to DES supported by all Kerberos */
+	secprops.max_ssf = gvnc->tls_session ? 0 : 100000; /* Very strong ! AES == 256 */
+	secprops.maxbufsize = 100000;
+	/* If we're not TLS, then forbid any anonymous or trivially crackable auth */
+	secprops.security_flags = gvnc->tls_session ? 0 :
+		SASL_SEC_NOANONYMOUS | SASL_SEC_NOPLAINTEXT;
+
+	err = sasl_setprop(saslconn, SASL_SEC_PROPS, &secprops);
+	if (err != SASL_OK) {
+		GVNC_DEBUG("cannot set security props %d (%s)",
+			   err, sasl_errstring(err, NULL, NULL));
+		goto error;
+	}
+
+	/* Get the supported mechanisms from the server */
+	mechlistlen = gvnc_read_u32(gvnc);
+	if (gvnc->has_error)
+		goto error;
+	if (mechlistlen > SASL_MAX_MECHLIST_LEN) {
+		GVNC_DEBUG("mechlistlen %d too long", mechlistlen);
+		goto error;
+	}
+
+	mechlist = g_malloc(mechlistlen+1);
+        gvnc_read(gvnc, mechlist, mechlistlen);
+	mechlist[mechlistlen] = '\0';
+	if (gvnc->has_error) {
+		g_free(mechlist);
+		mechlist = NULL;
+		goto error;
+	}
+
+#if 0
+	if (wantmech) {
+		if (strstr(mechlist, wantmech) == NULL) {
+			GVNC_DEBUG("SASL mechanism %s not supported by server",
+				   wantmech);
+			VIR_FREE(iret.mechlist);
+			goto error;
+		}
+		mechlist = wantmech;
+	}
+#endif
+
+ restart:
+	/* Start the auth negotiation on the client end first */
+	GVNC_DEBUG("Client start negotiation mechlist '%s'", mechlist);
+	err = sasl_client_start(saslconn,
+				mechlist,
+				&interact,
+				&clientout,
+				&clientoutlen,
+				&mechname);
+	if (err != SASL_OK && err != SASL_CONTINUE && err != SASL_INTERACT) {
+		GVNC_DEBUG("Failed to start SASL negotiation: %d (%s)",
+			   err, sasl_errdetail(saslconn));
+		g_free(mechlist);
+		mechlist = NULL;
+		goto error;
+	}
+
+	/* Need to gather some credentials from the client */
+	if (err == SASL_INTERACT) {
+		if (!gvnc_gather_sasl_credentials(gvnc,
+						  interact)) {
+			GVNC_DEBUG("%s", "Failed to collect auth credentials");
+			goto error;
+		}
+		goto restart;
+	}
+
+	GVNC_DEBUG("Server start negotiation with mech %s. Data %d bytes %p '%s'",
+		   mechname, clientoutlen, clientout, clientout);
+
+	if (clientoutlen > SASL_MAX_DATA_LEN) {
+		GVNC_DEBUG("SASL negotiation data too long: %d bytes",
+			   clientoutlen);
+		goto error;
+	}
+
+	/* Send back the chosen mechname */
+	gvnc_write_u32(gvnc, strlen(mechname));
+	gvnc_write(gvnc, mechname, strlen(mechname));
+
+	/* NB, distinction of NULL vs "" is *critical* in SASL */
+	if (clientout) {
+		gvnc_write_u32(gvnc, clientoutlen + 1);
+		gvnc_write(gvnc, clientout, clientoutlen + 1);
+	} else {
+		gvnc_write_u32(gvnc, 0);
+	}
+	gvnc_flush(gvnc);
+	if (gvnc->has_error)
+		goto error;
+
+
+	GVNC_DEBUG("%s", "Getting sever start negotiation reply");
+	/* Read the 'START' message reply from server */
+	serverinlen = gvnc_read_u32(gvnc);
+	if (gvnc->has_error)
+		goto error;
+	if (serverinlen > SASL_MAX_DATA_LEN) {
+		GVNC_DEBUG("SASL negotiation data too long: %d bytes",
+			   clientoutlen);
+		goto error;
+	}
+
+	/* NB, distinction of NULL vs "" is *critical* in SASL */
+	if (serverinlen) {
+		serverin = g_malloc(serverinlen);
+		gvnc_read(gvnc, serverin, serverinlen);
+		serverin[serverinlen-1] = '\0';
+		serverinlen--;
+	} else {
+		serverin = NULL;
+	}
+	complete = gvnc_read_u8(gvnc);
+	if (gvnc->has_error)
+		goto error;
+
+	GVNC_DEBUG("Client start result complete: %d. Data %d bytes %p '%s'",
+		   complete, serverinlen, serverin, serverin);
+
+	/* Loop-the-loop...
+	 * Even if the server has completed, the client must *always* do at least one step
+	 * in this loop to verify the server isn't lying about something. Mutual auth */
+	for (;;) {
+	restep:
+		err = sasl_client_step(saslconn,
+				       serverin,
+				       serverinlen,
+				       &interact,
+				       &clientout,
+				       &clientoutlen);
+		if (err != SASL_OK && err != SASL_CONTINUE && err != SASL_INTERACT) {
+			GVNC_DEBUG("Failed SASL step: %d (%s)",
+				   err, sasl_errdetail(saslconn));
+			goto error;
+		}
+
+		/* Need to gather some credentials from the client */
+		if (err == SASL_INTERACT) {
+			if (!gvnc_gather_sasl_credentials(gvnc,
+							  interact)) {
+				GVNC_DEBUG("%s", "Failed to collect auth credentials");
+				goto error;
+			}
+			goto restep;
+		}
+
+		if (serverin) {
+			g_free(serverin);
+			serverin = NULL;
+		}
+
+		GVNC_DEBUG("Client step result %d. Data %d bytes %p '%s'", err, clientoutlen, clientout, clientout);
+
+		/* Previous server call showed completion & we're now locally complete too */
+		if (complete && err == SASL_OK)
+			break;
+
+		/* Not done, prepare to talk with the server for another iteration */
+
+		/* NB, distinction of NULL vs "" is *critical* in SASL */
+		if (clientout) {
+			gvnc_write_u32(gvnc, clientoutlen + 1);
+			gvnc_write(gvnc, clientout, clientoutlen + 1);
+		} else {
+			gvnc_write_u32(gvnc, 0);
+		}
+		gvnc_flush(gvnc);
+		if (gvnc->has_error)
+			goto error;
+
+		GVNC_DEBUG("Server step with %d bytes %p", clientoutlen, clientout);
+
+		serverinlen = gvnc_read_u32(gvnc);
+		if (gvnc->has_error)
+			goto error;
+		if (serverinlen > SASL_MAX_DATA_LEN) {
+			GVNC_DEBUG("SASL negotiation data too long: %d bytes",
+				   clientoutlen);
+			goto error;
+		}
+
+		/* NB, distinction of NULL vs "" is *critical* in SASL */
+		if (serverinlen) {
+			serverin = g_malloc(serverinlen);
+			gvnc_read(gvnc, serverin, serverinlen);
+			serverin[serverinlen-1] = '\0';
+			serverinlen--;
+		} else {
+			serverin = NULL;
+		}
+		complete = gvnc_read_u8(gvnc);
+		if (gvnc->has_error)
+			goto error;
+
+		GVNC_DEBUG("Client step result complete: %d. Data %d bytes %p '%s'",
+			   complete, serverinlen, serverin, serverin);
+
+		/* This server call shows complete, and earlier client step was OK */
+		if (complete && err == SASL_OK) {
+			g_free(serverin);
+			serverin = NULL;
+			break;
+		}
+	}
+
+	/* Check for suitable SSF if non-TLS */
+	if (!gvnc->tls_session) {
+		err = sasl_getprop(saslconn, SASL_SSF, &val);
+		if (err != SASL_OK) {
+			GVNC_DEBUG("cannot query SASL ssf on connection %d (%s)",
+				   err, sasl_errstring(err, NULL, NULL));
+			goto error;
+		}
+		ssf = *(const int *)val;
+		GVNC_DEBUG("SASL SSF value %d", ssf);
+		if (ssf < 56) { /* 56 == DES level, good for Kerberos */
+			GVNC_DEBUG("negotiation SSF %d was not strong enough", ssf);
+			goto error;
+		}
+	}
+
+	GVNC_DEBUG("%s", "SASL authentication complete");
+	ret = gvnc_check_auth_result(gvnc);
+	/* This must come *after* check-auth-result, because the former
+	 * is defined to be sent unencrypted, and setting saslconn turns
+	 * on the SSF layer encryption processing */
+	gvnc->saslconn = saslconn;
+	return ret;
+
+ error:
+	gvnc->has_error = TRUE;
+	if (saslconn)
+		sasl_dispose(&saslconn);
+	return FALSE;
+}
+#endif /* HAVE_SASL */
+
 
 static gboolean gvnc_start_tls(struct gvnc *gvnc, int anonTLS)
 {
@@ -2181,9 +2977,9 @@ static gboolean gvnc_start_tls(struct gvnc *gvnc, int anonTLS)
 	static const int kx_anon[] = {GNUTLS_KX_ANON_DH, 0};
 	int ret;
 
-	GVNC_DEBUG("Do TLS handshake\n");
+	GVNC_DEBUG("Do TLS handshake");
 	if (gvnc_tls_initialize() < 0) {
-		GVNC_DEBUG("Failed to init TLS\n");
+		GVNC_DEBUG("Failed to init TLS");
 		gvnc->has_error = TRUE;
 		return FALSE;
 	}
@@ -2230,6 +3026,12 @@ static gboolean gvnc_start_tls(struct gvnc *gvnc, int anonTLS)
 				return FALSE;
 			}
 		} else {
+			gvnc->want_cred_password = FALSE;
+			gvnc->want_cred_username = FALSE;
+			gvnc->want_cred_x509 = TRUE;
+			if (!gvnc_gather_credentials(gvnc))
+				return FALSE;
+
 			gnutls_certificate_credentials_t x509_cred = gvnc_tls_initialize_cert_cred(gvnc);
 			if (!x509_cred) {
 				gnutls_deinit(gvnc->tls_session);
@@ -2251,119 +3053,32 @@ static gboolean gvnc_start_tls(struct gvnc *gvnc, int anonTLS)
  retry:
 	if ((ret = gnutls_handshake(gvnc->tls_session)) < 0) {
 		if (!gnutls_error_is_fatal(ret)) {
-			GVNC_DEBUG("Handshake was blocking\n");
+			GVNC_DEBUG("Handshake was blocking");
 			if (!gnutls_record_get_direction(gvnc->tls_session))
 				g_io_wait(gvnc->channel, G_IO_IN);
 			else
 				g_io_wait(gvnc->channel, G_IO_OUT);
 			goto retry;
 		}
-		GVNC_DEBUG("Handshake failed %s\n", gnutls_strerror(ret));
+		GVNC_DEBUG("Handshake failed %s", gnutls_strerror(ret));
 		gnutls_deinit(gvnc->tls_session);
 		gvnc->tls_session = NULL;
 		gvnc->has_error = TRUE;
 		return FALSE;
 	}
-	
-	GVNC_DEBUG("Handshake done\n");
+
+	GVNC_DEBUG("Handshake done");
 
 	if (anonTLS) {
 		return TRUE;
 	} else {
 		if (!gvnc_validate_certificate(gvnc)) {
-			GVNC_DEBUG("Certificate validation failed\n");
+			GVNC_DEBUG("Certificate validation failed");
 			gvnc->has_error = TRUE;
 			return FALSE;
 		}
 		return TRUE;
 	}
-}
-
-gboolean gvnc_wants_credential_password(struct gvnc *gvnc)
-{
-        if (gvnc->auth_type == GVNC_AUTH_VNC)
-                return TRUE;
-
-        if (gvnc->auth_type == GVNC_AUTH_TLS &&
-	    gvnc->auth_subtype == GVNC_AUTH_VNC)
-                return TRUE;
-
-        if (gvnc->auth_type == GVNC_AUTH_VENCRYPT) {
-                if (gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_PLAIN ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_TLSVNC ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_TLSPLAIN ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_X509VNC ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_X509PLAIN)
-                        return TRUE;
-        }
-
-        return FALSE;
-}
-
-gboolean gvnc_wants_credential_username(struct gvnc *gvnc)
-{
-        if (gvnc->auth_type == GVNC_AUTH_VENCRYPT) {
-                if (gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_PLAIN ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_TLSPLAIN ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_X509PLAIN)
-                        return TRUE;
-        }
-
-        return FALSE;
-}
-
-gboolean gvnc_wants_credential_x509(struct gvnc *gvnc)
-{
-        if (gvnc->auth_type == GVNC_AUTH_VENCRYPT) {
-                if (gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_X509NONE ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_X509PLAIN ||
-                    gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_X509VNC)
-                        return TRUE;
-        }
-
-        return FALSE;
-}
-
-static gboolean gvnc_has_credentials(gpointer data)
-{
-	struct gvnc *gvnc = (struct gvnc *)data;
-
-	if (gvnc->has_error)
-		return TRUE;
-	if (gvnc_wants_credential_username(gvnc) && !gvnc->cred_username)
-		return FALSE;
-	if (gvnc_wants_credential_password(gvnc) && !gvnc->cred_password)
-		return FALSE;
-	/*
-	 * For x509 we require a minimum of the CA cert.
-	 * Anything else is a bonus - though the server
-	 * may reject auth if it decides it wants a client
-	 * cert. We can't express that based on auth type
-	 * alone though - we'll merely find out when TLS
-	 * negotiation takes place.
-	 */
-	if (gvnc_wants_credential_x509(gvnc) && !gvnc->cred_x509_cacert)
-		return FALSE;
-	return TRUE;
-}
-
-static gboolean gvnc_gather_credentials(struct gvnc *gvnc)
-{
-	if (!gvnc_has_credentials(gvnc)) {
-		GVNC_DEBUG("Requesting missing credentials\n");
-		if (gvnc->has_error || !gvnc->ops.auth_cred) {
-			gvnc->has_error = TRUE;
-			return TRUE;
-		}
-		if (!gvnc->ops.auth_cred(gvnc->ops_data))
-		    gvnc->has_error = TRUE;
-		if (gvnc->has_error)
-			return TRUE;
-		GVNC_DEBUG("Waiting for missing credentials\n");
-		g_condition_wait(gvnc_has_credentials, gvnc);
-		GVNC_DEBUG("Got all credentials\n");
-	}
-	return !gvnc_has_error(gvnc);
 }
 
 static gboolean gvnc_has_auth_subtype(gpointer data)
@@ -2384,20 +3099,24 @@ static gboolean gvnc_perform_auth_tls(struct gvnc *gvnc)
 	unsigned int auth[20];
 
 	if (!gvnc_start_tls(gvnc, 1)) {
-		GVNC_DEBUG("Could not start TLS\n");
+		GVNC_DEBUG("Could not start TLS");
 		return FALSE;
 	}
-	GVNC_DEBUG("Completed TLS setup\n");
+	GVNC_DEBUG("Completed TLS setup");
 
 	nauth = gvnc_read_u8(gvnc);
+	GVNC_DEBUG("Got %d subauths", nauth);
 	if (gvnc_has_error(gvnc))
 		return FALSE;
 
-	if (nauth == 0)
+	GVNC_DEBUG("Got %d subauths", nauth);
+	if (nauth == 0) {
+		GVNC_DEBUG("No sub-auth types requested");
 		return gvnc_check_auth_result(gvnc);
+	}
 
 	if (nauth > sizeof(auth)) {
-		GVNC_DEBUG("Too many (%d) auth types\n", nauth);
+		GVNC_DEBUG("Too many (%d) auth types", nauth);
 		gvnc->has_error = TRUE;
 		return FALSE;
 	}
@@ -2406,7 +3125,7 @@ static gboolean gvnc_perform_auth_tls(struct gvnc *gvnc)
 	}
 
 	for (i = 0 ; i < nauth ; i++) {
-		GVNC_DEBUG("Possible sub-auth %d\n", auth[i]);
+		GVNC_DEBUG("Possible sub-auth %d", auth[i]);
 	}
 
 	if (gvnc->has_error || !gvnc->ops.auth_subtype)
@@ -2417,15 +3136,12 @@ static gboolean gvnc_perform_auth_tls(struct gvnc *gvnc)
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Waiting for auth subtype\n");
+	GVNC_DEBUG("Waiting for auth subtype");
 	g_condition_wait(gvnc_has_auth_subtype, gvnc);
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Choose auth %d\n", gvnc->auth_subtype);
-
-	if (!gvnc_gather_credentials(gvnc))
-		return FALSE;
+	GVNC_DEBUG("Choose auth %d", gvnc->auth_subtype);
 
 	gvnc_write_u8(gvnc, gvnc->auth_subtype);
 	gvnc_flush(gvnc);
@@ -2437,6 +3153,10 @@ static gboolean gvnc_perform_auth_tls(struct gvnc *gvnc)
 		return TRUE;
 	case GVNC_AUTH_VNC:
 		return gvnc_perform_auth_vnc(gvnc);
+#if HAVE_SASL
+	case GVNC_AUTH_SASL:
+		return gvnc_perform_auth_sasl(gvnc);
+#endif
 	default:
 		return FALSE;
 	}
@@ -2455,7 +3175,7 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 
 	if (major != 0 &&
 	    minor != 2) {
-		GVNC_DEBUG("Unsupported VeNCrypt version %d %d\n", major, minor);
+		GVNC_DEBUG("Unsupported VeNCrypt version %d %d", major, minor);
 		return FALSE;
 	}
 
@@ -2464,13 +3184,13 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 	gvnc_flush(gvnc);
 	status = gvnc_read_u8(gvnc);
 	if (status != 0) {
-		GVNC_DEBUG("Server refused VeNCrypt version %d %d\n", major, minor);
+		GVNC_DEBUG("Server refused VeNCrypt version %d %d", major, minor);
 		return FALSE;
 	}
 
 	nauth = gvnc_read_u8(gvnc);
 	if (nauth > (sizeof(auth)/sizeof(auth[0]))) {
-		GVNC_DEBUG("Too many (%d) auth types\n", nauth);
+		GVNC_DEBUG("Too many (%d) auth types", nauth);
 		return FALSE;
 	}
 
@@ -2479,7 +3199,7 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 	}
 
 	for (i = 0 ; i < nauth ; i++) {
-		GVNC_DEBUG("Possible auth %d\n", auth[i]);
+		GVNC_DEBUG("Possible auth %d", auth[i]);
 	}
 
 	if (gvnc->has_error || !gvnc->ops.auth_subtype)
@@ -2490,19 +3210,19 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Waiting for auth subtype\n");
+	GVNC_DEBUG("Waiting for auth subtype");
 	g_condition_wait(gvnc_has_auth_subtype, gvnc);
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Choose auth %d\n", gvnc->auth_subtype);
+	GVNC_DEBUG("Choose auth %d", gvnc->auth_subtype);
 
 	if (!gvnc_gather_credentials(gvnc))
 		return FALSE;
 
 #if !DEBUG
 	if (gvnc->auth_subtype == GVNC_AUTH_VENCRYPT_PLAIN) {
-		GVNC_DEBUG("Cowardly refusing to transmit plain text password\n");
+		GVNC_DEBUG("Cowardly refusing to transmit plain text password");
 		return FALSE;
 	}
 #endif
@@ -2511,7 +3231,7 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 	gvnc_flush(gvnc);
 	status = gvnc_read_u8(gvnc);
 	if (status != 1) {
-		GVNC_DEBUG("Server refused VeNCrypt auth %d %d\n", gvnc->auth_subtype, status);
+		GVNC_DEBUG("Server refused VeNCrypt auth %d %d", gvnc->auth_subtype, status);
 		return FALSE;
 	}
 
@@ -2519,6 +3239,7 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 	case GVNC_AUTH_VENCRYPT_TLSNONE:
 	case GVNC_AUTH_VENCRYPT_TLSPLAIN:
 	case GVNC_AUTH_VENCRYPT_TLSVNC:
+	case GVNC_AUTH_VENCRYPT_TLSSASL:
 		anonTLS = 1;
 		break;
 	default:
@@ -2526,25 +3247,34 @@ static gboolean gvnc_perform_auth_vencrypt(struct gvnc *gvnc)
 	}
 
 	if (!gvnc_start_tls(gvnc, anonTLS)) {
-		GVNC_DEBUG("Could not start TLS\n");
+		GVNC_DEBUG("Could not start TLS");
 		return FALSE;
 	}
-	GVNC_DEBUG("Completed TLS setup\n");
+	GVNC_DEBUG("Completed TLS setup, do subauth %d", gvnc->auth_subtype);
 
 	switch (gvnc->auth_subtype) {
 		/* Plain certificate based auth */
 	case GVNC_AUTH_VENCRYPT_TLSNONE:
 	case GVNC_AUTH_VENCRYPT_X509NONE:
-		GVNC_DEBUG("Completing auth\n");
+		GVNC_DEBUG("Completing auth");
 		return gvnc_check_auth_result(gvnc);
 
 		/* Regular VNC layered over TLS */
 	case GVNC_AUTH_VENCRYPT_TLSVNC:
 	case GVNC_AUTH_VENCRYPT_X509VNC:
-		GVNC_DEBUG("Handing off to VNC auth\n");
+		GVNC_DEBUG("Handing off to VNC auth");
 		return gvnc_perform_auth_vnc(gvnc);
 
+#if HAVE_SASL
+		/* SASL layered over TLS */
+	case GVNC_AUTH_VENCRYPT_TLSSASL:
+	case GVNC_AUTH_VENCRYPT_X509SASL:
+		GVNC_DEBUG("Handing off to SASL auth");
+		return gvnc_perform_auth_sasl(gvnc);
+#endif
+
 	default:
+		GVNC_DEBUG("Unknown auth subtype %d", gvnc->auth_subtype);
 		return FALSE;
 	}
 }
@@ -2585,7 +3315,7 @@ static gboolean gvnc_perform_auth(struct gvnc *gvnc)
 	}
 
 	for (i = 0 ; i < nauth ; i++) {
-		GVNC_DEBUG("Possible auth %u\n", auth[i]);
+		GVNC_DEBUG("Possible auth %u", auth[i]);
 	}
 
 	if (gvnc->has_error || !gvnc->ops.auth_type)
@@ -2596,12 +3326,12 @@ static gboolean gvnc_perform_auth(struct gvnc *gvnc)
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Waiting for auth type\n");
+	GVNC_DEBUG("Waiting for auth type");
 	g_condition_wait(gvnc_has_auth_type, gvnc);
 	if (gvnc->has_error)
 		return FALSE;
 
-	GVNC_DEBUG("Choose auth %u\n", gvnc->auth_type);
+	GVNC_DEBUG("Choose auth %u", gvnc->auth_type);
 	if (!gvnc_gather_credentials(gvnc))
 		return FALSE;
 
@@ -2625,6 +3355,14 @@ static gboolean gvnc_perform_auth(struct gvnc *gvnc)
 
 	case GVNC_AUTH_VENCRYPT:
 		return gvnc_perform_auth_vencrypt(gvnc);
+
+#if HAVE_SASL
+	case GVNC_AUTH_SASL:
+ 		return gvnc_perform_auth_sasl(gvnc);
+#endif
+
+	case GVNC_AUTH_MSLOGON:
+		return gvnc_perform_auth_mslogon(gvnc);
 
 	default:
 		if (gvnc->ops.auth_unsupported)
@@ -2671,6 +3409,11 @@ void gvnc_close(struct gvnc *gvnc)
 		gnutls_bye(gvnc->tls_session, GNUTLS_SHUT_RDWR);
 		gvnc->tls_session = NULL;
 	}
+#if HAVE_SASL
+	if (gvnc->saslconn)
+		sasl_dispose (&gvnc->saslconn);
+#endif
+
 	if (gvnc->channel) {
 		g_io_channel_unref(gvnc->channel);
 		gvnc->channel = NULL;
@@ -2735,7 +3478,7 @@ void gvnc_shutdown(struct gvnc *gvnc)
 	close(gvnc->fd);
 	gvnc->fd = -1;
 	gvnc->has_error = 1;
-	GVNC_DEBUG("Waking up couroutine to shutdown gracefully\n");
+	GVNC_DEBUG("Waking up couroutine to shutdown gracefully");
 	g_io_wakeup(&gvnc->wait);
 }
 
@@ -2781,14 +3524,14 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 
  	ret = sscanf(version, "RFB %03d.%03d\n", &gvnc->major, &gvnc->minor);
 	if (ret != 2) {
-		GVNC_DEBUG("Error while getting server version\n");
+		GVNC_DEBUG("Error while getting server version");
 		goto fail;
 	}
 
-	GVNC_DEBUG("Server version: %d.%d\n", gvnc->major, gvnc->minor);
+	GVNC_DEBUG("Server version: %d.%d", gvnc->major, gvnc->minor);
 
 	if (gvnc_before_version(gvnc, 3, 3)) {
-		GVNC_DEBUG("Server version is not supported (%d.%d)\n", gvnc->major, gvnc->minor);
+		GVNC_DEBUG("Server version is not supported (%d.%d)", gvnc->major, gvnc->minor);
 		goto fail;
 	} else if (gvnc_before_version(gvnc, 3, 7)) {
 		gvnc->minor = 3;
@@ -2800,10 +3543,10 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 	snprintf(version, 12, "RFB %03d.%03d\n", gvnc->major, gvnc->minor);
 	gvnc_write(gvnc, version, 12);
 	gvnc_flush(gvnc);
-	GVNC_DEBUG("Using version: %d.%d\n", gvnc->major, gvnc->minor);
+	GVNC_DEBUG("Using version: %d.%d", gvnc->major, gvnc->minor);
 
 	if (!gvnc_perform_auth(gvnc)) {
-		GVNC_DEBUG("Auth failed\n");
+		GVNC_DEBUG("Auth failed");
 		goto fail;
 	}
 
@@ -2825,7 +3568,7 @@ gboolean gvnc_initialize(struct gvnc *gvnc, gboolean shared_flag)
 
 	gvnc_read(gvnc, gvnc->name, n_name);
 	gvnc->name[n_name] = 0;
-	GVNC_DEBUG("Display name '%s'\n", gvnc->name);
+	GVNC_DEBUG("Display name '%s'", gvnc->name);
 
 	if (gvnc_has_error(gvnc))
 		return FALSE;
@@ -2855,12 +3598,12 @@ static gboolean gvnc_set_nonblock(int fd)
 #ifndef WIN32
 	int flags;
 	if ((flags = fcntl(fd, F_GETFL)) < 0) {
-		GVNC_DEBUG ("Failed to fcntl()\n");
+		GVNC_DEBUG ("Failed to fcntl()");
 		return FALSE;
 	}
 	flags |= O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, flags) < 0) {
-		GVNC_DEBUG ("Failed to fcntl()\n");
+		GVNC_DEBUG ("Failed to fcntl()");
 		return FALSE;
 	}
 
@@ -2883,11 +3626,11 @@ static gboolean gvnc_set_nonblock(int fd)
 gboolean gvnc_open_fd(struct gvnc *gvnc, int fd)
 {
 	if (gvnc_is_open(gvnc)) {
-		GVNC_DEBUG ("Error: already connected?\n");
+		GVNC_DEBUG ("Error: already connected?");
 		return FALSE;
 	}
 
-	GVNC_DEBUG("Connecting to FD %d\n", fd);
+	GVNC_DEBUG("Connecting to FD %d", fd);
 
 	if (!gvnc_set_nonblock(fd))
 		return FALSE;
@@ -2899,7 +3642,7 @@ gboolean gvnc_open_fd(struct gvnc *gvnc, int fd)
 	      g_io_channel_unix_new(fd)
 #endif
 	      )) {
-		GVNC_DEBUG ("Failed to g_io_channel_unix_new()\n");
+		GVNC_DEBUG ("Failed to g_io_channel_unix_new()");
 		return FALSE;
 	}
 	gvnc->fd = fd;
@@ -2917,14 +3660,14 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 	gvnc->host = g_strdup(host);
 	gvnc->port = g_strdup(port);
 
-        GVNC_DEBUG("Resolving host %s %s\n", host, port);
+        GVNC_DEBUG("Resolving host %s %s", host, port);
         memset (&hints, '\0', sizeof (hints));
         hints.ai_flags = AI_ADDRCONFIG;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = IPPROTO_TCP;
 
         if ((ret = getaddrinfo(host, port, &hints, &ai)) != 0) {
-		GVNC_DEBUG ("Failed to resolve hostname\n");
+		GVNC_DEBUG ("Failed to resolve hostname");
 		return FALSE;
 	}
 
@@ -2935,11 +3678,11 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 
 		if ((fd = socket(runp->ai_family, runp->ai_socktype,
 			runp->ai_protocol)) < 0) {
-			GVNC_DEBUG ("Failed to socket()\n");
+			GVNC_DEBUG ("Failed to socket()");
 			break;
 		}
 
-                GVNC_DEBUG("Trying socket %d\n", fd);
+                GVNC_DEBUG("Trying socket %d", fd);
 		if (!gvnc_set_nonblock(fd))
 			break;
 
@@ -2951,7 +3694,7 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 #endif
 		      )) {
                         close(fd);
-                        GVNC_DEBUG ("Failed to g_io_channel_unix_new()\n");
+                        GVNC_DEBUG ("Failed to g_io_channel_unix_new()");
                         break;
                 }
 
@@ -2973,7 +3716,7 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
                            errno != EHOSTUNREACH) {
                         g_io_channel_unref(chan);
                         close(fd);
-                        GVNC_DEBUG ("Failed with errno = %d\n", errno);
+                        GVNC_DEBUG ("Failed with errno = %d", errno);
                         break;
                 }
                 close(fd);
@@ -2987,21 +3730,25 @@ gboolean gvnc_open_host(struct gvnc *gvnc, const char *host, const char *port)
 
 gboolean gvnc_set_auth_type(struct gvnc *gvnc, unsigned int type)
 {
-        GVNC_DEBUG("Requested auth type %u\n", type);
+        GVNC_DEBUG("Thinking about auth type %u", type);
         if (gvnc->auth_type != GVNC_AUTH_INVALID) {
                 gvnc->has_error = TRUE;
                 return !gvnc_has_error(gvnc);
         }
         if (type != GVNC_AUTH_NONE &&
             type != GVNC_AUTH_VNC &&
+            type != GVNC_AUTH_MSLOGON &&
             type != GVNC_AUTH_TLS &&
-            type != GVNC_AUTH_VENCRYPT) {
+            type != GVNC_AUTH_VENCRYPT &&
+            type != GVNC_AUTH_SASL) {
+		GVNC_DEBUG("Unsupported auth type %u", type);
             	if (gvnc->ops.auth_unsupported)
-					gvnc->ops.auth_unsupported (gvnc->ops_data, type);
+			gvnc->ops.auth_unsupported (gvnc->ops_data, type);
 
                 gvnc->has_error = TRUE;
                 return !gvnc_has_error(gvnc);
         }
+        GVNC_DEBUG("Decided on auth type %u", type);
         gvnc->auth_type = type;
         gvnc->auth_subtype = GVNC_AUTH_INVALID;
 
@@ -3010,7 +3757,7 @@ gboolean gvnc_set_auth_type(struct gvnc *gvnc, unsigned int type)
 
 gboolean gvnc_set_auth_subtype(struct gvnc *gvnc, unsigned int type)
 {
-        GVNC_DEBUG("Requested auth subtype %d\n", type);
+        GVNC_DEBUG("Requested auth subtype %d", type);
         if (gvnc->auth_type != GVNC_AUTH_VENCRYPT &&
 	    gvnc->auth_type != GVNC_AUTH_TLS) {
                 gvnc->has_error = TRUE;
@@ -3027,7 +3774,7 @@ gboolean gvnc_set_auth_subtype(struct gvnc *gvnc, unsigned int type)
 
 gboolean gvnc_set_credential_password(struct gvnc *gvnc, const char *password)
 {
-        GVNC_DEBUG("Set password credential\n");
+        GVNC_DEBUG("Set password credential %s", password);
         if (gvnc->cred_password)
                 g_free(gvnc->cred_password);
         if (!(gvnc->cred_password = g_strdup(password))) {
@@ -3039,7 +3786,7 @@ gboolean gvnc_set_credential_password(struct gvnc *gvnc, const char *password)
 
 gboolean gvnc_set_credential_username(struct gvnc *gvnc, const char *username)
 {
-        GVNC_DEBUG("Set username credential %s\n", username);
+        GVNC_DEBUG("Set username credential %s", username);
         if (gvnc->cred_username)
                 g_free(gvnc->cred_username);
         if (!(gvnc->cred_username = g_strdup(username))) {
@@ -3051,7 +3798,7 @@ gboolean gvnc_set_credential_username(struct gvnc *gvnc, const char *username)
 
 gboolean gvnc_set_credential_x509_cacert(struct gvnc *gvnc, const char *file)
 {
-        GVNC_DEBUG("Set x509 cacert %s\n", file);
+        GVNC_DEBUG("Set x509 cacert %s", file);
         if (gvnc->cred_x509_cacert)
                 g_free(gvnc->cred_x509_cacert);
         if (!(gvnc->cred_x509_cacert = g_strdup(file))) {
@@ -3063,7 +3810,7 @@ gboolean gvnc_set_credential_x509_cacert(struct gvnc *gvnc, const char *file)
 
 gboolean gvnc_set_credential_x509_cacrl(struct gvnc *gvnc, const char *file)
 {
-        GVNC_DEBUG("Set x509 cacrl %s\n", file);
+        GVNC_DEBUG("Set x509 cacrl %s", file);
         if (gvnc->cred_x509_cacrl)
                 g_free(gvnc->cred_x509_cacrl);
         if (!(gvnc->cred_x509_cacrl = g_strdup(file))) {
@@ -3075,7 +3822,7 @@ gboolean gvnc_set_credential_x509_cacrl(struct gvnc *gvnc, const char *file)
 
 gboolean gvnc_set_credential_x509_key(struct gvnc *gvnc, const char *file)
 {
-        GVNC_DEBUG("Set x509 key %s\n", file);
+        GVNC_DEBUG("Set x509 key %s", file);
         if (gvnc->cred_x509_key)
                 g_free(gvnc->cred_x509_key);
         if (!(gvnc->cred_x509_key = g_strdup(file))) {
@@ -3087,7 +3834,7 @@ gboolean gvnc_set_credential_x509_key(struct gvnc *gvnc, const char *file)
 
 gboolean gvnc_set_credential_x509_cert(struct gvnc *gvnc, const char *file)
 {
-        GVNC_DEBUG("Set x509 cert %s\n", file);
+        GVNC_DEBUG("Set x509 cert %s", file);
         if (gvnc->cred_x509_cert)
                 g_free(gvnc->cred_x509_cert);
         if (!(gvnc->cred_x509_cert = g_strdup(file))) {
@@ -3127,7 +3874,7 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 	gvnc->bm = gvnc->local.blue_mask & gvnc->fmt.blue_max;
 	GVNC_DEBUG("Mask local: %3d %3d %3d\n"
 		   "    remote: %3d %3d %3d\n"
-		   "    merged: %3d %3d %3d\n",
+		   "    merged: %3d %3d %3d",
 		   gvnc->local.red_mask, gvnc->local.green_mask, gvnc->local.blue_mask,
 		   gvnc->fmt.red_max, gvnc->fmt.green_max, gvnc->fmt.blue_max,
 		   gvnc->rm, gvnc->gm, gvnc->bm);
@@ -3156,7 +3903,7 @@ gboolean gvnc_set_local(struct gvnc *gvnc, struct gvnc_framebuffer *fb)
 		gvnc->gls++;
 	for (n = gvnc->local.blue_mask ; n > gvnc->fmt.blue_max ; n>>= 1)
 		gvnc->bls++;
-	GVNC_DEBUG("Pixel shifts\n   right: %3d %3d %3d\n    left: %3d %3d %3d\n",
+	GVNC_DEBUG("Pixel shifts\n   right: %3d %3d %3d\n    left: %3d %3d %3d",
 		   gvnc->rrs, gvnc->grs, gvnc->brs,
 		   gvnc->rls, gvnc->gls, gvnc->bls);
 

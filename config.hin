@@ -133,6 +133,9 @@
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
+/* whether Cyrus SASL is available for authentication */
+#undef HAVE_SASL
+
 /* Define to 1 if you have the `shutdown' function. */
 #undef HAVE_SHUTDOWN
 
@@ -217,6 +220,10 @@
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O

@@ -4,7 +4,7 @@
 
 
 
-#line 3 "../../src/vnc.override"
+#line 3 "./vnc.override"
 #include <Python.h>
 #include "pygobject.h"
 #include "vncdisplay.h"
@@ -98,18 +98,18 @@ _wrap_vnc_display_close(PyGObject *self)
     return Py_None;
 }
 
-#line 16 "../../src/vnc.override"
+#line 16 "./vnc.override"
 static PyObject*
 _wrap_vnc_display_send_keys(PyGObject *self,
-                            PyObject *args, PyObject *kwargs) 
+                            PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = {"keys", "kind", NULL}; 
+    static char *kwlist[] = {"keys", "kind", NULL};
     PyObject *keyList;
     int kind = VNC_DISPLAY_KEY_EVENT_CLICK;
     int ret, i, len;
     guint *keys;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,    
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
                                      "O|I:VncDisplay.send_keys", kwlist,
                                      &keyList, &kind))
 	return NULL;
