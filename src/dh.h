@@ -1,7 +1,7 @@
 /*
- * GTK VNC Widget
+ * GTK VNC Widget, Diffie Hellman
  *
- * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
+ * Copyright (C) 2008  Red Hat, Inc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,17 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef _GTK_VNC_X_KEYMAP_H
-#define _GTK_VNC_X_KEYMAP_H
+#ifndef GTK_VNC_DH_H__
+#define GTK_VNC_DH_H__
 
-#include <stdint.h>
-#include <gdk/gdk.h>
+#include <glib.h>
+#include <gcrypt.h>
 
-const uint8_t const *x_keycode_to_pc_keycode_map(void);
-uint16_t x_keycode_to_pc_keycode(const uint8_t *keycode_map,
-				 uint16_t keycode);
-void x_keymap_set_keymap_entries(void);
-void x_keymap_free_keymap_entries(void);
-guint x_keymap_get_keyval_from_keycode(guint keycode, guint keyval);
+struct gvnc_dh;
+
+struct gvnc_dh *gvnc_dh_new(gcry_mpi_t prime, gcry_mpi_t generator);
+
+gcry_mpi_t gvnc_dh_gen_secret(struct gvnc_dh *dh);
+gcry_mpi_t gvnc_dh_gen_key(struct gvnc_dh *dh, gcry_mpi_t inter);
+void gvnc_dh_free(struct gvnc_dh *dh);
+
+void gvnc_mpi_to_bytes(const gcry_mpi_t value, guchar* result);
+gcry_mpi_t gvnc_bytes_to_mpi(const guchar* value);
 
 #endif

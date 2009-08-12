@@ -47,7 +47,7 @@
 #endif /* !G_ENABLE_DEBUG */
 
 
-/* VOID:INT,INT (../../src/vncmarshal.txt:1) */
+/* VOID:INT,INT (vncmarshal.txt:1) */
 void
 g_cclosure_user_marshal_VOID__INT_INT (GClosure     *closure,
                                        GValue       *return_value G_GNUC_UNUSED,
