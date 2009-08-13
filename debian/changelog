@@ -1,3 +1,16 @@
+gtk-vnc (0.3.9-1) unstable; urgency=low
+
+  * [f4f73c0] Imported Upstream version 0.3.9
+  * [04364d5] fix dbg's package section
+  * [a5cd4a3] update watch file: project moved to gnome.org
+  * [d5691c1] update DEB_DH_MAKESHLIBS_ARGS
+  * [946e53a] build depend on libsasl2-dev
+  * [a599a3b] bump standards version no changes
+  * [8e06017] build-dep on debhelper version 5
+  * [20f367b] exclude plugin from dh_makeshlibs call
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 13 Aug 2009 11:19:25 +0200
+
 gtk-vnc (0.3.8-3) unstable; urgency=low
 
   [ Laurent Léonard ]
