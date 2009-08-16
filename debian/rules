@@ -19,4 +19,4 @@ binary-install/python-gtk-vnc::
 	dh_pycentral
 
 post-patches::
-	autoreconf
+	autoreconf -i
