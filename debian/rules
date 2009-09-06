@@ -18,5 +18,16 @@ DEB_DH_MAKESHLIBS_ARGS_mozilla-gtk-vnc += --noscripts -X /plugins/
 binary-install/python-gtk-vnc::
 	dh_pycentral
 
+clean::
+	rm -f $(CURDIR)/aclocal.m4
+	rm -f $(CURDIR)/config.hin
+	rm -f $(CURDIR)/configure
+	rm -f $(CURDIR)/examples/Makefile.in
+	rm -f $(CURDIR)/gnulib/lib/Makefile.in
+	rm -f $(CURDIR)/gnulib/tests/Makefile.in
+	rm -f $(CURDIR)/Makefile.in
+	rm -f $(CURDIR)/plugin/Makefile.in
+	rm -f $(CURDIR)/src/Makefile.in
+
 post-patches::
 	autoreconf -i
