@@ -8,7 +8,8 @@
 #include <Python.h>
 #include "pygobject.h"
 #include "vncdisplay.h"
-#line 12 "vnc.c"
+#include "enums.h"
+#line 13 "vnc.c"
 
 
 /* ---------- types from other modules ---------- */
@@ -19,7 +20,7 @@ static PyTypeObject *_PyGtkDrawingArea_Type;
 /* ---------- forward type declarations ---------- */
 PyTypeObject G_GNUC_INTERNAL PyVncDisplay_Type;
 
-#line 23 "vnc.c"
+#line 24 "vnc.c"
 
 
 
@@ -98,7 +99,7 @@ _wrap_vnc_display_close(PyGObject *self)
     return Py_None;
 }
 
-#line 16 "./vnc.override"
+#line 17 "./vnc.override"
 static PyObject*
 _wrap_vnc_display_send_keys(PyGObject *self,
                             PyObject *args, PyObject *kwargs)
@@ -137,7 +138,7 @@ _wrap_vnc_display_send_keys(PyGObject *self,
     Py_INCREF(Py_None);
     return Py_None;
 }
-#line 141 "vnc.c"
+#line 142 "vnc.c"
 
 
 static PyObject *
@@ -451,6 +452,35 @@ _wrap_vnc_display_get_shared_flag(PyGObject *self)
 }
 
 static PyObject *
+_wrap_vnc_display_set_depth(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "depth", NULL };
+    PyObject *py_depth = NULL;
+    VncDisplayDepthColor depth;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O:VncDisplay.set_depth", kwlist, &py_depth))
+        return NULL;
+    if (pyg_enum_get_value(VNC_TYPE_DISPLAY_DEPTH_COLOR, py_depth, (gpointer)&depth))
+        return NULL;
+    
+    vnc_display_set_depth(VNC_DISPLAY(self->obj), depth);
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+_wrap_vnc_display_get_depth(PyGObject *self)
+{
+    gint ret;
+
+    
+    ret = vnc_display_get_depth(VNC_DISPLAY(self->obj));
+    
+    return pyg_enum_from_gtype(VNC_TYPE_DISPLAY_DEPTH_COLOR, ret);
+}
+
+static PyObject *
 _wrap_vnc_display_force_grab(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "enable", NULL };
@@ -472,6 +502,18 @@ _wrap_vnc_display_is_pointer_absolute(PyGObject *self)
 
     
     ret = vnc_display_is_pointer_absolute(VNC_DISPLAY(self->obj));
+    
+    return PyBool_FromLong(ret);
+
+}
+
+static PyObject *
+_wrap_vnc_display_request_update(PyGObject *self)
+{
+    int ret;
+
+    
+    ret = vnc_display_request_update(VNC_DISPLAY(self->obj));
     
     return PyBool_FromLong(ret);
 
@@ -534,9 +576,15 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
       NULL },
     { "get_shared_flag", (PyCFunction)_wrap_vnc_display_get_shared_flag, METH_NOARGS,
       NULL },
+    { "set_depth", (PyCFunction)_wrap_vnc_display_set_depth, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "get_depth", (PyCFunction)_wrap_vnc_display_get_depth, METH_NOARGS,
+      NULL },
     { "force_grab", (PyCFunction)_wrap_vnc_display_force_grab, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { "is_pointer_absolute", (PyCFunction)_wrap_vnc_display_is_pointer_absolute, METH_NOARGS,
+      NULL },
+    { "request_update", (PyCFunction)_wrap_vnc_display_request_update, METH_NOARGS,
       NULL },
     { NULL, NULL, 0, NULL }
 };
@@ -605,6 +653,7 @@ gtkvnc_add_constants(PyObject *module, const gchar *strip_prefix)
 #endif
   pyg_enum_add(module, "DisplayCredential", strip_prefix, VNC_TYPE_DISPLAY_CREDENTIAL);
   pyg_enum_add(module, "DisplayKeyEvent", strip_prefix, VNC_TYPE_DISPLAY_KEY_EVENT);
+  pyg_enum_add(module, "DisplayDepthColor", strip_prefix, VNC_TYPE_DISPLAY_DEPTH_COLOR);
 
   if (PyErr_Occurred())
     PyErr_Print();
@@ -630,7 +679,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 634 "vnc.c"
+#line 683 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }

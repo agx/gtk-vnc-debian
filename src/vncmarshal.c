@@ -1,3 +1,4 @@
+#include "vncmarshal.h"
 
 #include	<glib-object.h>
 

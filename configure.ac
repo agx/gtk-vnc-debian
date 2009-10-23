@@ -1,7 +1,22 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gtk-vnc], [0.3.9], [anthony@codemonkey.ws])
+AC_INIT([gtk-vnc], [0.3.10])
 AC_CONFIG_SRCDIR([src/gvnc.c])
+dnl Causes problems with RHEL-5 vintage intltool
+dnl AC_CONFIG_AUX_DIR([build-aux])
+AM_CONFIG_HEADER([config.h])
+dnl Make automake keep quiet about wildcards & other GNUmake-isms
+AM_INIT_AUTOMAKE([-Wno-portability])
+
+# Use the silent-rules feature when possible.
+m4_ifndef([AM_SILENT_RULES], [m4_define([AM_SILENT_RULES],[])])
+AM_SILENT_RULES([yes])
+
+AC_CANONICAL_HOST
+
+dnl *******************************************************************************
+dnl Declare required library versions
+dnl *******************************************************************************
 
 GTK_REQUIRED=2.10.0
 AC_SUBST(GTK_REQUIRED)
@@ -17,13 +32,9 @@ NSPR_REQUIRED=4.0.0
 FIREFOX_PLUGIN_REQUIRED=2.0.0
 MOZILLA_PLUGIN_REQUIRED=1.8
 
-
-AC_CONFIG_HEADERS([config.h:config.hin])
-
-AC_CANONICAL_TARGET
-
-AM_INIT_AUTOMAKE(gtk-vnc, 0.3.9)
-
+dnl *******************************************************************************
+dnl Setup GNULIB - must be before anything else in this file
+dnl *******************************************************************************
 
 dnl gl_INIT uses m4_foreach_w, yet that is not defined in autoconf-2.59.
 dnl In order to accommodate developers with such old tools, here's a
@@ -35,11 +46,28 @@ m4_ifndef([m4_foreach_w],
 gl_EARLY
 gl_INIT
 
+dnl *******************************************************************************
+dnl Setup core compilers / build helpers
+dnl *******************************************************************************
+
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
-AC_LIBTOOL_WIN32_DLL
 
+AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
+
+dnl *******************************************************************************
+dnl Internationalization
+dnl *******************************************************************************
+GETTEXT_PACKAGE=gtk-vnc
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
+
+IT_PROG_INTLTOOL([0.35.0])
+AM_GLIB_GNU_GETTEXT
+
+dnl *******************************************************************************
+
 
 AC_CHECK_HEADERS([pwd.h winsock2.h])
 
@@ -52,44 +80,7 @@ AC_ARG_WITH(python,
 
 WITH_PYTHON=$withval
 
-AC_ARG_ENABLE(fatal-warnings,
-[  --enable-fatal-warnings make all compiler warnings fatal (not recommended)],
-[case "${enableval}" in
-   yes|no) ;;
-   *)      AC_MSG_ERROR([bad value ${enableval} for fatal-warnings option]) ;;
- esac],
-              [enableval=no])
-if test "${enableval}" = yes; then
-  gl_COMPILER_FLAGS(-Werror)
-  AC_SUBST([WERROR_CFLAGS], [$COMPILER_FLAGS])
-  COMPILER_FLAGS=
-fi
-
-AC_ARG_ENABLE(warnings,
-[  --enable-warnings       turn on lots of compiler warnings (recommended)],
-[case "${enableval}" in
-   yes|no) ;;
-   *)      AC_MSG_ERROR([bad value ${enableval} for warnings option]) ;;
- esac],
-              [enableval=no])
-
-if test "${enableval}" = yes; then
-  gl_COMPILER_FLAGS(-W)
-  gl_COMPILER_FLAGS(-Wall)
-  gl_COMPILER_FLAGS(-Wcast-align)
-  gl_COMPILER_FLAGS(-Wformat)
-  gl_COMPILER_FLAGS(-Wwrite-strings)
-  AC_SUBST([WARNING_CXXFLAGS], [$COMPILER_FLAGS])
-  # The following warnings are not suitable for C++.
-  gl_COMPILER_FLAGS(-Wbad-function-cast)
-  gl_COMPILER_FLAGS(-Wmissing-declarations)
-  gl_COMPILER_FLAGS(-Wmissing-prototypes)
-  gl_COMPILER_FLAGS(-Wshadow)
-  # gl_COMPILER_FLAGS(-Wstrict-prototypes)
-  AC_SUBST([WARNING_CFLAGS], [$COMPILER_FLAGS])
-  AC_DEFINE([lint], 1, [Define to 1 if the compiler is checking for lint.])
-  COMPILER_FLAGS=
-fi
+GTK_VNC_COMPILE_WARNINGS
 
 AC_ARG_WITH(examples,
 [  --with-examples         install example programs],
@@ -158,6 +149,7 @@ AC_ARG_WITH([sasl],
 
 SASL_CFLAGS=
 SASL_LIBS=
+enable_sasl=no
 if test "x$with_sasl" != "xno"; then
   if test "x$with_sasl" != "xyes" -a "x$with_sasl" != "xcheck"; then
     SASL_CFLAGS="-I$with_sasl"
@@ -175,24 +167,27 @@ if test "x$with_sasl" != "xno"; then
         fail=1
     fi])
   if test "x$with_sasl" != "xno" ; then
-    AC_CHECK_LIB([sasl2], [sasl_client_init],[with_sasl=yes],[
-      if test "x$with_sasl" = "xcheck" ; then
-          with_sasl=no
-      else
-          fail=1
-      fi])
+    AC_CHECK_LIB([sasl2], [sasl_client_init],[with_sasl2=yes],[with_sasl2=no])
   fi
-  test $fail = 1 &&
+  if test "x$with_sasl2" = "xno" -a "x$with_sasl" != "xno" ; then
+    AC_CHECK_LIB([sasl], [sasl_client_init],[with_sasl=yes],[with_sasl=no])
+  fi
+  if test "x$with_sasl2" = "xyes"; then
+    SASL_LIBS="$SASL_LIBS -lsasl2"
+  elif test "x$with_sasl" = "xyes"; then
+    SASL_LIBS="$SASL_LIBS -lsasl"
+  else
     AC_MSG_ERROR([You must install the Cyrus SASL development package in order to compile GTK-VNC])
+  fi
   CFLAGS="$old_cflags"
   LIBS="$old_libs"
-  SASL_LIBS="$SASL_LIBS -lsasl2"
-  if test "x$with_sasl" = "xyes" ; then
+  if test "x$with_sasl2" = "xyes" -o "x$with_sasl" = "xyes" ; then
     AC_DEFINE_UNQUOTED([HAVE_SASL], 1,
       [whether Cyrus SASL is available for authentication])
+    enable_sasl=yes
   fi
 fi
-AM_CONDITIONAL([HAVE_SASL], [test "x$with_sasl" = "xyes"])
+AM_CONDITIONAL([HAVE_SASL], [test "x$with_sasl2" = "xyes" -o "x$with_sasl" = "xyes"])
 AC_SUBST([SASL_CFLAGS])
 AC_SUBST([SASL_LIBS])
 
@@ -279,6 +274,19 @@ if test "x$enable_plugin" = "xyes"; then
     AC_SUBST(FIREFOX_PLUGIN_LIBS)
 fi
 
+dnl define a MAINT-like variable REBUILD which is set
+dnl if Perl, so autogenerated sources can be rebuilt
+AC_PATH_PROGS(PERL, perl5 perl)
+AC_ARG_ENABLE(rebuilds, [  --disable-rebuilds      disable all source autogeneration rules],,enable_rebuilds=yes)
+REBUILD=\#
+if test "x$enable_rebuilds" = "xyes" && \
+     test -n "$PERL" && \
+     $PERL -e 'exit !($] >= 5.002)' > /dev/null 2>&1 ; then
+  REBUILD=
+fi
+AC_SUBST(REBUILD)
+
+
 AM_CONDITIONAL(WITH_PYTHON, [test "$WITH_PYTHON" = "yes"])
 
 AM_CONDITIONAL(WITH_EXAMPLES, [test "$WITH_EXAMPLES" = "yes"])
@@ -292,6 +300,7 @@ AC_CONFIG_FILES(
   src/Makefile
   examples/Makefile
   plugin/Makefile
+  po/Makefile.in
   gtk-vnc-1.0.pc
   gtk-vnc.spec
   mingw32-gtk-vnc.spec
@@ -316,5 +325,5 @@ Configure summary:
 	Install example programs ...:  ${WITH_EXAMPLES}
 	Browser plugin .............:  ${enable_plugin}
 	Scaling support.............:  ${with_scaling}
-	SASL support................:  ${with_sasl}
+	SASL support................:  ${enable_sasl}
 "

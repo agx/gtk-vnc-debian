@@ -32,10 +32,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-target_triplet = @target@
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(srcdir)/config.hin \
+	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/gtk-vnc-1.0.pc.in $(srcdir)/gtk-vnc.spec.in \
 	$(srcdir)/mingw32-gtk-vnc.spec.in $(top_srcdir)/configure \
 	AUTHORS COPYING.LIB ChangeLog INSTALL NEWS compile \
@@ -53,12 +52,7 @@ am__aclocal_m4_deps = $(top_srcdir)/gnulib/m4/alloca.m4 \
 	$(top_srcdir)/gnulib/m4/inet_ntop.m4 \
 	$(top_srcdir)/gnulib/m4/intmax_t.m4 \
 	$(top_srcdir)/gnulib/m4/inttypes_h.m4 \
-	$(top_srcdir)/gnulib/m4/libtool.m4 \
 	$(top_srcdir)/gnulib/m4/longlong.m4 \
-	$(top_srcdir)/gnulib/m4/ltoptions.m4 \
-	$(top_srcdir)/gnulib/m4/ltsugar.m4 \
-	$(top_srcdir)/gnulib/m4/ltversion.m4 \
-	$(top_srcdir)/gnulib/m4/lt~obsolete.m4 \
 	$(top_srcdir)/gnulib/m4/malloc.m4 \
 	$(top_srcdir)/gnulib/m4/netinet_in_h.m4 \
 	$(top_srcdir)/gnulib/m4/onceonly.m4 \
@@ -124,6 +118,7 @@ distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
 ALLOCA_H = @ALLOCA_H@
+ALL_LINGUAS = @ALL_LINGUAS@
 AMTAR = @AMTAR@
 AR = @AR@
 ARPA_INET_H = @ARPA_INET_H@
@@ -137,6 +132,8 @@ BITSIZEOF_SIG_ATOMIC_T = @BITSIZEOF_SIG_ATOMIC_T@
 BITSIZEOF_SIZE_T = @BITSIZEOF_SIZE_T@
 BITSIZEOF_WCHAR_T = @BITSIZEOF_WCHAR_T@
 BITSIZEOF_WINT_T = @BITSIZEOF_WINT_T@
+CATALOGS = @CATALOGS@
+CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -144,6 +141,7 @@ COMPILER_FLAGS = @COMPILER_FLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
+DATADIRNAME = @DATADIRNAME@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -165,6 +163,9 @@ FGREP = @FGREP@
 FIREFOX_PLUGIN_CFLAGS = @FIREFOX_PLUGIN_CFLAGS@
 FIREFOX_PLUGIN_LIBS = @FIREFOX_PLUGIN_LIBS@
 FLOAT_H = @FLOAT_H@
+GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+GMOFILES = @GMOFILES@
+GMSGFMT = @GMSGFMT@
 GNULIB_ACCEPT = @GNULIB_ACCEPT@
 GNULIB_BIND = @GNULIB_BIND@
 GNULIB_CALLOC_POSIX = @GNULIB_CALLOC_POSIX@
@@ -305,6 +306,12 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+INSTOBJEXT = @INSTOBJEXT@
+INTLLIBS = @INTLLIBS@
+INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
+INTLTOOL_MERGE = @INTLTOOL_MERGE@
+INTLTOOL_PERL = @INTLTOOL_PERL@
+INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LD_VERSION_SCRIPT_SUPPORT = @LD_VERSION_SCRIPT_SUPPORT@
@@ -319,8 +326,12 @@ LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
+MKINSTALLDIRS = @MKINSTALLDIRS@
 MOZILLA_PLUGIN_CFLAGS = @MOZILLA_PLUGIN_CFLAGS@
 MOZILLA_PLUGIN_LIBS = @MOZILLA_PLUGIN_LIBS@
+MSGFMT = @MSGFMT@
+MSGFMT_OPTS = @MSGFMT_OPTS@
+MSGMERGE = @MSGMERGE@
 NETINET_IN_H = @NETINET_IN_H@
 NEXT_ARPA_INET_H = @NEXT_ARPA_INET_H@
 NEXT_ERRNO_H = @NEXT_ERRNO_H@
@@ -347,7 +358,12 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PERL = @PERL@
 PKG_CONFIG = @PKG_CONFIG@
+POFILES = @POFILES@
+POSUB = @POSUB@
+PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
+PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 PRAGMA_SYSTEM_HEADER = @PRAGMA_SYSTEM_HEADER@
 PTRDIFF_T_SUFFIX = @PTRDIFF_T_SUFFIX@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
@@ -359,6 +375,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+REBUILD = @REBUILD@
 REPLACE_CHOWN = @REPLACE_CHOWN@
 REPLACE_FCHDIR = @REPLACE_FCHDIR@
 REPLACE_FFLUSH = @REPLACE_FFLUSH@
@@ -401,16 +418,17 @@ STDBOOL_H = @STDBOOL_H@
 STDINT_H = @STDINT_H@
 STRIP = @STRIP@
 SYS_SOCKET_H = @SYS_SOCKET_H@
+USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 VIEW_CFLAGS = @VIEW_CFLAGS@
 VIEW_LIBS = @VIEW_LIBS@
 VOID_UNSETENV = @VOID_UNSETENV@
 WARNING_CFLAGS = @WARNING_CFLAGS@
-WARNING_CXXFLAGS = @WARNING_CXXFLAGS@
+WARNING_PYTHON_CFLAGS = @WARNING_PYTHON_CFLAGS@
 WCHAR_H = @WCHAR_H@
 WCHAR_T_SUFFIX = @WCHAR_T_SUFFIX@
-WERROR_CFLAGS = @WERROR_CFLAGS@
 WINT_T_SUFFIX = @WINT_T_SUFFIX@
+XGETTEXT = @XGETTEXT@
 abs_aux_dir = @abs_aux_dir@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -468,19 +486,59 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
-target = @target@
 target_alias = @target_alias@
-target_cpu = @target_cpu@
-target_os = @target_os@
-target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = gnulib/lib src examples plugin gnulib/tests
-ACLOCAL_AMFLAGS = -I gnulib/m4
+SUBDIRS = gnulib/lib src examples plugin gnulib/tests po
+ACLOCAL_AMFLAGS = -I m4 -I gnulib/m4
 pkgconfig_DATA = @PACKAGE@-1.0.pc
 pkgconfigdir = $(libdir)/pkgconfig
-EXTRA_DIST = $(PACKAGE)-1.0.pc.in $(PACKAGE).spec.in $(PACKAGE).spec mingw32-$(PACKAGE).spec.in
+EXTRA_DIST = \
+	$(PACKAGE)-1.0.pc.in		\
+	$(PACKAGE).spec.in		\
+	$(PACKAGE).spec			\
+	mingw32-$(PACKAGE).spec.in	\
+	intltool-extract.in		\
+	intltool-merge.in		\
+	intltool-update.in
+
+DISTCLEANFILES = \
+	intltool-extract		\
+	intltool-merge			\
+	intltool-update
+
+MAINTAINERCLEANFILES = \
+	INSTALL			\
+	compile			\
+	aclocal.m4		\
+	config.guess		\
+	config.h.in		\
+	config.sub		\
+	depcomp			\
+	gtk-doc.make		\
+	install-sh		\
+	ltmain.sh		\
+	missing			\
+	mkinstalldirs		\
+	omf.make		\
+	py-compile		\
+	xmldocs.make		\
+	gnulib/m4/gnome-doc-utils.m4	\
+	gnulib/m4/gtk-doc.m4		\
+	gnulib/m4/intltool.m4		\
+	gnulib/m4/libtool.m4		\
+	gnulib/m4/ltoptions.m4		\
+	gnulib/m4/ltsugar.m4		\
+	gnulib/m4/ltversion.m4		\
+	gnulib/m4/lt~obsolete.m4	\
+	m4/libtool.m4			\
+	m4/lt~obsolete.m4		\
+	m4/ltoptions.m4			\
+	m4/ltsugar.m4			\
+	m4/ltversion.m4			\
+	`find "$(srcdir)" -type f -name Makefile.in -print`
+
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -525,10 +583,10 @@ config.h: stamp-h1
 	  $(MAKE) $(AM_MAKEFLAGS) stamp-h1; \
 	else :; fi
 
-stamp-h1: $(srcdir)/config.hin $(top_builddir)/config.status
+stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/config.hin:  $(am__configure_deps) 
+$(srcdir)/config.h.in:  $(am__configure_deps) 
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -648,7 +706,7 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES) config.hin $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
@@ -665,7 +723,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES) config.hin $(TAGS_DEPENDENCIES) \
 	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
 	  fi; \
 	done; \
-	list='$(SOURCES) $(HEADERS) config.hin $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -677,10 +735,10 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES) config.hin $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS: ctags-recursive $(HEADERS) $(SOURCES) config.hin $(TAGS_DEPENDENCIES) \
+CTAGS: ctags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
-	list='$(SOURCES) $(HEADERS) config.hin $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -874,10 +932,12 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
 clean-am: clean-generic clean-libtool mostlyclean-am
@@ -956,6 +1016,8 @@ uninstall-am: uninstall-pkgconfigDATA
 	ps ps-am tags tags-recursive uninstall uninstall-am \
 	uninstall-pkgconfigDATA
 
+
+-include $(top_srcdir)/git.mk
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
