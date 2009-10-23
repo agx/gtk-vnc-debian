@@ -1,3 +1,25 @@
+gtk-vnc (0.3.10-1) unstable; urgency=low
+
+  [ Laurent Léonard ]
+  * [08c37ba] Bump Debhelper version to 7.
+  * [f222140] Bump Standards-Version to 3.8.3.
+  * [bdc973a] Add clean target in debian/rules.
+  * [acace64] Clean debian/rules.
+
+  [ Guido Günther ]
+  [ Guido Günther ]
+  * [1f2e3c5] say "disconnected from server" only once connected (Closes:
+    #540435) - thanks to Michal Suchanek
+  * [52c3a40] allow connecting to local server by display number (Closes:
+    #540434) - thanks to Michal Suchanek
+  * [bf6c78e] Imported Upstream version 0.3.10
+  * [5f1532b] redo patches
+  * [cc1fb45] create m4/ dir to make autoreconf happy
+  * [4ac1958] build-dep on intltool for translations
+  * [fe0fe02] drop WERROR_CFLAGS
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 23 Oct 2009 22:29:24 +0200
+
 gtk-vnc (0.3.9-1) unstable; urgency=low
 
   * [f4f73c0] Imported Upstream version 0.3.9
