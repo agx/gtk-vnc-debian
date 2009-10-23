@@ -8,7 +8,7 @@ Closes: #540435
  1 files changed, 7 insertions(+), 1 deletions(-)
 
 diff --git a/examples/gvncviewer.c b/examples/gvncviewer.c
-index 6373564..777b8c8 100644
+index 28b0fb8..c3fbd74 100644
 --- a/examples/gvncviewer.c
 +++ b/examples/gvncviewer.c
 @@ -84,9 +84,12 @@ static void vnc_ungrab(GtkWidget *vncdisplay, GtkWidget *window)
