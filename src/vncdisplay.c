@@ -19,6 +19,7 @@
  */
 
 #include <config.h>
+#include <locale.h>
 
 #include "vncdisplay.h"
 #include "coroutine.h"
@@ -27,8 +28,10 @@
 #include "vncmarshal.h"
 #include "config.h"
 #include "x_keymap.h"
+#include "enums.h"
 
 #include <gtk/gtk.h>
+#include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
 #include <gdk/gdkkeysyms.h>
@@ -66,6 +69,7 @@ struct _VncDisplayPrivate
 	struct gvnc *gvnc;
 
 	guint open_id;
+	VncDisplayDepthColor depth;
 
 	gboolean in_pointer_grab;
 	gboolean in_keyboard_grab;
@@ -129,7 +133,8 @@ enum
   PROP_LOSSY_ENCODING,
   PROP_SCALING,
   PROP_SHARED_FLAG,
-  PROP_FORCE_SIZE
+  PROP_FORCE_SIZE,
+  PROP_DEPTH
 };
 
 /* Signals */
@@ -164,7 +169,7 @@ gboolean debug_enabled = FALSE;
 
 static const GOptionEntry gtk_vnc_args[] =
 {
-  { "gtk-vnc-debug", 0, 0, G_OPTION_ARG_NONE, &debug_enabled, "Enables debug output", 0 },
+  { "gtk-vnc-debug", 0, 0, G_OPTION_ARG_NONE, &debug_enabled, N_("Enables debug output"), 0 },
   { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, 0 }
 };
 
@@ -212,6 +217,9 @@ vnc_display_get_property (GObject    *object,
       case PROP_FORCE_SIZE:
         g_value_set_boolean (value, vnc->priv->force_size);
 	break;
+      case PROP_DEPTH:
+        g_value_set_enum (value, vnc->priv->depth);
+	break;
       default:
 	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 	break;
@@ -251,6 +259,9 @@ vnc_display_set_property (GObject      *object,
         break;
       case PROP_FORCE_SIZE:
         vnc_display_set_force_size (vnc, g_value_get_boolean (value));
+        break;
+      case PROP_DEPTH:
+        vnc_display_set_depth (vnc, g_value_get_enum (value));
         break;
       default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1016,19 +1027,65 @@ static gboolean on_get_preferred_pixel_format(void *opaque,
 	VncDisplay *obj = VNC_DISPLAY(opaque);
 	GdkVisual *v =  gdk_drawable_get_visual(GTK_WIDGET(obj)->window);
 
-	GVNC_DEBUG("Setting pixel format to true color");
+	switch (obj->priv->depth) {
+	case VNC_DISPLAY_DEPTH_COLOR_DEFAULT:
+		if (fmt->true_color_flag == 1)
+			break;
+	case VNC_DISPLAY_DEPTH_COLOR_FULL:
+		fmt->depth = 24;
+		fmt->bits_per_pixel = 32;
+		fmt->red_max = 255;
+		fmt->green_max = 255;
+		fmt->blue_max = 255;
+		fmt->red_shift = 16;
+		fmt->green_shift = 8;
+		fmt->blue_shift = 0;
+		fmt->true_color_flag = 1;
+		fmt->byte_order = v->byte_order == GDK_LSB_FIRST ? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
+		break;
+	case VNC_DISPLAY_DEPTH_COLOR_MEDIUM:
+		fmt->depth = 15;
+		fmt->bits_per_pixel = 16;
+		fmt->red_max = 31;
+		fmt->green_max = 31;
+		fmt->blue_max = 31;
+		fmt->red_shift = 11;
+		fmt->green_shift = 6;
+		fmt->blue_shift = 1;
+		fmt->true_color_flag = 1;
+		fmt->byte_order = v->byte_order == GDK_LSB_FIRST ? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
+		break;
+	case VNC_DISPLAY_DEPTH_COLOR_LOW:
+		fmt->depth = 8;
+		fmt->bits_per_pixel = 8;
+		fmt->red_max = 7;
+		fmt->green_max = 7;
+		fmt->blue_max = 3;
+		fmt->red_shift = 5;
+		fmt->green_shift = 2;
+		fmt->blue_shift = 0;
+		fmt->true_color_flag = 1;
+		fmt->byte_order = v->byte_order == GDK_LSB_FIRST ? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
+		break;
 
-	fmt->true_color_flag = 1;
-	fmt->depth = v->depth;
-	fmt->bits_per_pixel = v->depth > 16 ? 32 : v->depth;
-	fmt->red_max = v->red_mask >> v->red_shift;
-	fmt->green_max = v->green_mask >> v->green_shift;
-	fmt->blue_max = v->blue_mask >> v->blue_shift;
-	fmt->red_shift = v->red_shift;
-	fmt->green_shift = v->green_shift;
-	fmt->blue_shift = v->blue_shift;
-	fmt->byte_order = v->byte_order == GDK_LSB_FIRST ? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
+	case VNC_DISPLAY_DEPTH_COLOR_ULTRA_LOW:
+		fmt->depth = 3;
+		fmt->bits_per_pixel = 8;
+		fmt->red_max = 1;
+		fmt->green_max = 1;
+		fmt->blue_max = 1;
+		fmt->red_shift = 7;
+		fmt->green_shift = 6;
+		fmt->blue_shift = 5;
+		fmt->true_color_flag = 1;
+		fmt->byte_order = v->byte_order == GDK_LSB_FIRST ? G_BIG_ENDIAN : G_LITTLE_ENDIAN;
+		break;
 
+	default:
+		g_assert_not_reached ();
+	}
+
+	GVNC_DEBUG ("Setting depth color to %d (%d bpp)", fmt->depth, fmt->bits_per_pixel);
 	return TRUE;
 }
 
@@ -1715,10 +1772,23 @@ static void vnc_display_class_init(VncDisplayClass *klass)
 								G_PARAM_STATIC_NICK |
 								G_PARAM_STATIC_BLURB));
 
+	g_object_class_install_property (object_class,
+					 PROP_DEPTH,
+					 g_param_spec_enum    ( "depth",
+								"Depth",
+								"The color depth",
+								VNC_TYPE_DISPLAY_DEPTH_COLOR,
+								VNC_DISPLAY_DEPTH_COLOR_DEFAULT,
+								G_PARAM_READWRITE |
+								G_PARAM_CONSTRUCT |
+								G_PARAM_STATIC_NAME |
+								G_PARAM_STATIC_NICK |
+								G_PARAM_STATIC_BLURB));
+
 	signalCredParam = g_param_spec_enum("credential",
 					    "credential",
 					    "credential",
-					    vnc_display_credential_get_type(),
+					    VNC_TYPE_DISPLAY_CREDENTIAL,
 					    0,
 					    G_PARAM_READABLE);
 
@@ -2045,40 +2115,6 @@ void vnc_display_set_read_only(VncDisplay *obj, gboolean enable)
 	obj->priv->read_only = enable;
 }
 
-GType vnc_display_credential_get_type(void)
-{
-	static GType etype = 0;
-
-	if (etype == 0) {
-		static const GEnumValue values[] = {
-			{ VNC_DISPLAY_CREDENTIAL_PASSWORD, "VNC_DISPLAY_CREDENTIAL_PASSWORD", "password" },
-			{ VNC_DISPLAY_CREDENTIAL_USERNAME, "VNC_DISPLAY_CREDENTIAL_USERNAME", "username" },
-			{ VNC_DISPLAY_CREDENTIAL_CLIENTNAME, "VNC_DISPLAY_CREDENTIAL_CLIENTNAME", "clientname" },
-			{ 0, NULL, NULL }
-		};
-		etype = g_enum_register_static ("VncDisplayCredentialType", values );
-	}
-
-	return etype;
-}
-
-GType vnc_display_key_event_get_type(void)
-{
-	static GType etype = 0;
-
-	if (etype == 0) {
-		static const GEnumValue values[] = {
-			{ VNC_DISPLAY_KEY_EVENT_PRESS, "VNC_DISPLAY_KEY_EVENT_PRESS", "press" },
-			{ VNC_DISPLAY_KEY_EVENT_RELEASE, "VNC_DISPLAY_KEY_EVENT_RELEASE", "release" },
-			{ VNC_DISPLAY_KEY_EVENT_CLICK, "VNC_DISPLAY_KEY_EVENT_CLICK", "click" },
-			{ 0, NULL, NULL }
-		};
-		etype = g_enum_register_static ("VncDisplayKeyEvents", values );
-	}
-
-	return etype;
-}
-
 GdkPixbuf *vnc_display_get_pixbuf(VncDisplay *obj)
 {
 	VncDisplayPrivate *priv = obj->priv;
@@ -2174,6 +2210,27 @@ void vnc_display_set_force_size(VncDisplay *obj, gboolean enabled)
 	obj->priv->force_size = enabled;
 }
 
+void vnc_display_set_depth(VncDisplay *obj, VncDisplayDepthColor depth)
+{
+	g_return_if_fail (VNC_IS_DISPLAY (obj));
+
+	/* Ignore if we are already connected */
+	if (obj->priv->gvnc && gvnc_is_initialized(obj->priv->gvnc))
+		return;
+
+	if (obj->priv->depth == depth)
+		return;
+
+	obj->priv->depth = depth;
+}
+
+VncDisplayDepthColor vnc_display_get_depth(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), 0);
+
+	return obj->priv->depth;
+}
+
 gboolean vnc_display_get_force_size(VncDisplay *obj)
 {
 	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
@@ -2240,7 +2297,8 @@ vnc_display_get_option_group (void)
 {
 	GOptionGroup *group;
 
-	group = g_option_group_new ("gtk-vnc", "GTK-VNC Options", "Show GTK-VNC Options", NULL, NULL);
+	group = g_option_group_new ("gtk-vnc", N_("GTK-VNC Options:"), N_("Show GTK-VNC Options"), NULL, NULL);
+	g_option_group_set_translation_domain (group, GETTEXT_PACKAGE);
 
 	g_option_group_add_entries (group, gtk_vnc_args);
 
@@ -2251,6 +2309,23 @@ const GOptionEntry *
 vnc_display_get_option_entries (void)
 {
 	return gtk_vnc_args;
+}
+
+gboolean
+vnc_display_request_update(VncDisplay *obj)
+{
+	g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+	if (!obj->priv->gvnc || !gvnc_is_initialized(obj->priv->gvnc))
+		return FALSE;
+
+	GVNC_DEBUG ("Requesting a full update");
+	return gvnc_framebuffer_update_request(obj->priv->gvnc,
+					       0,
+					       0,
+					       0,
+					       obj->priv->fb.width,
+					       obj->priv->fb.height);
 }
 
 #ifdef WIN32

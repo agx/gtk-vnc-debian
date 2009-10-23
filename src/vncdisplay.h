@@ -29,8 +29,6 @@ typedef struct _VncDisplayPrivate VncDisplayPrivate;
 #include <glib.h>
 
 #define VNC_TYPE_DISPLAY (vnc_display_get_type())
-#define VNC_TYPE_DISPLAY_CREDENTIAL (vnc_display_credential_get_type())
-#define VNC_TYPE_DISPLAY_KEY_EVENT (vnc_display_key_event_get_type())
 
 #define VNC_DISPLAY(obj) \
         (G_TYPE_CHECK_INSTANCE_CAST((obj), VNC_TYPE_DISPLAY, VncDisplay))
@@ -79,11 +77,18 @@ typedef enum
 	VNC_DISPLAY_KEY_EVENT_CLICK = 3,
 } VncDisplayKeyEvent;
 
+typedef enum
+{
+	VNC_DISPLAY_DEPTH_COLOR_DEFAULT = 0,
+	VNC_DISPLAY_DEPTH_COLOR_FULL,
+	VNC_DISPLAY_DEPTH_COLOR_MEDIUM,
+	VNC_DISPLAY_DEPTH_COLOR_LOW,
+	VNC_DISPLAY_DEPTH_COLOR_ULTRA_LOW
+} VncDisplayDepthColor;
+
 G_BEGIN_DECLS
 
 GType		vnc_display_get_type(void);
-GType		vnc_display_credential_get_type(void);
-GType		vnc_display_key_event_get_type(void);
 GtkWidget *	vnc_display_new(void);
 
 gboolean	vnc_display_open_fd(VncDisplay *obj, int fd);
@@ -132,12 +137,17 @@ gboolean	vnc_display_get_force_size(VncDisplay *obj);
 void		vnc_display_set_shared_flag(VncDisplay *obj, gboolean shared);
 gboolean	vnc_display_get_shared_flag(VncDisplay *obj);
 
+void			vnc_display_set_depth(VncDisplay *obj, VncDisplayDepthColor depth);
+VncDisplayDepthColor	vnc_display_get_depth(VncDisplay *obj);
+
 void		vnc_display_force_grab(VncDisplay *obj, gboolean enable);
 
 gboolean	vnc_display_is_pointer_absolute(VncDisplay *obj);
 
 GOptionGroup *  vnc_display_get_option_group(void);
 const GOptionEntry *  vnc_display_get_option_entries(void);
+
+gboolean	vnc_display_request_update(VncDisplay *obj);
 
 G_END_DECLS
 
