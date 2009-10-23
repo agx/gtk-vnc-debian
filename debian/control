@@ -7,7 +7,7 @@ Standards-Version: 3.8.3
 Build-Depends: cdbs, debhelper (>= 7), python-central, libgtk2.0-dev,
  python-all-dev, libgnutls-dev (>= 1.4.0), python-gtk2-dev (>= 2.0),
  libcairo2-dev, iceape-dev (>= 1.1.9-5), autotools-dev, quilt,
- automake, autoconf, libffi-dev, libtool, libsasl2-dev
+ automake, autoconf, libffi-dev, libtool, libsasl2-dev, intltool
 Build-Conflicts: libffi4-dev
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
 Vcs-Browser: http://git.debian.org/?p=pkg-libvirt/gtk-vnc.git
