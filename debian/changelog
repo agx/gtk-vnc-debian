@@ -1,3 +1,10 @@
+gtk-vnc (0.3.10-2) unstable; urgency=low
+
+  * [5974bae] Use xulrunner-dev instead of iceape-dev (Closes: #555908)
+  * [402bca0] Fix build with xulrunner 1.9.1 (Closes: #556840)
+
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 18 Nov 2009 10:03:00 +0100
+
 gtk-vnc (0.3.10-1) unstable; urgency=low
 
   [ Laurent Léonard ]
