@@ -1,3 +1,14 @@
+gtk-vnc (0.3.10-3) unstable; urgency=low
+
+  * [37978f9] Make package buildable with Python 2.6 (Closes: #571490) -
+    thanks to Jakub Wilk for the suggestions.
+  * [af58b98] Split build-deps to one package per line (Closes: #559128,
+    #544003)
+  * [31c8903] New patch 0004-Don-t-use-PATH_MAX.patch Don't use PATH_MAX
+    (Closes: #561004) - thanks to Emilio Pozuelo Monfort
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 28 Feb 2010 17:32:47 +0100
+
 gtk-vnc (0.3.10-2) unstable; urgency=low
 
   * [5974bae] Use xulrunner-dev instead of iceape-dev (Closes: #555908)
