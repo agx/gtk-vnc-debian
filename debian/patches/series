@@ -1,3 +1,4 @@
 0001-say-disconnected-from-server-only-once-connected.patch
 0002-remove-WERROR_CFLAGS.patch
 0003-fix-build-with-xulrunner-1.9.1.patch
+0004-Don-t-use-PATH_MAX.patch
