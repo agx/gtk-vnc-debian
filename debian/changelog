@@ -1,3 +1,16 @@
+gtk-vnc (0.3.10-4) unstable; urgency=low
+
+  * [d0c8027] New patch 0005-Drop-space-after-Wl-in-
+    libgtk_vnc_1_0_la_LDFLAGS.patch Drop space after -Wl, in
+    libgtk_vnc_1_0_la_LDFLAGS
+  * [b1a99c0] New patch 0006-Add-Wl-since-no-undefined-is-a-linker-
+    option.patch Add -Wl since --no-undefined is a linker option
+  * [95496ef] New patch 0007-Explicitly-link-against-X11-libs-for-
+    XkbGetKeyboard.patch Explicitly link against X11 libs for XkbGetKeyboard
+   (Closes: #554751)
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 04 Mar 2010 19:03:22 +0100
+
 gtk-vnc (0.3.10-3) unstable; urgency=low
 
   * [37978f9] Make package buildable with Python 2.6 (Closes: #571490) -
