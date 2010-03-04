@@ -1,0 +1,44 @@
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Thu, 4 Mar 2010 07:23:57 +0100
+Subject: [PATCH] Explicitly link against X11 libs for XkbGetKeyboard
+
+and friends. Fixes linking with --no-undefined as well as binutils-gold.
+
+Closes: #554751
+---
+ configure.ac    |    4 ++++
+ src/Makefile.am |    2 ++
+ 2 files changed, 6 insertions(+), 0 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 2131706..f888ee3 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -105,6 +105,10 @@ PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK_REQUIRED)
+ AC_SUBST(GTK_CFLAGS)
+ AC_SUBST(GTK_LIBS)
+ 
++PKG_CHECK_MODULES(X11, x11,,AC_MSG_NOTICE([Not building against X11]))
++AC_SUBST(X11_CFLAGS)
++AC_SUBST(X11_LIBS)
++
+ save_CFLAGS="$CFLAGS"
+ save_LIBS="$LIBS"
+ CFLAGS="$CFLAGS $GTK_CFLAGS"
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 89b8731..e1d5552 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -5,9 +5,11 @@ lib_LTLIBRARIES = libgtk-vnc-1.0.la
+ 
+ libgtk_vnc_1_0_la_LIBADD = @GTK_LIBS@ @GNUTLS_LIBS@ \
+ 			   @GTHREAD_LIBS@ @SASL_LIBS@ \
++			   @X11_LIBS@ \
+                            ../gnulib/lib/libgnu.la
+ libgtk_vnc_1_0_la_CFLAGS = @GTK_CFLAGS@ @GNUTLS_CFLAGS@ \
+ 			   @GTHREAD_CFLAGS@ @SASL_CFLAGS@ @WARNING_CFLAGS@ \
++			   @X11_CFLAGS@ \
+ 			   -DSYSCONFDIR=\""$(sysconfdir)"\" \
+ 			   -DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
+                            -DG_LOG_DOMAIN=\"gtk-vnc\" \
+-- 
