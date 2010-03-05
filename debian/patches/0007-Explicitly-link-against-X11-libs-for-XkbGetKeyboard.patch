@@ -5,6 +5,7 @@ Subject: [PATCH] Explicitly link against X11 libs for XkbGetKeyboard
 and friends. Fixes linking with --no-undefined as well as binutils-gold.
 
 Closes: #554751
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=611935
 ---
  configure.ac    |    4 ++++
  src/Makefile.am |    2 ++

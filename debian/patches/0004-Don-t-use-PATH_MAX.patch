@@ -3,6 +3,7 @@ Date: Sun, 28 Feb 2010 17:30:11 +0100
 Subject: [PATCH] Don't use PATH_MAX
 
 Closes: #561004
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=604448
 ---
  src/vncdisplay.c |   67 ++++++++++++++++++++++++++++++-----------------------
  1 files changed, 38 insertions(+), 29 deletions(-)
