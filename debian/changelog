@@ -1,3 +1,12 @@
+gtk-vnc (0.3.10-5) unstable; urgency=low
+
+  * [7554fa2] Bump standards version
+  * [5b40e11] Add symbols file
+  * [da19fa0] Add Links to upstream bugtracker
+  * [9f49f13] New patch 0008-Add-missing-symbols.patch
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 05 Mar 2010 23:28:06 +0100
+
 gtk-vnc (0.3.10-4) unstable; urgency=low
 
   * [d0c8027] New patch 0005-Drop-space-after-Wl-in-
