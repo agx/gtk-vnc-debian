@@ -1,0 +1,32 @@
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Fri, 5 Mar 2010 22:46:03 +0100
+Subject: [PATCH] Add missing symbols
+
+don't version them for now until this is soreted out with upstream.
+---
+ src/libgtk-vnc_sym.version |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
+
+diff --git a/src/libgtk-vnc_sym.version b/src/libgtk-vnc_sym.version
+index 4a88740..a77a9f1 100644
+--- a/src/libgtk-vnc_sym.version
++++ b/src/libgtk-vnc_sym.version
+@@ -53,6 +53,17 @@
+     vnc_display_set_force_size;
+     vnc_display_get_force_size;
+ 
++# introduced with 0.3.8
++    vnc_display_get_option_entries;
++
++# introduced with 0.3.9
++    vnc_display_set_depth;
++    vnc_display_get_depth;
++
++    vnc_display_depth_color_get_type;
++
++    vnc_display_request_update;
++
+   local:
+       *;
+ };
+-- 
