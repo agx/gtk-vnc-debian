@@ -1,3 +1,11 @@
+gtk-vnc (0.3.10-6) unstable; urgency=low
+
+  * [405bfa7] New patch 0009-Fix-missing-intialisation-of-sysdir-and-
+    uderdir.patch Fix missing intialisation of sysdir and uderdir
+    (Closes: #576102)
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 04 Apr 2010 14:47:02 +0200
+
 gtk-vnc (0.3.10-5) unstable; urgency=low
 
   * [7554fa2] Bump standards version
