@@ -1,0 +1,46 @@
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Sun, 4 Apr 2010 14:27:28 +0200
+Subject: [PATCH] Fix missing intialisation of sysdir and uderdir
+
+introduced by PATH_MAX removal.
+
+Closes: #576102
+---
+ src/vncdisplay.c |   15 +++++----------
+ 1 files changed, 5 insertions(+), 10 deletions(-)
+
+diff --git a/src/vncdisplay.c b/src/vncdisplay.c
+index 98c2795..89811f6 100644
+--- a/src/vncdisplay.c
++++ b/src/vncdisplay.c
+@@ -2019,24 +2019,19 @@ static int vnc_display_set_x509_credential(VncDisplay *obj, const char *name)
+ {
+ 	gboolean ret = FALSE;
+ 	char *file;
+-	char *sysdir;
++	char *sysdir = g_strdup_printf("%s/pki", SYSCONFDIR);
+ #ifndef WIN32
+-	char *userdir;
+ 	struct passwd *pw;
+-	char *dirs[] = { sysdir, userdir };
+-#else
+-	char *dirs[] = { sysdir };
+-#endif
+ 
+-#ifndef WIN32
+ 	if (!(pw = getpwuid(getuid())))
+ 		return TRUE;
+ 
+-	userdir = g_strdup_printf("%s/.pki", pw->pw_dir);
++	char *userdir = userdir = g_strdup_printf("%s/.pki", pw->pw_dir);
++	char *dirs[] = { sysdir, userdir };
++#else
++	char *dirs[] = { sysdir };
+ #endif
+ 
+-	sysdir = g_strdup_printf("%s/pki", SYSCONFDIR);
+-
+ 	if ((file = vnc_display_best_path("CA", "cacert.pem", dirs,
+ 				  sizeof(dirs)/sizeof(dirs[0]))) == NULL) {
+ 		ret = TRUE;
+-- 

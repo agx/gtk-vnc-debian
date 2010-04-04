@@ -6,3 +6,4 @@
 0006-Add-Wl-since-no-undefined-is-a-linker-option.patch
 0007-Explicitly-link-against-X11-libs-for-XkbGetKeyboard.patch
 0008-Add-missing-symbols.patch
+0009-Fix-missing-intialisation-of-sysdir-and-uderdir.patch
