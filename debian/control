@@ -15,10 +15,7 @@ Build-Depends: cdbs,
  xulrunner-dev,
  autotools-dev,
  quilt,
- automake,
- autoconf,
  libffi-dev,
- libtool,
  libsasl2-dev,
  intltool
 Build-Conflicts: libffi4-dev
