@@ -1,9 +1,1 @@
-0001-say-disconnected-from-server-only-once-connected.patch
-0002-remove-WERROR_CFLAGS.patch
-0003-fix-build-with-xulrunner-1.9.1.patch
-0004-Don-t-use-PATH_MAX.patch
-0005-Drop-space-after-Wl-in-libgtk_vnc_1_0_la_LDFLAGS.patch
-0006-Add-Wl-since-no-undefined-is-a-linker-option.patch
-0007-Explicitly-link-against-X11-libs-for-XkbGetKeyboard.patch
-0008-Add-missing-symbols.patch
-0009-Fix-missing-intialisation-of-sysdir-and-uderdir.patch
+0001-fix-build-with-xulrunner-1.9.1.patch
