@@ -1,16 +1,17 @@
    GTK VNC  Readme
    ===============
 
-gtk-vnc is a VNC viewer widget for GTK. It is built using
-coroutines allowing it to be completely asynchronous while
-remaining single threaded. It provides a core C library, and
-bindings for Python (PyGTK)
+gtk-vnc is a project providing client side APIs for the
+RFB protocol / VNC remote desktop technology.
 
-The API is still in early stages of development & so until
-version 1.0 is declared, the API may change. The primary
-public API is provided by the vncdisplay.h class & should
-be reasonably free of API churn. The other header files are
-internal VNC protocol implementation & will very likely change.
+It is built using coroutines allowing it to be completely
+asynchronous while remaining single threaded. It provides
+two core C libraries, libgvnc for interacting with the core
+RFB protocol and libgtk-vnc for a GTK display widget.
+
+There is a traditional Python binding built on PyGTK, and
+evolving support for arbitrary languages via the GObject
+Introspection system.
 
 For information about the project visit the webpage at:
 
@@ -23,5 +24,37 @@ To contact developers use the project mailing list at:
 To browse or report bugs, go to our bugzilla page at:
 
   http://bugzilla.gnome.org/browse.cgi?product=gtk-vnc
+
+
+Installation caveats
+--------------------
+
+ * GTK3: The build defaults to using GTK2. To enable GTK3 support
+   the flag '--with-gtk' must be passed to configure.
+
+         ./configure --with-gtk=3.0
+
+   NB: the traditional python bindings are disabled when gtk3
+   is used. Applications should use the GObject introspection
+   bindings instead.
+
+   NB: when built against GTK3, the library name for gtk-vnc
+   will become 'gtk-vnc-2.0.so' and the pkg-config file will
+   also be 'gtk-vnc-2.0'.  The gvnc library is unaffected.
+
+ * NetBSD: You must run configure using
+
+    --with-coroutine=gthread
+
+   since any app linking against NetBSD's libpthread.so is
+   forbidden from using swapcontext() calls, which is gtk-vnc's
+   default coroutine impl. For further information see
+
+    https://bugzilla.gnome.org/show_bug.cgi?id=566148
+    http://man.netbsd.org/cgi-bin/man-cgi?pthread++NetBSD-current
+
+ * MinGW: The SASL protocol extension is not available on
+   this platform
+
 
 -- End

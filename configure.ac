@@ -1,16 +1,24 @@
-dnl Process this file with autoconf to produce a configure script.
+# gtk-vnc autoconf
 
-AC_INIT([gtk-vnc], [0.3.10])
-AC_CONFIG_SRCDIR([src/gvnc.c])
-dnl Causes problems with RHEL-5 vintage intltool
-dnl AC_CONFIG_AUX_DIR([build-aux])
-AM_CONFIG_HEADER([config.h])
+AC_PREREQ(2.63)
+
+AC_INIT([gtk-vnc],[0.4.1],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_CONFIG_SRCDIR([src/vncconnection.c])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_HEADERS([config.h])
+
 dnl Make automake keep quiet about wildcards & other GNUmake-isms
-AM_INIT_AUTOMAKE([-Wno-portability])
+AM_INIT_AUTOMAKE([1.10 -Wno-portability])
+
+LT_PREREQ([2.2.6])
+LT_INIT([win32-dll disable-static])
+
+AC_CONFIG_MACRO_DIR([gnulib/m4])
+
+GNOME_MAINTAINER_MODE_DEFINES
 
 # Use the silent-rules feature when possible.
-m4_ifndef([AM_SILENT_RULES], [m4_define([AM_SILENT_RULES],[])])
-AM_SILENT_RULES([yes])
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_CANONICAL_HOST
 
@@ -18,8 +26,10 @@ dnl ****************************************************************************
 dnl Declare required library versions
 dnl *******************************************************************************
 
-GTK_REQUIRED=2.10.0
-AC_SUBST(GTK_REQUIRED)
+GOBJECT_REQUIRED=2.10.0
+AC_SUBST(GOBJECT_REQUIRED)
+GDK_PIXBUF_REQUIRED=2.10.0
+AC_SUBST(GDK_PIXBUF_REQUIRED)
 GNUTLS_REQUIRED=1.4.0
 AC_SUBST(GNUTLS_REQUIRED)
 
@@ -28,20 +38,13 @@ VIEW_REQUIRED=0.6.0
 GTHREAD_REQUIRED=2.0.0
 PYTHON_REQUIRED=2.4
 
-NSPR_REQUIRED=4.0.0
 FIREFOX_PLUGIN_REQUIRED=2.0.0
 MOZILLA_PLUGIN_REQUIRED=1.8
+GOBJECT_INTROSPECTION_REQUIRED=0.6.2
 
 dnl *******************************************************************************
 dnl Setup GNULIB - must be before anything else in this file
 dnl *******************************************************************************
-
-dnl gl_INIT uses m4_foreach_w, yet that is not defined in autoconf-2.59.
-dnl In order to accommodate developers with such old tools, here's a
-dnl replacement definition.
-m4_ifndef([m4_foreach_w],
-  [m4_define([m4_foreach_w],
-    [m4_foreach([$1], m4_split(m4_normalize([$2]), [ ]), [$3])])])
 
 gl_EARLY
 gl_INIT
@@ -53,9 +56,6 @@ dnl ****************************************************************************
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
 
-AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
-
 dnl *******************************************************************************
 dnl Internationalization
 dnl *******************************************************************************
@@ -63,13 +63,43 @@ GETTEXT_PACKAGE=gtk-vnc
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
 
-IT_PROG_INTLTOOL([0.35.0])
+IT_PROG_INTLTOOL([0.40.0])
 AM_GLIB_GNU_GETTEXT
 
 dnl *******************************************************************************
 
+################################################################################
+# GTK+
+################################################################################
 
-AC_CHECK_HEADERS([pwd.h winsock2.h])
+AC_MSG_CHECKING([which gtk+ version to compile against])
+AC_ARG_WITH([gtk],
+  [AS_HELP_STRING([--with-gtk=2.0|3.0],[which gtk+ version to compile against (default: 2.0)])],
+  [case "$with_gtk" in
+     2.0|3.0) ;;
+     *) AC_MSG_ERROR([invalid gtk version specified]) ;;
+   esac],
+  [with_gtk=2.0])
+AC_MSG_RESULT([$with_gtk])
+
+case "$with_gtk" in
+  2.0) GTK_API_VERSION=2.0
+       GTK_REQUIRED=2.18.0
+       GTK_VNC_API_VERSION=1.0
+       ;;
+  3.0) GTK_API_VERSION=3.0
+       GTK_REQUIRED=2.90.4
+       GTK_VNC_API_VERSION=2.0
+       ;;
+esac
+
+AC_SUBST([GTK_API_VERSION])
+AC_SUBST([GTK_REQUIRED])
+AC_SUBST([GTK_VNC_API_VERSION])
+AM_CONDITIONAL([HAVE_GTK_2],[test "$with_gtk" = "2.0"])
+AM_CONDITIONAL([HAVE_GTK_3],[test "$with_gtk" = "3.0"])
+
+AC_CHECK_HEADERS([pwd.h winsock2.h termios.h])
 
 AC_ARG_WITH(python,
 [  --with-python           build python bindings],
@@ -78,7 +108,12 @@ AC_ARG_WITH(python,
    *)      AC_MSG_ERROR([bad value ${withval} for python option]) ;;
  esac],[withval=yes])
 
-WITH_PYTHON=$withval
+if test "$with_gtk" = "3.0"
+then
+  WITH_PYTHON=no
+else
+  WITH_PYTHON=$withval
+fi
 
 GTK_VNC_COMPILE_WARNINGS
 
@@ -91,19 +126,49 @@ AC_ARG_WITH(examples,
 WITH_EXAMPLES=$withval
 
 
-dnl check ld support --version-script
-ld --help>/tmp/$$ 2>&1
-if `cat /tmp/$$|grep version-script>/dev/null 2>&1`; then
-LD_VERSION_SCRIPT_SUPPORT='--version-script=$(srcdir)/libgtk-vnc_sym.version'
-else
-LD_VERSION_SCRIPT_SUPPORT="export-symbols-regex 'vnc_'"
-fi
-rm /tmp/$$
-AC_SUBST(LD_VERSION_SCRIPT_SUPPORT)
+NO_UNDEFINED_LDFLAGS=
+VERSION_SCRIPT_FLAGS=
+USE_VERSION_DEFS=0
+case "$host" in
+  *-*-mingw*)
+    VERSION_SCRIPT_FLAGS="-Wl,"
+    USE_VERSION_DEFS=1
+    NO_UNDEFINED_FLAGS="-no-undefined"
+    ;;
 
-PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK_REQUIRED)
+  *-*-cygwin*)
+    NO_UNDEFINED_LDFLAGS="-no-undefined"
+    ;;
+
+  *)
+    NO_UNDEFINED_FLAGS="-Wl,--no-undefined"
+    VERSION_SCRIPT_FLAGS=-Wl,--version-script=
+    `ld --help 2>&1 | grep -- --version-script >/dev/null` || \
+      VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
+    ;;
+esac
+AC_SUBST([NO_UNDEFINED_FLAGS])
+AC_SUBST([VERSION_SCRIPT_FLAGS])
+AM_CONDITIONAL([USE_VERSION_DEFS], [test "$USE_VERSION_DEFS" = "1"])
+
+dnl check ld support --version-script
+AC_SUBST(VERSION_SCRIPT_FLAGS)
+
+PKG_CHECK_MODULES(GOBJECT, gobject-2.0 >= $GOBJECT_REQUIRED)
+AC_SUBST(GOBJECT_CFLAGS)
+AC_SUBST(GOBJECT_LIBS)
+
+PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= $GDK_PIXBUF_REQUIRED)
+AC_SUBST(GDK_PIXBUF_CFLAGS)
+AC_SUBST(GDK_PIXBUF_LIBS)
+
+PKG_CHECK_MODULES(GTK, gtk+-$GTK_API_VERSION >= $GTK_REQUIRED)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
+
+PKG_CHECK_MODULES(X11, x11,,AC_MSG_NOTICE([Not building against X11]))
+AC_SUBST(X11_CFLAGS)
+AC_SUBST(X11_LIBS)
 
 save_CFLAGS="$CFLAGS"
 save_LIBS="$LIBS"
@@ -133,10 +198,10 @@ AC_SUBST(VIEW_CFLAGS)
 AC_SUBST(VIEW_LIBS)
 
 PKG_CHECK_MODULES(GNUTLS, gnutls >= $GNUTLS_REQUIRED)
-dnl Not all versions of gnutls include -lgcrypt, and we need it
+dnl Not all versions of gnutls include -lgcrypt and -lgpg-error, and we need it
 dnl explicitly for building MS Logon extension which calls
 dnl gcry_XXX APIs
-GNUTLS_LIBS="$GNUTLS_LIBS -lgcrypt"
+GNUTLS_LIBS="$GNUTLS_LIBS -lgcrypt -lgpg-error"
 AC_SUBST(GNUTLS_CFLAGS)
 AC_SUBST(GNUTLS_LIBS)
 
@@ -209,7 +274,7 @@ case $with_coroutine in
   gthread)
     ;;
   *)
-    AC_ERROR([Unsupported coroutine type])
+    AC_MSG_ERROR(Unsupported coroutine type)
 esac
 
 if test "$with_coroutine" = "ucontext"; then
@@ -260,8 +325,6 @@ AC_ARG_ENABLE(plugin,
 	[  --enable-plugin=[no/yes] enable browser plugin [default=no]],,
 	enable_plugin=no)
 if test "x$enable_plugin" = "xyes"; then
-    dnl Check for Netscape Portable Runtime development package.
-    PKG_CHECK_MODULES(NSPR, nspr >= $NSPR_REQUIRED)
     dnl Check for Firefox plugin package (also includes NSPR cflags/libs).
     PKG_CHECK_MODULES(FIREFOX_PLUGIN,
                      firefox-plugin >= $FIREFOX_PLUGIN_REQUIRED, ,[
@@ -293,15 +356,43 @@ AM_CONDITIONAL(WITH_EXAMPLES, [test "$WITH_EXAMPLES" = "yes"])
 
 AM_CONDITIONAL(ENABLE_PLUGIN, [test "$enable_plugin" = "yes"])
 
+AC_ARG_ENABLE([introspection],
+        AS_HELP_STRING([--enable-introspection], [enable GObject introspection]),
+        [], [enable_introspection=check])
+
+if test "x$enable_introspection" != "xno" ; then
+        PKG_CHECK_MODULES([GOBJECT_INTROSPECTION],
+                          [gobject-introspection-1.0 >= $GOBJECT_INTROSPECTION_REQUIRED],
+                          [enable_introspection=yes],
+                          [
+                             if test "x$enable_introspection" = "xcheck"; then
+			       enable_introspection=no
+                             else
+                               AC_MSG_ERROR([gobject-introspection is not available])
+                             fi
+                          ])
+        if test "x$enable_introspection" = "xyes" ; then
+          AC_DEFINE([WITH_GOBJECT_INTROSPECTION], [1], [enable GObject introspection support])
+          AC_SUBST(GOBJECT_INTROSPECTION_CFLAGS)
+          AC_SUBST(GOBJECT_INTROSPECTION_LIBS)
+          AC_SUBST([G_IR_SCANNER], [$($PKG_CONFIG --variable=g_ir_scanner gobject-introspection-1.0)])
+          AC_SUBST([G_IR_COMPILER], [$($PKG_CONFIG --variable=g_ir_compiler gobject-introspection-1.0)])
+        fi
+fi
+AM_CONDITIONAL([WITH_GOBJECT_INTROSPECTION], [test "x$enable_introspection" = "xyes"])
+
 AC_CONFIG_FILES(
   Makefile
   gnulib/lib/Makefile
   gnulib/tests/Makefile
   src/Makefile
+  tools/Makefile
   examples/Makefile
   plugin/Makefile
   po/Makefile.in
+  gvnc-1.0.pc
   gtk-vnc-1.0.pc
+  gtk-vnc-2.0.pc
   gtk-vnc.spec
   mingw32-gtk-vnc.spec
   )
@@ -319,6 +410,7 @@ Configure summary:
 
 	Compiler ...................:  ${CC}
 	Compiler Flags .............:  ${CFLAGS}
+	Extra Link Flags ...........:  ${VERSION_SCRIPT_FLAGS} ${NO_UNDEFINED_FLAGS}
 	Prefix......................:  ${prefix}
 
 	Python binding .............:  ${WITH_PYTHON}
@@ -326,4 +418,5 @@ Configure summary:
 	Browser plugin .............:  ${enable_plugin}
 	Scaling support.............:  ${with_scaling}
 	SASL support................:  ${enable_sasl}
+	GTK+ version................:  ${GTK_API_VERSION}
 "

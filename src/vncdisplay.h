@@ -2,6 +2,7 @@
  * GTK VNC Widget
  *
  * Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
+ * Copyright (C) 2009-2010 Daniel P. Berrange <dan@berrange.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,38 +19,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef _VNC_DISPLAY_H_
-#define _VNC_DISPLAY_H_
+#ifndef VNC_DISPLAY_H
+#define VNC_DISPLAY_H
+
+#include <gtk/gtk.h>
+#include <glib.h>
+#include <vncgrabsequence.h>
+
+G_BEGIN_DECLS
+
+#define VNC_TYPE_DISPLAY            (vnc_display_get_type())
+#define VNC_DISPLAY(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj), VNC_TYPE_DISPLAY, VncDisplay))
+#define VNC_DISPLAY_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST((klass), VNC_TYPE_DISPLAY, VncDisplayClass))
+#define VNC_IS_DISPLAY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj), VNC_TYPE_DISPLAY))
+#define VNC_IS_DISPLAY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass), VNC_TYPE_DISPLAY))
+#define VNC_DISPLAY_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS((obj), VNC_TYPE_DISPLAY, VncDisplayClass))
+
 
 typedef struct _VncDisplay VncDisplay;
 typedef struct _VncDisplayClass VncDisplayClass;
 typedef struct _VncDisplayPrivate VncDisplayPrivate;
-
-#include <gtk/gtkdrawingarea.h>
-#include <glib.h>
-
-#define VNC_TYPE_DISPLAY (vnc_display_get_type())
-
-#define VNC_DISPLAY(obj) \
-        (G_TYPE_CHECK_INSTANCE_CAST((obj), VNC_TYPE_DISPLAY, VncDisplay))
-
-#define VNC_DISPLAY_CLASS(klass) \
-        (G_TYPE_CHECK_CLASS_CAST((klass), VNC_TYPE_DISPLAY, VncDisplayClass))
-
-#define VNC_IS_DISPLAY(obj) \
-        (G_TYPE_CHECK_INSTANCE_TYPE((obj), VNC_TYPE_DISPLAY))
-
-#define VNC_IS_DISPLAY_CLASS(klass) \
-        (G_TYPE_CHECK_CLASS_TYPE((klass), VNC_TYPE_DISPLAY))
-
-#define VNC_DISPLAY_GET_CLASS(obj) \
-        (G_TYPE_INSTANCE_GET_CLASS((obj), VNC_TYPE_DISPLAY, VncDisplayClass))
 
 struct _VncDisplay
 {
 	GtkDrawingArea parent;
 
 	VncDisplayPrivate *priv;
+
+	/* Do not add fields to this struct */
 };
 
 struct _VncDisplayClass
@@ -61,6 +58,8 @@ struct _VncDisplayClass
 	void		(* vnc_initialized)	(VncDisplay *display);
 	void		(* vnc_disconnected)	(VncDisplay *display);
 	void		(* vnc_auth_credential)	(VncDisplay *display, GValueArray *credList);
+
+	/* Do not add fields to this struct */
 };
 
 typedef enum
@@ -86,8 +85,6 @@ typedef enum
 	VNC_DISPLAY_DEPTH_COLOR_ULTRA_LOW
 } VncDisplayDepthColor;
 
-G_BEGIN_DECLS
-
 GType		vnc_display_get_type(void);
 GtkWidget *	vnc_display_new(void);
 
@@ -102,6 +99,8 @@ void            vnc_display_send_keys_ex(VncDisplay *obj, const guint *keyvals,
 					 int nkeyvals, VncDisplayKeyEvent kind);
 
 void		vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask);
+void		vnc_display_set_grab_keys(VncDisplay *obj, VncGrabSequence *seq);
+VncGrabSequence	*vnc_display_get_grab_keys(VncDisplay *obj);
 
 gboolean	vnc_display_set_credential(VncDisplay *obj, int type, const gchar *data);
 
@@ -151,7 +150,7 @@ gboolean	vnc_display_request_update(VncDisplay *obj);
 
 G_END_DECLS
 
-#endif
+#endif /* VNC_DISPLAY_H */
 /*
  * Local variables:
  *  c-indent-level: 8

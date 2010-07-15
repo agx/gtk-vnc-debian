@@ -4,11 +4,11 @@
 
 
 
-#line 3 "./vnc.override"
+#line 3 "../../src/vnc.override"
 #include <Python.h>
 #include "pygobject.h"
 #include "vncdisplay.h"
-#include "enums.h"
+#include "vncdisplayenums.h"
 #line 13 "vnc.c"
 
 
@@ -52,7 +52,7 @@ _wrap_vnc_display_open_fd(PyGObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = { "fd", NULL };
     int fd, ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.open_fd", kwlist, &fd))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.open_fd", kwlist, &fd))
         return NULL;
     
     ret = vnc_display_open_fd(VNC_DISPLAY(self->obj), fd);
@@ -68,7 +68,7 @@ _wrap_vnc_display_open_host(PyGObject *self, PyObject *args, PyObject *kwargs)
     char *host, *port;
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"ss:VncDisplay.open_host", kwlist, &host, &port))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"ss:Vnc.Display.open_host", kwlist, &host, &port))
         return NULL;
     
     ret = vnc_display_open_host(VNC_DISPLAY(self->obj), host, port);
@@ -99,7 +99,7 @@ _wrap_vnc_display_close(PyGObject *self)
     return Py_None;
 }
 
-#line 17 "./vnc.override"
+#line 17 "../../src/vnc.override"
 static PyObject*
 _wrap_vnc_display_send_keys(PyGObject *self,
                             PyObject *args, PyObject *kwargs)
@@ -147,7 +147,7 @@ _wrap_vnc_display_send_pointer(PyGObject *self, PyObject *args, PyObject *kwargs
     static char *kwlist[] = { "x", "y", "button_mask", NULL };
     int x, y, button_mask;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"iii:VncDisplay.send_pointer", kwlist, &x, &y, &button_mask))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"iii:Vnc.Display.send_pointer", kwlist, &x, &y, &button_mask))
         return NULL;
     
     vnc_display_send_pointer(VNC_DISPLAY(self->obj), x, y, button_mask);
@@ -156,6 +156,67 @@ _wrap_vnc_display_send_pointer(PyGObject *self, PyObject *args, PyObject *kwargs
     return Py_None;
 }
 
+#line 75 "../../src/vnc.override"
+static PyObject*
+_wrap_vnc_display_set_grab_keys(PyGObject *self,
+                            PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"keys", NULL};
+    PyObject *keyList;
+    int i;
+    guint nkeysyms;
+    guint *keysyms;
+    VncGrabSequence *seq;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+                                     "O|I:VncDisplay.set_grab_keys", kwlist,
+                                     &keyList))
+        return NULL;
+
+    if (!PyList_Check(keyList))
+        return NULL;
+
+    nkeysyms = PyList_Size(keyList);
+    keysyms = g_new0(guint, nkeysyms);
+
+    for (i = 0 ; i < nkeysyms ; i++) {
+        PyObject *val = PyList_GetItem(keyList, i);
+        keysyms[i] = (guint)PyInt_AsLong(val);
+    }
+
+    seq = vnc_grab_sequence_new(nkeysyms, keysyms);
+    g_free(keysyms);
+
+    vnc_display_set_grab_keys(VNC_DISPLAY(self->obj), seq);
+
+    vnc_grab_sequence_free(seq);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+#line 198 "vnc.c"
+
+
+#line 57 "../../src/vnc.override"
+static PyObject*
+_wrap_vnc_display_get_grab_keys(PyGObject *self,
+                            PyObject *args, PyObject *kwargs)
+{
+    VncGrabSequence *seq;
+    PyObject *keyList;
+    int i;
+
+    seq = vnc_display_get_grab_keys(VNC_DISPLAY(self->obj));
+
+    keyList = PyList_New(0);
+    for (i = 0 ; i < seq->nkeysyms ; i++)
+       PyList_Append(keyList, PyInt_FromLong(seq->keysyms[i]));
+
+    return keyList;
+}
+#line 218 "vnc.c"
+
+
 static PyObject *
 _wrap_vnc_display_set_credential(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -163,7 +224,7 @@ _wrap_vnc_display_set_credential(PyGObject *self, PyObject *args, PyObject *kwar
     int type, ret;
     char *data;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"is:VncDisplay.set_credential", kwlist, &type, &data))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"is:Vnc.Display.set_credential", kwlist, &type, &data))
         return NULL;
     
     ret = vnc_display_set_credential(VNC_DISPLAY(self->obj), type, data);
@@ -178,7 +239,7 @@ _wrap_vnc_display_set_pointer_local(PyGObject *self, PyObject *args, PyObject *k
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_pointer_local", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_pointer_local", kwlist, &enable))
         return NULL;
     
     vnc_display_set_pointer_local(VNC_DISPLAY(self->obj), enable);
@@ -205,7 +266,7 @@ _wrap_vnc_display_set_pointer_grab(PyGObject *self, PyObject *args, PyObject *kw
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_pointer_grab", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_pointer_grab", kwlist, &enable))
         return NULL;
     
     vnc_display_set_pointer_grab(VNC_DISPLAY(self->obj), enable);
@@ -232,7 +293,7 @@ _wrap_vnc_display_set_keyboard_grab(PyGObject *self, PyObject *args, PyObject *k
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_keyboard_grab", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_keyboard_grab", kwlist, &enable))
         return NULL;
     
     vnc_display_set_keyboard_grab(VNC_DISPLAY(self->obj), enable);
@@ -259,7 +320,7 @@ _wrap_vnc_display_set_read_only(PyGObject *self, PyObject *args, PyObject *kwarg
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_read_only", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_read_only", kwlist, &enable))
         return NULL;
     
     vnc_display_set_read_only(VNC_DISPLAY(self->obj), enable);
@@ -334,7 +395,7 @@ _wrap_vnc_display_client_cut_text(PyGObject *self, PyObject *args, PyObject *kwa
     static char *kwlist[] = { "text", NULL };
     char *text;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:VncDisplay.client_cut_text", kwlist, &text))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"s:Vnc.Display.client_cut_text", kwlist, &text))
         return NULL;
     
     vnc_display_client_cut_text(VNC_DISPLAY(self->obj), text);
@@ -349,7 +410,7 @@ _wrap_vnc_display_set_lossy_encoding(PyGObject *self, PyObject *args, PyObject *
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_lossy_encoding", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_lossy_encoding", kwlist, &enable))
         return NULL;
     
     vnc_display_set_lossy_encoding(VNC_DISPLAY(self->obj), enable);
@@ -376,7 +437,7 @@ _wrap_vnc_display_set_scaling(PyGObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = { "enable", NULL };
     int enable, ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_scaling", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_scaling", kwlist, &enable))
         return NULL;
     
     ret = vnc_display_set_scaling(VNC_DISPLAY(self->obj), enable);
@@ -403,7 +464,7 @@ _wrap_vnc_display_set_force_size(PyGObject *self, PyObject *args, PyObject *kwar
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_force_size", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_force_size", kwlist, &enable))
         return NULL;
     
     vnc_display_set_force_size(VNC_DISPLAY(self->obj), enable);
@@ -430,7 +491,7 @@ _wrap_vnc_display_set_shared_flag(PyGObject *self, PyObject *args, PyObject *kwa
     static char *kwlist[] = { "shared", NULL };
     int shared;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.set_shared_flag", kwlist, &shared))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.set_shared_flag", kwlist, &shared))
         return NULL;
     
     vnc_display_set_shared_flag(VNC_DISPLAY(self->obj), shared);
@@ -458,7 +519,7 @@ _wrap_vnc_display_set_depth(PyGObject *self, PyObject *args, PyObject *kwargs)
     PyObject *py_depth = NULL;
     VncDisplayDepthColor depth;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O:VncDisplay.set_depth", kwlist, &py_depth))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O:Vnc.Display.set_depth", kwlist, &py_depth))
         return NULL;
     if (pyg_enum_get_value(VNC_TYPE_DISPLAY_DEPTH_COLOR, py_depth, (gpointer)&depth))
         return NULL;
@@ -486,7 +547,7 @@ _wrap_vnc_display_force_grab(PyGObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = { "enable", NULL };
     int enable;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:VncDisplay.force_grab", kwlist, &enable))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:Vnc.Display.force_grab", kwlist, &enable))
         return NULL;
     
     vnc_display_force_grab(VNC_DISPLAY(self->obj), enable);
@@ -531,6 +592,10 @@ static const PyMethodDef _PyVncDisplay_methods[] = {
     { "send_keys", (PyCFunction)_wrap_vnc_display_send_keys, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { "send_pointer", (PyCFunction)_wrap_vnc_display_send_pointer, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "set_grab_keys", (PyCFunction)_wrap_vnc_display_set_grab_keys, METH_VARARGS|METH_KEYWORDS,
+      NULL },
+    { "get_grab_keys", (PyCFunction)_wrap_vnc_display_get_grab_keys, METH_VARARGS|METH_KEYWORDS,
       NULL },
     { "set_credential", (PyCFunction)_wrap_vnc_display_set_credential, METH_VARARGS|METH_KEYWORDS,
       NULL },
@@ -679,7 +744,7 @@ gtkvnc_register_classes(PyObject *d)
     }
 
 
-#line 683 "vnc.c"
+#line 748 "vnc.c"
     pygobject_register_class(d, "VncDisplay", VNC_TYPE_DISPLAY, &PyVncDisplay_Type, Py_BuildValue("(O)", &PyGtkDrawingArea_Type));
     pyg_set_object_has_new_constructor(VNC_TYPE_DISPLAY);
 }
