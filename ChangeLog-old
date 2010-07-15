@@ -1,0 +1,1604 @@
+2008-12-07  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c, src/x_keymap.c, src/x_keymap.h:
+	Fix key mapping with evdev
+	[49bde4aa5c01] [tip]
+
+	* Makefile.am, autobuild.sh, configure.ac, mingw32-gtk-vnc.spec.in:
+	Initial RPM spec for mingw & add mingw to automated builds
+	[a247100905c7]
+
+2008-11-26  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Use GVNC_DEBUG instead of fprintf for diagnostic
+	[6178e73ea19b]
+
+2008-11-19  anthony  <anthony@squirrel>
+
+	* src/continuation.c, src/coroutine_gthread.c,
+	src/coroutine_ucontext.c, src/gvnc.c, src/vncdisplay.c:
+	branch merge
+	[91c12c4984c9]
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/blt.h,
+	src/blt1.h, src/continuation.c, src/continuation.h, src/coroutine.h,
+	src/coroutine_gthread.c, src/coroutine_ucontext.c, src/gvnc.c,
+	src/gvnc.h, src/utils.h, src/vnc_keycodes.h, src/vncdisplay.c,
+	src/vncdisplay.h, src/vncmodule.c, src/x_keymap.c, src/x_keymap.h:
+	Update licensing text for all files to be the full FSF LGPL
+	preamble.
+
+	Signed-off-by: Anthony Liguori <anthony@codemonkey.ws>
+	[073d39393eff]
+
+	* src/d3des.c, src/d3des.h:
+	Switch to an older, still public domain version of d3des. The
+	RealVNC changes were GPL and we wish to remain LGPL.
+	[726e2cb86082]
+
+2008-11-17  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Simplify keyboard modifier handling to try and fix non-US keyboards
+	[974dbf1cc505]
+
+2008-11-12  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c:
+	Save updates dimensions from resize event
+	[610b8cf46138]
+
+	* src/gvnc.c:
+	Avoid triggering bogus screen updates for pseudo-encodings
+	[2fa7d9dd62c8]
+
+	* src/gvnc.c:
+	Fix Win32 socket/fd handle mix-up. Make read/write routines always
+	use the FD, not the giochannel which could be a socket handle on
+	win32
+	[cbdd9755a6b0]
+
+2008-10-30  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* plugin/Makefile.am:
+	Fix $(DESTDIR) in plugin rule
+	[fa5bd6e978ec]
+
+	* configure.ac:
+	Use LIBS instead of LDFLAGS when checking for cairo for Win32
+	portability (Richard Jones)
+	[e4d8c112fafa]
+
+	* .hgignore:
+	Ignore more gnulib files
+	[f93a690c02ca]
+
+	* src/vncdisplay.c:
+	Replace __MINGW32__ with WIN32 macro (Richard Jones)
+	[173819a13d90]
+
+	* src/vncdisplay.c:
+	Call winsock initialization functions on startup (patch from Richard
+	Jones)
+	[6224c2676f76]
+
+	* src/gvnc.c:
+	Use ioctl() instead of ioctlsocket() on Win32 platforms
+	[c2c6540e064e]
+
+	* src/gvnc.c:
+	Switch to using recv/send for I/O to work on Win32 platforms
+	[33ce405f271f]
+
+2008-10-09  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* .hgignore, Makefile.am, autogen.sh, bootstrap, configure.ac,
+	gnulib/lib/Makefile.am, gnulib/lib/alloca.in.h,
+	gnulib/lib/arpa_inet.in.h, gnulib/lib/asnprintf.c,
+	gnulib/lib/dummy.c, gnulib/lib/errno.in.h, gnulib/lib/float+.h,
+	gnulib/lib/float.in.h, gnulib/lib/gai_strerror.c,
+	gnulib/lib/getaddrinfo.c, gnulib/lib/getaddrinfo.h,
+	gnulib/lib/gettext.h, gnulib/lib/inet_ntop.c, gnulib/lib/malloc.c,
+	gnulib/lib/netinet_in.in.h, gnulib/lib/printf-args.c, gnulib/lib
+	/printf-args.h, gnulib/lib/printf-parse.c, gnulib/lib/printf-
+	parse.h, gnulib/lib/size_max.h, gnulib/lib/snprintf.c,
+	gnulib/lib/stdbool.in.h, gnulib/lib/stdint.in.h, gnulib/lib/stdio-
+	write.c, gnulib/lib/stdio.in.h, gnulib/lib/stdlib.in.h,
+	gnulib/lib/sys_socket.in.h, gnulib/lib/unistd.in.h,
+	gnulib/lib/vasnprintf.c, gnulib/lib/vasnprintf.h,
+	gnulib/lib/wchar.in.h, gnulib/lib/winsock.c, gnulib/lib/xsize.h,
+	gnulib/m4/alloca.m4, gnulib/m4/arpa_inet_h.m4, gnulib/m4/errno_h.m4,
+	gnulib/m4/extensions.m4, gnulib/m4/float_h.m4,
+	gnulib/m4/getaddrinfo.m4, gnulib/m4/gnulib-cache.m4, gnulib/m4
+	/gnulib-common.m4, gnulib/m4/gnulib-comp.m4, gnulib/m4/gnulib-
+	tool.m4, gnulib/m4/include_next.m4, gnulib/m4/inet_ntop.m4,
+	gnulib/m4/intmax_t.m4, gnulib/m4/inttypes_h.m4,
+	gnulib/m4/longlong.m4, gnulib/m4/malloc.m4,
+	gnulib/m4/netinet_in_h.m4, gnulib/m4/onceonly.m4,
+	gnulib/m4/printf.m4, gnulib/m4/size_max.m4, gnulib/m4/snprintf.m4,
+	gnulib/m4/socklen.m4, gnulib/m4/sockpfaf.m4, gnulib/m4/stdbool.m4,
+	gnulib/m4/stdint.m4, gnulib/m4/stdint_h.m4, gnulib/m4/stdio_h.m4,
+	gnulib/m4/stdlib_h.m4, gnulib/m4/sys_socket_h.m4,
+	gnulib/m4/unistd_h.m4, gnulib/m4/vasnprintf.m4, gnulib/m4/wchar.m4,
+	gnulib/m4/wchar_t.m4, gnulib/m4/wint_t.m4, gnulib/m4/xsize.m4,
+	gnulib/tests/Makefile.am, gnulib/tests/dummy.c,
+	gnulib/tests/intprops.h, gnulib/tests/test-alloca-opt.c,
+	gnulib/tests/test-arpa_inet.c, gnulib/tests/test-errno.c,
+	gnulib/tests/test-getaddrinfo.c, gnulib/tests/test-netinet_in.c,
+	gnulib/tests/test-snprintf.c, gnulib/tests/test-stdbool.c,
+	gnulib/tests/test-stdint.c, gnulib/tests/test-stdio.c, gnulib/tests
+	/test-stdlib.c, gnulib/tests/test-sys_socket.c, gnulib/tests/test-
+	unistd.c, gnulib/tests/test-vasnprintf.c, gnulib/tests/test-vc-list-
+	files-cvs.sh, gnulib/tests/test-vc-list-files-git.sh, gnulib/tests
+	/test-wchar.c, gnulib/tests/verify.h, link-warning.h,
+	src/Makefile.am, src/continuation.c, src/coroutine_gthread.c,
+	src/coroutine_ucontext.c, src/gvnc.c, src/vncdisplay.c, vc-list-
+	files:
+	Import gnulib, and make use of it for mingw portability
+	[47135c91cd9c]
+
+	* Merge heads
+	[ed5db286ac58]
+
+	* src/coroutine_gthread.c:
+	Add missing mutex lock calls at init time
+	[085766df1230]
+
+	* src/vncdisplay.c:
+	Allow ungrab sequence if currently grabbed, even if abs pointer mode
+	is active
+	[1bae3a18e487]
+
+2008-09-15  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Fix the scaling factor for mouse motion.
+	[a3c68b4f30bd]
+
+	* configure.ac:
+	Fix checking gdk_cairo_create() in configure.ac
+	[9a343b80cd39]
+
+2008-09-11  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* configure.ac, src/vncdisplay.c:
+	Use cairo for drawing if available, including scaling support
+	[cf0e849385e0]
+
+	* configure.ac, examples/Makefile.am, gtk-vnc.spec.in,
+	plugin/Makefile.am, src/Makefile.am, src/vncdisplay.c:
+	Remove use of gtkglext for scaling
+	[6f896a6017cc]
+
+2008-09-05  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* .hgtags:
+	Added tag release-0.3.7 for changeset 37c0b4255895
+	[f1d5c8fae2e9]
+
+	* ChangeLog:
+	Re-generate changelog
+	[37c0b4255895] [release-0.3.7]
+
+	* NEWS, configure.ac:
+	Update version & NEWS for 0.3.7
+	[d5ebf650aad6]
+
+	* src/vncdisplay.c:
+	Register internal signal handlers against class, instead of each
+	object
+	[ffc643772cfd]
+
+2008-06-30  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/libgtk-vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Added vnc_display_[gs]et_force_size(), which tell if the widget has
+	a fixed size. This helps scaling down work properly.
+	[3881365c9917]
+
+2008-06-05  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Backed out changeset dba0c3d837dd
+	[6a869ca98aeb]
+
+2008-06-04  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Fix an error message in destructor, when using scaling
+	[dba0c3d837dd]
+
+2008-06-01  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Do more checks if connection is still alive in initialisation. This
+	fix a crash when closing the connection right after connecting.
+	[2396ceb7da50]
+
+2008-05-30  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Use a preferred pixmap format when we receive true_color_flag 0 from
+	server
+	[d2f220a10a2f]
+
+2008-05-29  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Ignore CTRL-ALT key combination if we are autograbbing and pointer
+	is absolute
+	[e7d57ece8227]
+
+2008-05-21  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Ungrab pointer upon loosing focus
+	[175e8585ff2a]
+
+2008-05-05  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.6 for changeset 9daca7e451a5
+	[3ca3eea2347a]
+
+	* configure.ac:
+	branch merge
+	[9daca7e451a5] [release-0.3.6]
+
+	* .hgtags:
+	Added tag release-0.3.6 for changeset 8050c87f404b
+	[4f055a629945]
+
+	* ChangeLog, NEWS, configure.ac:
+	Update for 0.3.6
+	[8050c87f404b]
+
+	* .hgtags:
+	Added tag release-0.3.6 for changeset 854c8ce46e5a
+	[46a807b15c82]
+
+2008-04-30  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/libgtk-vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Created a function to let the app take control over the shared flag.
+	[281b37ee2880]
+
+2008-04-27  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Implement preferable auth methods
+	[e1b964facd65]
+
+2008-04-24  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* configure.ac:
+	Fix typo
+	[adefa4c86b29]
+
+2008-04-22  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/continuation.c:
+	Fix gcc warning about variable that can be clobbered by
+	longjump/vfork (Atsushi Sakai)
+	[854c8ce46e5a]
+
+	* configure.ac, src/Makefile.am:
+	Use regex for symbol visibility in linker on Solaris (Halton Huo)
+	[7348451f9cee]
+
+2008-04-15  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Fixed a crash when closing the connection in a middle of an update
+	[fb2b0584c87e]
+
+2008-04-11  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Use GLib memory functions
+	[53a42c599c77]
+
+2008-04-06  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.5 for changeset d8003db700fd
+	[b7bbfb2b5a47]
+
+	* ChangeLog, NEWS, configure.ac:
+	Prepare for 0.3.5 release
+	[d8003db700fd] [release-0.3.5]
+
+2008-04-04  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Maintain the consistency: create with g_strdup, free with g_free
+	[c7ef79a435a6]
+
+2008-04-03  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* configure.ac, examples/gvncviewer.c, src/vncdisplay.c:
+	Fixed z-buffer depth to avoid rendering ontop of other windows.
+	Enable scaling in gvncviewer if not composited
+	[107a30ef75c3]
+
+2008-04-03  Jonh Wendell  <wendell@bani.com.br>
+
+	* plugin/Makefile.am:
+	Dropped DEBUG_CFLAGS from plugin/Makefile.am, noticed by Richard
+	W.M. Jones
+	[6f18ca44fbe3]
+
+	* src/vncdisplay.c:
+	Use g_strdup() instead of strdup() in vnc_display_open_host(): It
+	doesn't crash if we pass NULL as argument.
+	[976c3dcbd0ee]
+
+2008-04-02  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/continuation.c:
+	Fix makecontext() for 64-bit args
+	[d2f49ba72d0b]
+
+	* src/blt.h, src/gvnc.c:
+	Fixed endianness conversions. Disable ZRLE for broken pixel depths.
+	Fix CPIXEL size calculations
+	[b28dadb1f19b]
+
+2008-04-02  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* src/x_keymap.h:
+	This fixes following warnings about x_keymap. x_keymap.c:149:
+	warning: no previous prototype for 'x_keymap_set_keymap_entries'
+	x_keymap.c:162: warning: no previous prototype for
+	'x_keymap_free_keymap_entries'
+
+	At this moment, all compile warnings are cleanuped by this patch.
+	[2ca361cd74cd]
+
+2008-04-01  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Re-checked protocol version negotiation
+	[5a24f51d9c27]
+
+	* src/gvnc.c:
+	Added a workaround to work with AppleVNCServer, based on patch from
+	Jin Choi
+	[e40d5019d77e]
+
+	* examples/gvncviewer.c, src/vncdisplay.c:
+	Fix some warnings, patch from Atsushi SAKAI
+	[e26b129b1c9e]
+
+2008-03-30  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Changed debug output in protocol initialization
+	[ed430aa8ee39]
+
+2008-03-29  Jonh Wendell  <wendell@bani.com.br>
+
+	* configure.ac, examples/gvncviewer.c, src/Makefile.am, src/libgtk-
+	vnc_sym.version, src/utils.h, src/vncdisplay.c, src/vncdisplay.h:
+	Changed debug behavior.
+
+	Dropped --enable-debug flag in configure stage. We always build with
+	debug framework.
+
+	Also, we use GLib to generate debug messages, through g_debug()
+	function, and we provide a new public symbol,
+	vnc_display_get_option_group(), to be used with the GLib's command
+	line parser, GOptionContext.
+	[159641abed96]
+
+2008-03-25  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/utils.h, src/vncdisplay.c:
+	Use GLib's G_N_ELEMENTS instead of our ARRAY_SIZE macro
+	[15d01d93a5fe]
+
+	* src/vncdisplay.c:
+	Added GObject properties
+	[ded3f3d05205]
+
+2008-03-19  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/blt.h, src/gvnc.c, src/vncdisplay.c:
+	Fix multiple big-endian conversion bugs
+	[767a847dbdc9]
+
+2008-03-19  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* src/gvnc.c, src/vncdisplay.c:
+	This is code clean up of "{" location.
+	[7fd767383ac8]
+
+2008-03-15  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c, src/vncdisplay.c:
+	Put more debug output
+	[a0c03e9f8ec1]
+
+2008-03-14  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	branches merged
+	[a9ba1443ca64]
+
+	* src/libgtk-vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Added _get() for various properties
+	[6622091a310a]
+
+2008-03-14  Hiroyuki Kaguchi  <fj7025cf@aa.jp.fujitsu.com>
+
+	* src/vncdisplay.c, src/x_keymap.c:
+	This patch fixes compilation warnings for ISO_Left_Tab feature.
+	[e25d2b6ae9c6]
+
+2008-03-12  Hiroyuki Kaguchi  <fj7025cf@aa.jp.fujitsu.com>
+
+	* src/vncdisplay.c, src/x_keymap.c, src/x_keymap.h:
+	I make the patch that applied your two indications. Moreover, this
+	patch contains the fix of two bugs and a modification besides the
+	indications.
+
+	The change points from the last patch:
+
+	1)Use GDK key symbols instead of X11 key symbols.
+
+	2)Remove CR characters.
+
+	3)Make keycode conversion function.
+	  - I make the keycode conversion function on "x_keymap.c".
+
+	4)Modify structure used for keycode conversion.
+	  - The type of the keycodes member variable is changed from "guint*"
+	to "GdkKeymapKey*".
+
+	5)Modify getting timing and release timing of keymap entries.
+	  - Because "g_free" function is not called on the last patch, the
+	memory leak is done.
+	[f7fc5cf7bef0]
+
+2008-03-11  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/vncdisplay.c:
+	Propagate key press events. This is needed for kvm-test.
+	[3b33ba158827]
+
+	* src/libgtk-vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Add accessor to determine if widget is in absolute mode. This is
+	needed by kvm-test.
+	[f825091e3cf0]
+
+2008-03-07  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/vncdisplay.c:
+	branch merge
+	[fb8ab9818527]
+
+2008-03-06  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* src/gvnc.c, src/vncdisplay.c:
+	This patch changes endian definition from endian.h to gtypes.h.
+
+	A.L. also remove endian.h include
+	[6ba972d14002]
+
+	* src/gvnc.c, src/vncdisplay.c:
+	fix typos
+	[9888e1ab15c2]
+
+2008-03-07  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Don't setup gl textures if display isn't active
+	[5ac8330e0e24]
+
+2008-03-05  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.4 for changeset 313620c58d69
+	[02bc30c3e8f6]
+
+	* NEWS:
+	Update news for release
+	[313620c58d69] [release-0.3.4]
+
+	* .hgtags:
+	Added tag release-0.3.4 for changeset a1fb42cb7694
+	[6afaff3cf087]
+
+2008-03-05  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* gtk-vnc.spec.in:
+	Add missing BuildRequires for gnutls/gtkglext. Add sub-package for
+	mozilla plugin (disabled by default)
+	[a1fb42cb7694]
+
+	* configure.ac:
+	Make configure.ac check for mozilla-plugin pkgconfig file for
+	Firefox 3 build compatabiltiy
+	[a140d11707c3]
+
+2008-03-02  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.4 for changeset 96433efe0e7d
+	[f0782ebb4c1c]
+
+	* src/vncdisplay.c:
+	We don't use tex_max so let's not query it for now.
+	[96433efe0e7d]
+
+	* .hgtags:
+	Added tag release-0.3.4 for changeset fa6db40bad43
+	[fcf63ccb7def]
+
+	* ChangeLog, NEWS, configure.ac, examples/gvncviewer.c,
+	src/vncdisplay.c:
+	Prepare for release and also make gtkgl usage transparent.
+	[fa6db40bad43]
+
+	* .hgtags:
+	Added tag release-0.3.4 for changeset 7ea3a341f452
+	[3e21784ecf23]
+
+	* .hgtags:
+	Added tag release-0.3.4 for changeset 09836ab4d17a
+	[7ea3a341f452]
+
+	* src/vncdisplay.c:
+	Fixup cursor grab so that it works properly in relative mode.
+	[09836ab4d17a]
+
+	* src/vncdisplay.c:
+	For the Hardy release cycle, Ubuntu seems to be building some
+	versions of GTK with G_ENABLE_DEBUG. When G_ENABLE_DEBUG is set,
+	the marshal functions use g_value_get_XXX() instead of directly
+	accessing the members. This function will validate that the
+	parameter holds the exact type of value being requested. Without
+	G_ENABLE_DEBUG set, no parameter type checking is done.
+
+	After writing a marshaling function from scratch, I discovered that
+	what we really need to use is the BOXED marshaling type as this is
+	the GValue type that a GValueArray will be set to. This should
+	hopefully fix this problem once and for all.
+	[f1dc570dcab7]
+
+	* src/vncdisplay.c:
+	Remove unused function
+	[5134a95f2d9d]
+
+	* src/vncdisplay.c:
+	Remove debug printf.
+	[4e1aee06d5b1]
+
+2008-03-02  Marton Balint  <cus@fazekas.hu>
+
+	* src/vncdisplay.c:
+	A break statement is missing from the key event handler, where the
+	keypress event of an already pressed key is sent as a key release
+	and a key press event.
+
+	Without this patch, the effect of the normal auto-repeat is
+	multiplied, and if you hold down the backspace key for a long time
+	and then release it, you won't be able to press a key before
+	releasing the previously pressed key.
+	[72516595e925]
+
+2008-03-02  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* examples/gvncviewer.c:
+	This patch removes redundunt headers from examples/gvncviewer.c.
+	Currently network is handled on src/gvnc.c
+	[fe461ca5c9d7]
+
+2008-02-25  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Do key event tracking based on scancode instead of keyval to ensure
+	matching press & release events
+	[a8cd8a224a10]
+
+2008-02-25  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* src/vncdisplay.c:
+	This is compilation warning fix for Cset153.
+	[c1008eaca3a5]
+
+2008-02-22  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* examples/gvncviewer.c, src/gvnc.c, src/vncdisplay.c:
+	This patch clean up all compilation warning except vncmarshal.c
+	[7ae474a63a25]
+
+2008-02-22  Saori Fukuta  <fukuta.saori@jp.fujitsu.com>
+
+	* src/vncdisplay.c:
+	At Cset:127, Anthony changed the c_marshaller of vnc-auth-
+	credentials from PARAM to POINTER, and also the parameter types
+	changed from G_TYPE_VALUE_ARRAY to G_TYPE_POINTER. http://gtk-
+	vnc.codemonkey.ws/hg/outgoing.hg/rev/a720c8172a85 Do we need to
+	change the parameter type ?
+
+	AL: this fixes not only Python, but more recent versions of GTK that
+	are very strict about enforcing the type of the signal parameter.
+	[a5f3cb589f54]
+
+2008-02-22  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Branch merge
+	[13d193fa92bd]
+
+2008-02-20  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/gvnc.h:
+	Fix compile warnings introduced by previous commit.
+	[61704bd7bb0d]
+
+2008-02-20  Stefano Stabellini  <stefano.stabellini@eu.citrix.com>
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Hi all, I am attaching a simple patch to add support for WMVi in
+	gtk-vnc. Seems to work well with xen-unstable.
+	[4c14d08521a7]
+
+2008-02-08  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/vncdisplay.c:
+	Make sure to free image data on close.
+	[037c694d8865]
+
+	* src/vncdisplay.c:
+	Make sure to draw something to the widget even when not connected.
+	[6310faba0111]
+
+2008-02-19  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/blt.h, src/vncdisplay.c:
+	Re-add bits of big endian fix which got lost in merge
+	[127004e2ede0]
+
+2008-02-18  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.h:
+	Added missing variable
+	[7165509e1b39]
+
+	* src/gvnc.c:
+	Merge heads
+	[aaaaa7173d47]
+
+	* AUTHORS, src/blt.h, src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Fix big endian color conversion (Hiroyuki Kaguchi)
+	[01b34fbc6e99]
+
+2008-02-18  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Added lots of debug messages where we set the flag has_error to TRUE
+	[28eab97c0d35]
+
+2008-02-08  Jonh Wendell  <wendell@bani.com.br>
+
+	* configure.ac:
+	Show 'support scaling?' in configure summary
+	[777ee6d6a72d]
+
+	* src/vncdisplay.c:
+	Focus the widget on mouse click
+	[bb6581a609b3]
+
+2008-02-06  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* examples/gvncviewer.c, src/libgtk-vnc_sym.version, src/vncdisplay.c,
+	src/vncdisplay.h:
+	Add interface to force pointer grab.
+	[1e6a5272ef00]
+
+	* src/vncdisplay.c:
+	Make sure to support key break when using raw keycodes
+	[a6afe49858ba]
+
+	* src/vncdisplay.c:
+	on_resize() is called based on some events which aren't in a
+	coroutine. So we need to supress the signals when called like this
+	to avoid yielding to a non-existent coroutine.
+	[1b11c4627311]
+
+	* src/vncdisplay.c:
+	Always emit signals from system coroutine.
+
+	When using threads to simulate coroutines, GTK gets very confused as
+	signal handlers are run in a different thread than the main loop
+	when the signal handlers aren't expecting it.
+
+	This patch changes all of the signals emitted from the VNC coroutine
+	to use a delay function to actually issue the signals. This appears
+	to fix the GThread coroutine issue.
+	[0639b5d4ae89]
+
+	* src/blt.h, src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Revert e65d8e4758b3eed4ae7b3a225c2d5a35d9de146b until we figure out
+	what the regression it introduced with UltraVNC.
+	[e270ad1c2736]
+
+	* examples/gvncviewer.c:
+	SetActive has the behavior we want so let's use that.
+	[74c5f106e11e]
+
+	* src/vncdisplay.c:
+	Update cursor grab to have the following behavior:
+
+	For normal VNC servers, keyboard/mouse grab should only be activated
+	when ctrl-alt is clicked. If the server is doing cursor offloading,
+	we should use that cursor.
+
+	For servers supporting PointerTypeChange, when in absolute mode,
+	they should behave as above. When in relative mode, pointer grab
+	should also be activated on the first left-click in the window. The
+	cursor should *not* be hidden when cursor grab is not activated.
+	[2dcbedc3a39b]
+
+2008-02-06  Hiroyuki Kaguchi  <fj7025cf@aa.jp.fujitsu.com>
+
+	* src/blt.h, src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	When the endian between VNC server and X server is different, the
+	displayed color is abnormal. This is because the endian conversion
+	of the pixel data is not done .
+
+	X server that uses big endian cannot be used. The reason is that
+	most Linux vncserver sends data by little endian.
+
+	Of course, Fedora8(Linux) and Windows(Xming) works fine, since it
+	uses little endian for X protocol.
+
+	This patch applies follows: (a)The endian conversion function is
+	called by the SET_PIXEL function. (b)It is checked whether there is
+	difference in endian between X server and VNC Server. (c)The
+	byte_order variable is added to the gvnc_framebuffer structure.
+
+	Sign-off-by: Hiroyuki Kaguchi <fj7025cf@aa.jp.fujitsu.com>
+	[e65d8e4758b3]
+
+2008-02-06  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* src/coroutine_gthread.c:
+	Just remove redundunt code. (same action is doing on
+	coroutine_swap())
+	[2846d5236152]
+
+2008-02-04  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/vncdisplay.c:
+	Make sure to flush the gl buffer. This fixes updates on some
+	graphics cards. This patch was originally from Dan Berrange.
+	[c008e589a12b]
+
+2008-02-03  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/libgtk-vnc_sym.version:
+	Add the new symbol
+	[bb20869010d4]
+
+2008-02-02  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/Makefile.am, src/gvnc.c, src/gvnc.h, src/vnc_keycodes.h,
+	src/vncdisplay.c, src/x_keymap.c, src/x_keymap.h:
+	Support VNC Scancode extension.
+	[2d87caab4637]
+
+	* configure.ac, examples/Makefile.am, examples/gvncviewer.c,
+	plugin/Makefile.am, src/Makefile.am, src/vncdisplay.c,
+	src/vncdisplay.h:
+	Support for OpenGL scaling
+	[a3bcd91c40e8]
+
+	* .hgtags:
+	Added tag release-0.3.3 for changeset 784fc0419a5e
+	[a01e9f1fa9ab]
+
+	* ChangeLog, NEWS, configure.ac:
+	Prepare for 0.3.3 release
+	[784fc0419a5e] [release-0.3.3]
+
+2008-01-28  Atsushi SAKAI  <sakaia@jp.fujitsu.com>
+
+	* src/gvnc.c:
+	Fix ZRLE encoding where multiple palette sizes of different lengths
+	occur in a single update.
+	[3bf6fb00d105]
+
+2008-01-27  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/vncdisplay.c:
+	Change vnc-auth-credentials to a POINTER instead of a PARAM.
+
+	Newer versions of gtk are enforcing that PARMs are actually PARAMs
+	so this was triggering an assert. We switch to POINTER to avoid
+	breaking the ABI.
+	[a720c8172a85]
+
+2008-01-25  Richard W.M. Jones  <rjones@redhat.com>
+
+	* plugin/README:
+	After some discussion here about plugin security, this documents
+	what we think are the potential vulnerabilities of letting an
+	unconstrained plugin live in your browser
+	[27e7004a3772]
+
+2008-01-21  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/blt1.h, src/continuation.c, src/continuation.h, src/coroutine.h,
+	src/coroutine_gthread.c, src/coroutine_ucontext.c, src/gvnc.c,
+	src/utils.h, src/vncdisplay.c, src/vncdisplay.h, src/vncmodule.c:
+	Clarify license to be LGPLv2 or later.
+	[ec1859fcd58c]
+
+	* src/vncdisplay.c:
+	Make sure to free coroutine after it exits
+	[4fc4541f1ad7]
+
+2008-01-16  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Print a debug message when receive an unknown message
+	[3a0afe359edf]
+
+2008-01-15  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* examples/gvncviewer.c, plugin/gtk-vnc-plugin.c:
+	Hide password characters in auth text entry (Rich Jones)
+	[5912e584132d]
+
+2008-01-14  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/blt.h, src/gvnc.c:
+	When doing pixel math, we have to take endianness into account.
+	This sucks for performance :-/
+	[0d49b73d662a]
+
+	* src/gvnc.c:
+	Fix case where client byte order != server byte order
+	[bfcbe9409fa5]
+
+2008-01-11  Richard W.M. Jones  <rjones@redhat.com>
+
+	* .hgignore, plugin/Makefile.am, plugin/gtk-vnc-plugin.c, plugin/gtk-
+	vnc-plugin.h, plugin/npshell.c, plugin/test.html:
+	This patch contains further fixes to the browser plugin:
+
+	(1) As Dan suggested, use -module -avoid-version. This still
+	installs a static library and the linker script, both of which are
+	unhelpful to have in the plugins directory, so I have to delete them
+	by hand. Couldn't see any option in the libtool info to not have it
+	build or install those.
+
+	(2) Use the global ENABLE_DEBUG setting to turn on/off debug
+	messages.
+
+	(3) Move the debug() function into a common header file.
+
+	(4) Include test.html, which I missed out from the first patch.
+
+	(5) Put #if 1 ... #endif around the Gtk toolkit test. I'll probably
+	remove this test altogether in future since (in theory) XEmbed
+	should let you embed a widget from any toolkit in any other toolkit,
+	so this test doesn't really matter.
+	[492cc3ad13a7]
+
+2008-01-11  Jonh Wendell  <wendell@bani.com.br>
+
+	* configure.ac:
+	Output configure summary
+	[77e5b2124839]
+
+2008-01-11  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* plugin/Makefile.am, plugin/README, plugin/gtk-vnc-plugin.c, plugin
+	/gtk-vnc-plugin.h, plugin/npshell.c, plugin/npunix.c:
+	Add the files from the plugin patch. Sorry about that!
+	[1b674865392b]
+
+2008-01-11  Richard W.M. Jones  <rjones@redhat.com>
+
+	* .hgignore, Makefile.am, configure.ac:
+	Gtk-VNC browser plugin.
+	[7d2f6e449be6]
+
+2008-01-10  Richard W.M. Jones  <rjones@redhat.com>
+
+	* src/gvnc.c:
+	This patch detects if the server responds with (illegal) VNC
+	protocol version "3.6" and negotiates version 3.3.
+
+	(This fix actually supplied for me by Dan Berrange ...)
+	[4964aaeb8ccc]
+
+2008-01-10  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/gvnc.c:
+	uint8_t's are always greater than 0 and less than 255. Removing
+	these checks keeps GCC happy.
+	[8b9c9e2afd99]
+
+2008-01-10  Halton Huo  <halton.huo@sun.com>
+
+	* src/gvnc.c:
+	suncc does not range case for swith statement.
+	[fbad115f06b9]
+
+2008-01-10  Richard W.M. Jones  <rjones@redhat.com>
+
+	* src/vncdisplay.c:
+	If you call one of the vnc_display_open* functions followed quickly
+	by vnc_display_close, then the library segfaults.
+
+	The reason is that the vnc_display_open* functions register an idle
+	callback to launch the coroutine, but if vnc_display_close is called
+	before the idle loop has had a moment to run, this idle callback
+	remains. The coroutine later runs - in my case, after the plugin
+	I'm writing has been unmapped from memory, with unhappy
+	consequences.
+
+	The attached patch fixes this by remembering the callback ID and
+	unregistering it if necessary.
+	[39b5a6c76599]
+
+2008-01-09  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Track keystate & send fake events for GTK key-repeat flaw & to reset
+	state on focus out
+	[95f570fc49e1]
+
+2008-01-01  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/vncdisplay.c:
+	Relax the jpeg compression a bit.
+	[73b4f4043cb5]
+
+	* NEWS, src/blt.h, src/gvnc.c, src/gvnc.h, src/libgtk-vnc_sym.version,
+	src/vncdisplay.c, src/vncdisplay.h:
+	Add support for Tight encoding. Also add an interface to enable the
+	use of lossy-encodings such as the Tight JPEG encoding.
+	[b5de4b4d2c9c]
+
+2007-12-30  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.2 for changeset 978cb4791ef2
+	[5f08494b222b]
+
+2007-12-28  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.2-rc0 for changeset ae93c84b5fc8
+	[978cb4791ef2] [release-0.3.2]
+
+	* src/gvnc.c:
+	Client cut text should used buffered writes to avoid race conditions
+	since it may be called while the coroutine is blocked on IO.
+	[ae93c84b5fc8] [release-0.3.2-rc0]
+
+	* .hgtags:
+	Added tag release-0.3.2-rc0 for changeset b4006353448c
+	[34ffaf166bfc]
+
+	* NEWS, configure.ac:
+	Update news and prepare for 0.3.2
+	[b4006353448c]
+
+	* ChangeLog:
+	Update ChangeLog
+	[02d63c1b0f4e]
+
+	* configure.ac, gtk-vnc.spec.in, src/blt.h, src/gvnc.c,
+	src/vncdisplay.c:
+	Add support for ZRLE encoding
+	[ad7c87b9d94a]
+
+	* NEWS:
+	Update news
+	[c6745423e3bb]
+
+	* src/blt.h, src/gvnc.c:
+	Fix rich cursor encoding.
+
+	If the depth of the server is less than 24, when we built the
+	cursor, we were expanding the smaller pixels to the lower bits of
+	the new pixel instead of the upper bits. The result was that colors
+	in the cursor were showing up as dark grays.
+
+	This patch refactors the cursor blitting function to be more similar
+	to the rest of the blitting functions and ensures that the proper
+	shift values are used.
+	[df452cd30b8c]
+
+2007-12-26  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* NEWS:
+	Update news
+	[be60cc1bd95f]
+
+2007-12-25  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/libgtk-vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Add pointer pass through support
+	[9dc9eb9f4d0f]
+
+2007-12-21  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/gvnc.h:
+	Remove unused declaration.
+	[479cfe7bc3cb]
+
+	* src/coroutine.c:
+	Remove unused file.
+	[bd05cf7a64f0]
+
+2007-12-20  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* NEWS:
+	Update the NEWS file to make the next release a bit easier.
+	[4e59d779bd67]
+
+	* configure.ac, src/Makefile.am, src/coroutine.h,
+	src/coroutine_gthread.c, src/coroutine_ucontext.c, src/libgtk-
+	vnc_sym.version:
+	Add gthread-based coroutine implementation. Many thanks to danpb
+	for autconf support.
+	[ff0c05dacd6e]
+
+	* src/blt.h, src/gvnc.c, src/vncdisplay.c:
+	Add support for RRE encoding.
+	[cb3e43b06ada]
+
+	* src/gvnc.h, src/utils.h, src/vncdisplay.c:
+	We weren't passing the right number of encodings to set_encodings().
+	This is actually non-standard behavior since all clients are
+	required to support at least raw!
+	[9e23f86da2a0]
+
+2007-12-18  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/Makefile.am, src/gvnc.c, src/gvnc.h, src/libgtk-vnc_sym.version,
+	src/vncdisplay.c, src/vncdisplay.h, src/vncshmimage.c,
+	src/vncshmimage.h:
+	Revert support for shared memory transport. The code is fine but
+	the protocol definition is incomplete. The current protocol has a
+	race condition whereas the guest may disconnect before acking the
+	shmid which can lead to shared memory segment being leaked.
+
+	Besides, I think I need to add an accessor to gdkimage to get the
+	shared memory ID instead of reinventing the wheel.
+	[71c9bd03a6c7]
+
+2007-12-14  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/libgtk-vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Add an interface for setting the widget to be read-only
+	[1be3121d5c24]
+
+	* src/vncdisplay.c:
+	Propagate mouse events.
+	[c95f7f37df07]
+
+	* src/libgtk-vnc_sym.version, src/vnc.override, src/vncdisplay.c,
+	src/vncdisplay.h:
+	Extend send_keys() interface to allow raw key presses to be
+	generated.
+	[b206415d1881]
+
+	* src/vnc.override:
+	Make sure the Display.send_keys() returns a value.
+	[0a2f7fafc1f2]
+
+2007-12-13  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.1 for changeset 493439fe2664
+	[b36d749544ee]
+
+	* NEWS, autogen.sh, configure.ac:
+	Prepare for 0.3.1 release and fix bug in autogen script.
+	[493439fe2664] [release-0.3.1]
+
+2007-12-12  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* .hgtags:
+	Added tag release-0.3.0 for changeset 1bbb129cb1ca
+	[c03b2c8f36dd]
+
+	* NEWS, configure.ac:
+	Prepare for 0.3.0 release
+	[1bbb129cb1ca] [release-0.3.0]
+
+2007-11-24  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	gvnc_open_host(): Do not consider connect() return value EISCONN as
+	an error, fix connection in Solaris
+	[9090b80eb7f9]
+
+2007-10-26  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/coroutine.c, src/coroutine.h, src/gvnc.c, src/libgtk-
+	vnc_sym.version, src/vncdisplay.c:
+	Prefix yield()/yieldto() methods with coroutine_ to avoid namespace
+	clash with unistd on Solaris
+	[4a821c404746]
+
+	* AUTHORS, src/blt.h:
+	Re-order SPLICE macros to avoid Solaris compiler/cpp bug (patch from
+	Halton Huo)
+	[b925a71a0d45]
+
+2007-10-21  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Grab the cursor correctly
+	[d6f1a50dbb0b]
+
+2007-10-10  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/coroutine.c:
+	Clear coroutine caller when exiting coroutine
+	[8d1799e6a392]
+
+2007-10-10  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Added the mask GDK_KEY_PRESS_MASK to the widget
+	[df7828ad6498]
+
+2007-10-04  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/coroutine.c:
+	Fix to coroutine caller state management to avoid SEGV
+	[949312711737]
+
+2007-10-04  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c, src/vncdisplay.c:
+	Added support to bell message in vncdisplay widget.
+	[ef58fe73ab0c]
+
+	* src/gvnc.c, src/libgtk-vnc_sym.version, src/vncdisplay.c,
+	src/vncdisplay.h:
+	Implemented clipboard feature in vncdisplay widget
+	[60237af3b6fb]
+
+2007-10-03  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Added a signal for unsupported auth method
+	[1d5e4d1f22a6]
+
+2007-10-02  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Added compatibility to RFB 3.4 (UltraVNC again)
+	[082f2cb50661]
+
+2007-09-26  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/coroutine.c:
+	Remove use of PROT_EXEC with mmap to avoid execmem SELinux errors
+	[1377d78a7153]
+
+2007-09-13  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* .hgtags:
+	Added tag release-0.2.0 for changeset cebd472323b7
+	[101d61c32f64]
+
+	* ChangeLog:
+	Regenerate changelog
+	[cebd472323b7] [release-0.2.0]
+
+	* src/gvnc.c:
+	Remove unused variable
+	[1873728651cc]
+
+	* NEWS, configure.ac, gtk-vnc.spec.in:
+	Prepare for 0.2.0 release
+	[e413780fce33]
+
+	* examples/gvncviewer.c, src/Makefile.am, src/gvnc.c, src/gvnc.h,
+	src/vncdisplay.c, src/vncmarshal.txt:
+	Added signals for authentication failure reports & desktop resizes
+	[ecefdda5818e]
+
+2007-09-10  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c, src/gvnc.h:
+	Support VINO's TLS auth method
+	[381f8531daab]
+
+2007-09-01  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c:
+	Added some paranoid checkings before free() the things
+	[f869a84aa6c5]
+
+2007-08-31  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Hook into destroy method to do shutdown of GVNC couroutine. Keep a
+	ref on vncdisplay, so widget isn't finalized unless the GVNC
+	coroutine is complete
+	[5493aa247633]
+
+	* src/gvnc.c, src/vncdisplay.c:
+	Monitor IO errors & close socket when shutting down to interrupt
+	poll()
+	[c6e55ffe9187]
+
+	* src/gvnc.c, src/vncdisplay.c:
+	Get graceful shutdown working correctly (ie interrupting & waking up
+	message thread)
+	[81dc7bef9183]
+
+2007-08-31  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/vncdisplay.c:
+	Added a destructor for VncDisplay widget
+	[7210501ed245]
+
+	* .hgignore:
+	Added some ignored files to hgignore
+	[a4fe551643a8]
+
+	* src/vncdisplay.c:
+	Uses g_signal_connect() instead of gtk_signal_connect()
+	[d0f0dda040ed]
+
+2007-08-31  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Added impl of xcursor and richcursor encodings for OSX-VNC and
+	TightVNC compatability
+	[12bb6b38448b]
+
+	* src/blt.h, src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Fix decoding of mixed colour depths between client & server
+	[e59d5638a8e8]
+
+2007-08-29  Jonh Wendell  <wendell@bani.com.br>
+
+	* configure.ac, src/Makefile.am, src/gvnc.c, src/utils.h:
+	Enable debugging messages
+	[3aa27e27cfe0]
+
+2007-08-22  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Clear excess space in widget
+	[b1c48ddc01d9]
+
+	* src/blt.h, src/gvnc.c:
+	Fixed handling of shifts for BGR displays and mixed endian client vs
+	server
+	[f6b6e9e2ac43]
+
+	* src/gvnc.h, src/vncdisplay.c:
+	typedef the enums to aid API readability/docs generation
+	[453f9ca2a737]
+
+	* examples/gvncviewer.py:
+	Fix offf by one in argv use
+	[a4bd9ecc4e4e]
+
+2007-08-15  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* .hgtags:
+	Added tag release-0.1.0 for changeset 87259132efca
+	[860bcf129876]
+
+	* README, configure.ac, gtk-vnc.spec.in:
+	Update version to 0.1.0 for release
+	[87259132efca] [release-0.1.0]
+
+	* src/Makefile.am:
+	Fix makefile rule for python bindings to install in lib64 on x86_64
+	[9eae5e847060]
+
+2007-08-13  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c, src/vncdisplay.c:
+	Merge heads
+	[4bf741278c01]
+
+2007-08-01  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c, src/vncdisplay.c:
+	Changed boolean functions (which use gvnc_has_error) to return FALSE
+	when failure
+	[2f8878799f3c]
+
+2007-08-13  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/Makefile.am,
+	src/gvnc.c, src/gvnc.h, src/vncdisplay.c, src/vncdisplay.h:
+	Added support for TLS related credentials
+	[6c4a0385c705]
+
+2007-07-30  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c:
+	Fixed up handling of TLS i/o functions
+	[4c3599147f53]
+
+	* src/gvnc.c:
+	Only print GNU TLS debug if debug level > 1
+	[24ed08897f52]
+
+	* src/gvnc.c:
+	Remove hardcoded hostname & use user supplied hostname in
+	certificate validation
+	[a1196dc0d8ae]
+
+2007-07-20  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/libgtk-
+	vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h,
+	src/vncshmimage.c, src/vncshmimage.h:
+	Added API for taking a screenshot
+	[f5d4e8c6c0bf]
+
+	* src/vncdisplay.c:
+	Fixed typo in conditional test
+	[b6bd362ad33c]
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/gvnc.c,
+	src/gvnc.h, src/libgtk-vnc_sym.version, src/vncdisplay.c,
+	src/vncdisplay.h, src/vncmodule.c:
+	Added more general purpose authentication API
+	[89041eebbead]
+
+	* examples/Makefile.am, examples/gvncviewer.c, examples/gvncviewer.py,
+	src/gvnc.c, src/gvnc.h, src/libgtk-vnc_sym.version,
+	src/vncdisplay.c, src/vncdisplay.h:
+	Refactor GVNC open/close lifecycle APIs
+	[12b4191b7cb4]
+
+2007-07-19  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* configure.ac, examples/Makefile.am, examples/gvncviewer.c:
+	[PATCH] Enhance gvncviewer a bit This patch adds the following to
+	gvncviewer:
+
+	1) install by default 2) make title consistently displayed 3) make
+	the VNC session part of the title 4) use a command line syntax more
+	common with vnc viewers
+
+	Signed-off-by: Anthony Liguori <anthony@codemonkey.ws>
+	[3f09199bff0f]
+
+	* merge
+	[cae84d5bd9ad]
+
+	* configure.ac:
+	Line up the output of ./configure --help and correct a typo
+	[a2126b9a1c1e]
+
+2007-07-18  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* Merge
+	[7802cb9f9d47]
+
+2007-07-18  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/gvnc.c:
+	Buffer client messages to avoid race condition when write() blocks.
+	[2a92ce0f7cf5]
+
+2007-07-18  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/libgtk-
+	vnc_sym.version, src/vnc.override, src/vncdisplay.c,
+	src/vncdisplay.h:
+	Added vnc_display_send_keys API & example usage
+	[ee139f2eefc8]
+
+2007-07-15  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* autobuild.sh:
+	Run automated builds with -Werror enabled
+	[ab919470c43f]
+
+	* src/Makefile.am:
+	Disable verbose compiler warnings for python module - the auto-
+	generated code is crap
+	[e2b249eab7cf]
+
+2007-07-12  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/libgtk-vnc_sym.version:
+	merge
+	[5b8f080db6d9]
+
+	* src/Makefile.am, src/libgtk-vnc_sym.version:
+	Expose GVNC in libgtk-vnc-1.0
+
+	This patch exposes gvnc as part of the public API for libgtk-vnc.
+	We won't considered this a supported API for the first release. I'm
+	using this lower level API at the moment to build an automation
+	system.
+
+	Signed-off-by: Anthony Liguori <anthony@codemonkey.ws>
+	[ea0cdea4fa5e]
+
+2007-07-10  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/vncdisplay.c:
+	Fixed keycode -> keysym conversion wrt to modifier state
+	[8d2ec85be8c3]
+
+	* src/continuation.c, src/coroutine.c:
+	Fix coroutine cleanup/release
+	[47b768fb7f7d]
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/libgtk-
+	vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Allow local pointer hiding to be configurable
+	[ab0313ca8f7a]
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/libgtk-
+	vnc_sym.version, src/vncdisplay.c, src/vncdisplay.h:
+	Add APIs for keyboard & pointer grab policy
+	[9a6dd1146e9f]
+
+	* src/gvnc.c:
+	Treat EHOSTUNREACH as non-fatal connection error
+	[fbbfa57a79cd]
+
+2007-07-04  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* examples/gvncviewer.c, examples/gvncviewer.py, src/blt.h,
+	src/gvnc.c, src/gvnc.h, src/vncdisplay.c, src/vncdisplay.h:
+	Separate creation of gvnc object, from connect opening. Add ability
+	to free/cleanup object & notify upon disconnect
+	[b77ea47300ab]
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c:
+	Use constants for framebuffer encodings
+	[8a6239867d1e]
+
+	* Makefile.am, configure.ac, examples/Makefile.am,
+	examples/gvncviewer.c, examples/gvncviewer.py, gtk-vnc.spec.in:
+	Added really simple example programs in both C & python
+	[5b0848e7fa26]
+
+	* src/gvnc.c, src/gvnc.h, src/libgtk-vnc_sym.version,
+	src/vncdisplay.c, src/vncdisplay.h, src/vncmodule.c:
+	Allow connecting based on a host & port, vs a filedescriptor
+	[7ea49c093bcf]
+
+	* src/continuation.c, src/continuation.h, src/coroutine.c,
+	src/coroutine.h, src/gvnc.h, src/vncdisplay.c, src/vncdisplay.h:
+	Tidy whitespace & put emacs formatting rules at bottom of files
+	[81b497e4bed7]
+
+	* src/blt.h, src/gvnc.c, src/vncdisplay.c, src/vncmodule.c,
+	src/vncshmimage.c:
+	Fixed a number of compiler warnings
+	[f99dcbc7c31f]
+
+	* .hgignore, AUTHORS, COPYING.LIB, COPYING.lib, ChangeLog, MANIFEST,
+	Makefile.am, NEWS, README, acinclude.m4, autobuild.sh, autogen.sh,
+	configure.ac, dsextras.py, gtk-vnc-1.0.pc.in, gtk-vnc.spec.in,
+	setup.py, src/Makefile, src/Makefile.am, src/gen-vnc.defs.c, src
+	/libgtk-vnc_sym.version, src/vnc.defs, src/vnc.override,
+	src/vncmodule.c:
+	Switched over to using automake/conf/libtool. Added pkgconfig data
+	file. Added linker script to control library symbols
+	[f1588033db9c]
+
+2007-06-20  Jonh Wendell  <wendell@bani.com.br>
+
+	* src/gvnc.c, src/gvnc.h, src/vncdisplay.c, src/vncdisplay.h:
+	- Created two public get functions: get_width() and get_height()
+	- Created a vnc-initialized signal
+	- Made small changes in order to work with ultravnc, which reports rfb
+	3.6
+	[0a645e462b27]
+
+2007-02-24  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* src/gvnc.c:
+	Make sure to flush after set_shared_memory
+	[96efd786ce0e]
+
+	* src/gvnc.c:
+	merge
+	[bf58a3b140e9]
+
+2007-02-24  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c:
+	Merge heads
+	[40f71f58fe82]
+
+	* src/gvnc.c:
+	Buffer all outgoing writes until gvnc_flush() is called. Fix
+	signed/unsigned comparisons
+	[63a8d28dc00c]
+
+2007-02-23  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c:
+	Add in missing diffie-hellman params. Fixed reading of TLS data wrt
+	to internal buffer
+	[e89673aaaa27]
+
+2007-02-24  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* setup.py, src/Makefile, src/gen-vnc.defs.c, src/gvnc.c, src/gvnc.h,
+	src/vnc.defs, src/vncdisplay.c, src/vncdisplay.h, src/vncshmimage.c,
+	src/vncshmimage.h:
+	Add initial support for shared memory transport. It's off by
+	default.
+	[5cc6db03869a]
+
+2007-02-23  Anthony Liguori  <anthony@codemonkey.ws>
+
+	* setup.py, src/gvnc.c:
+	Fix python widget build and add proper support for RFB 3.3
+	[9315b4e9cbac]
+
+2007-02-21  "Daniel P. Berrange  <berrange@redhat.com>
+
+	* src/gvnc.c:
+	Support the plain no X509 certificate auth types. Remove mistaken 1
+	byte write. Allow use of TLS 1.0 for compatability
+	[6d1100a8d5b4]
+
+	* src/Makefile, src/gvnc.c:
+	Initial suppport for protocol 3.7/3.8 and VeNCrypt TLS
+	authentication
+	[079f2f886eef]
+
+	* src/vncdisplay.c:
+	Remove redundant call to resize - gvnc_set_vnc_ops triggers a resize
+	signal
+	[26f19dac4378]
+
+2007-01-05  anthony  <anthony@rhesus>
+
+	* dsextras.py, setup.py, src/Makefile:
+	Some updates
+	[e92830dedd8a]
+
+	* MANIFEST, Makefile, blt.h, blt1.h, continuation.c, continuation.h,
+	coroutine.c, coroutine.h, d3des.c, d3des.h, dsextras.py, gvnc.c,
+	gvnc.h, setup.py, src/Makefile, src/blt.h, src/blt1.h,
+	src/continuation.c, src/continuation.h, src/coroutine.c,
+	src/coroutine.h, src/d3des.c, src/d3des.h, src/gen-vnc.defs.c,
+	src/gvnc.c, src/gvnc.h, src/vnc.defs, src/vnc.override,
+	src/vncdisplay.c, src/vncdisplay.h, src/vncmodule.c, test.py, vnc-
+	test.c, vnc.override, vncdisplay.c, vncdisplay.h, vncmodule.c:
+	Reorganize repo and create a proper setup.py
+	[b883d2248b18]
+
+	* COPYING.lib, blt1.h, continuation.c, continuation.h, coroutine.c,
+	coroutine.h, gvnc.c, vncdisplay.c, vncdisplay.h, vncmodule.c:
+	Add licensing stuff
+	[19632bb439a4]
+
+	* test.py, vncdisplay.c, vncdisplay.h:
+	Add a proper set of signals to notify of grab change
+	[4226ed633da9]
+
+2006-12-20  anthony  <anthony@rhesus>
+
+	* Makefile, blt.h, blt1.h, continuation.c, continuation.h,
+	coroutine.c, coroutine.h, d3des.c, d3des.h, gvnc.c, gvnc.h, test.py,
+	vnc-test.c, vnc.override, vncdisplay.c, vncdisplay.h, vncmodule.c:
+	Put vnc widget into a separate repo
+	[ba8d726d2f0f]
+

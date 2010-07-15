@@ -4,19 +4,32 @@
 # a security audit at very least
 %define with_plugin 0
 
+%define with_gir 0
+
+%if 0%{fedora} >= 12
+%define with_gir 1
+%endif
+
 Summary: A GTK widget for VNC clients
 Name: gtk-vnc
-Version: 0.3.10
+Version: 0.4.1
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
-Source: http://ftp.gnome.org/pub/GNOME/sources/%{name}/0.3/%{name}-%{version}.tar.gz
+Source: http://ftp.gnome.org/pub/GNOME/sources/%{name}/0.4/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: http://live.gnome.org/gtk-vnc
-BuildRequires: gtk2-devel pygtk2-devel python-devel zlib-devel
+BuildRequires: gtk2-devel >= 2.14
+BuildRequires: pygtk2-devel python-devel zlib-devel
 BuildRequires: gnutls-devel cyrus-sasl-devel intltool
+%if %{with_gir}
+BuildRequires: gobject-introspection-devel
+%if 0%{?fedora} < 14
+BuildRequires: gir-repository-devel
+%endif
+%endif
 %if %{with_plugin}
-%if "%{fedora}" > "8"
+%if 0%{?fedora} > 8
 BuildRequires: xulrunner-devel
 %else
 BuildRequires: firefox-devel
@@ -30,9 +43,9 @@ allowing it to be completely asynchronous while remaining single threaded.
 %package devel
 Summary: Libraries, includes, etc. to compile with the gtk-vnc library
 Group: Development/Libraries
-Requires: %{name} = %{version}
+Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig
-Requires: pygtk2-devel gtk2-devel
+Requires: gtk2-devel gnutls-devel
 
 %description devel
 gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
@@ -65,16 +78,54 @@ This package provides a web browser plugin for Mozilla compatible
 browsers.
 %endif
 
+%package -n gvnc
+Summary: A GObject for VNC connections
+
+%description -n gvnc
+gvnc is a GObject for managing a VNC connection. It provides all the
+infrastructure required to build a VNC client without having to deal
+with the raw protocol itself.
+
+%package -n gvnc-devel
+Summary: Libraries, includes, etc. to compile with the gvnc library
+Group: Development/Libraries
+Requires: gvnc = %{version}-%{release}
+Requires: pkgconfig
+
+%description -n gvnc-devel
+gvnc is a GObject for managing a VNC connection. It provides all the
+infrastructure required to build a VNC client without having to deal
+with the raw protocol itself.
+
+Libraries, includes, etc. to compile with the gvnc library
+
+%package -n gvnc-tools
+Summary: Command line VNC tools
+Group: Applications/Internet
+
+%description -n gvnc-tools
+Provides useful command line utilities for interacting with
+VNC servers. Includes the gvnccapture program for capturing
+screenshots of a VNC desktop
+
 %prep
 %setup -q
 
 %build
-%if %{with_plugin}
-%configure --enable-plugin=yes
+%if %{with_gir}
+%define gir_arg --enable-introspection=yes
 %else
-%configure
+%define gir_arg --enable-introspection=no
 %endif
-%__make %{?_smp_mflags}
+
+%if %{with_plugin}
+%define plugin_arg --enable-plugin=yes
+%else
+%define plugin_arg --enable-plugin=no
+%endif
+
+%configure %{plugin_arg} %{gir_arg}
+%__make %{?_smp_mflags} V=1
 
 %install
 rm -fr %{buildroot}
@@ -98,21 +149,28 @@ rm -fr %{buildroot}
 
 %files -f %{name}.lang
 %defattr(-, root, root)
-%doc AUTHORS ChangeLog NEWS README COPYING.LIB
-%{_libdir}/lib*.so.*
+%doc AUTHORS ChangeLog ChangeLog-old NEWS README COPYING.LIB
+%{_libdir}/libgtk-vnc-1.0.so.*
+%if %{with_gir}
+%{_libdir}/girepository-1.0/GtkVnc-1.0.typelib
+%endif
 
 %files devel
 %defattr(-, root, root)
-%doc AUTHORS ChangeLog NEWS README COPYING.LIB
 %doc examples/gvncviewer.c
-%{_libdir}/lib*.so
+%if %{with_gir}
+%doc examples/gvncviewer.js
+%endif
+%{_libdir}/libgtk-vnc-1.0.so
 %dir %{_includedir}/%{name}-1.0/
 %{_includedir}/%{name}-1.0/*.h
 %{_libdir}/pkgconfig/%{name}-1.0.pc
+%if %{with_gir}
+%{_datadir}/gir-1.0/GtkVnc-1.0.gir
+%endif
 
 %files python
 %defattr(-, root, root)
-%doc AUTHORS ChangeLog NEWS README COPYING.LIB
 %doc examples/gvncviewer.py
 %{_libdir}/python*/site-packages/gtkvnc.so
 
@@ -121,6 +179,29 @@ rm -fr %{buildroot}
 %defattr(-, root, root)
 %{_libdir}/mozilla/plugins/%{name}-plugin.so
 %endif
+
+%files -n gvnc
+%defattr(-, root, root)
+%{_libdir}/libgvnc-1.0.so.*
+%if %{with_gir}
+%{_libdir}/girepository-1.0/GVnc-1.0.typelib
+%endif
+
+%files -n gvnc-devel
+%defattr(-, root, root)
+%{_libdir}/libgvnc-1.0.so
+%dir %{_includedir}/gvnc-1.0/
+%{_includedir}/gvnc-1.0/*.h
+%{_libdir}/pkgconfig/gvnc-1.0.pc
+%if %{with_gir}
+%{_datadir}/gir-1.0/GVnc-1.0.gir
+%endif
+
+%files -n gvnc-tools
+%defattr(-, root, root)
+%doc AUTHORS ChangeLog NEWS README COPYING.LIB
+%{_bindir}/gvnccapture
+%{_mandir}/man1/gvnccapture.1*
 
 %changelog
 * Thu Sep 13 2007 Daniel P. Berrange <berrange@redhat.com> - 0.2.0-1

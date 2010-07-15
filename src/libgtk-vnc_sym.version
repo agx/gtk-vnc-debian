@@ -53,6 +53,31 @@
     vnc_display_set_force_size;
     vnc_display_get_force_size;
 
+# introduced with 0.3.8
+    vnc_display_get_option_entries;
+
+# introduced with 0.3.9
+    vnc_display_set_depth;
+    vnc_display_get_depth;
+
+    vnc_display_depth_color_get_type;
+
+    vnc_display_request_update;
+
+    vnc_image_framebuffer_get_type;
+    vnc_image_framebuffer_new;
+    vnc_image_framebuffer_get_image;
+
+# grab key settings support
+    vnc_display_set_grab_keys;
+    vnc_display_get_grab_keys;
+    vnc_grab_sequence_new;
+    vnc_grab_sequence_new_from_string;
+    vnc_grab_sequence_copy;
+    vnc_grab_sequence_free;
+    vnc_grab_sequence_as_string;
+    vnc_grab_sequence_get_type;
+
   local:
       *;
 };
