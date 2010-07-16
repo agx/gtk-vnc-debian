@@ -1,3 +1,22 @@
+gtk-vnc (0.4.1-1) unstable; urgency=low
+
+  * [2703df5] Imported Upstream version 0.4.1
+  * [5a5910e] Drop patches applied upstream 
+        0001-say-disconnected-from-server-only-once-connected.patch
+        0002-remove-WERROR_CFLAGS.patch
+        0004-Don-t-use-PATH_MAX.patch
+        0005-Drop-space-after-Wl-in-libgtk_vnc_1_0_la_LDFLAGS.patch
+        0006-Add-Wl-since-no-undefined-is-a-linker-option.patch
+        0007-Explicitly-link-against-X11-libs-for-XkbGetKeyboard.patch
+        0008-Add-missing-symbols.patch
+        0009-Fix-missing-intialisation-of-sysdir-and-uderdir.patch
+  * [e3ed1d0] No need to run autoreconf anymore
+  * [1529b9a] No static libs built
+  * [15068ef] Update symbols file with new symbols
+  * [337c397] Bump standards version
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 16 Jul 2010 17:55:31 +0200
+
 gtk-vnc (0.3.10-6) unstable; urgency=low
 
   * [405bfa7] New patch 0009-Fix-missing-intialisation-of-sysdir-and-
