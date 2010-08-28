@@ -1,0 +1,30 @@
+From: Daniel P. Berrange <dan@berrange.com>
+Date: Sun, 15 Aug 2010 17:30:19 +0000
+Subject: [PATCH] Reset xmit_buffer fields to fix reconnect
+
+If a vnc_connection object was closed and reopened old data in the xmit_buffer fields would cause a crash, since it was not re-initialized
+
+Origin: upstream, http://git.gnome.org/browse/gtk-vnc/commit/?id=55d0ee7ba77e15ac5bcf59ff6160170d5b67784f
+---
+ src/vncconnection.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
+
+diff --git a/src/vncconnection.c b/src/vncconnection.c
+index 03197de..a4a9835 100644
+--- a/src/vncconnection.c
++++ b/src/vncconnection.c
+@@ -4191,7 +4191,12 @@ static void vnc_connection_close(VncConnection *conn)
+ 		priv->name = NULL;
+ 	}
+ 
+-	g_free (priv->xmit_buffer);
++	if (priv->xmit_buffer) {
++		g_free(priv->xmit_buffer);
++		priv->xmit_buffer = NULL;
++		priv->xmit_buffer_size = 0;
++		priv->xmit_buffer_capacity = 0;
++	}
+ 
+ 	if (priv->cred_username) {
+ 		g_free(priv->cred_username);
+-- 
