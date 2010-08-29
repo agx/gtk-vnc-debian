@@ -1,3 +1,14 @@
+gtk-vnc (0.4.1-3) unstable; urgency=low
+
+  [ Laurent Léonard ]
+  * [3e55ef6] New patch 0002-Reset-xmit_buffer-fields-to-fix- reconnect.patch
+  * [66baa3f] Bump Standards-Version to 3.9.1
+
+  [ Guido Günther ]
+  * [629db64] Switch to team maintenance and set DM-Upload-Allowed = yes.
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 29 Aug 2010 18:13:39 +0200
+
 gtk-vnc (0.4.1-2) unstable; urgency=low
 
   * [9b54fbb] Switch to dh_pysupport. (Closes: #590365)
