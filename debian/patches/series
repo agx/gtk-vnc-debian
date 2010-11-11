@@ -1,3 +1,1 @@
 0001-fix-build-with-xulrunner-1.9.1.patch
-0002-Reset-xmit_buffer-fields-to-fix-reconnect.patch
-0003-Fix-auth-subtype-choosing-logic-in-vncdisplay.patch
