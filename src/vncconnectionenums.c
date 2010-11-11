@@ -1,5 +1,5 @@
 
-/* Generated data (by glib-mkenums) */
+
 
 #include <glib-object.h>
 #include "vncconnectionenums.h"
@@ -57,6 +57,7 @@ static const GEnumValue _vnc_connection_auth_values[] = {
   { VNC_CONNECTION_AUTH_TLS, "VNC_CONNECTION_AUTH_TLS", "tls" },
   { VNC_CONNECTION_AUTH_VENCRYPT, "VNC_CONNECTION_AUTH_VENCRYPT", "vencrypt" },
   { VNC_CONNECTION_AUTH_SASL, "VNC_CONNECTION_AUTH_SASL", "sasl" },
+  { VNC_CONNECTION_AUTH_ARD, "VNC_CONNECTION_AUTH_ARD", "ard" },
   { VNC_CONNECTION_AUTH_MSLOGON, "VNC_CONNECTION_AUTH_MSLOGON", "mslogon" },
   { 0, NULL, NULL }
 };
@@ -115,5 +116,5 @@ vnc_connection_credential_get_type (void)
 }
 
 
-/* Generated data ends here */
+
 

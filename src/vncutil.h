@@ -27,6 +27,9 @@ G_BEGIN_DECLS
 
 void vnc_util_set_debug(gboolean enabled);
 gboolean vnc_util_get_debug(void);
+gint vnc_util_get_version(void);
+const gchar *vnc_util_get_version_string(void);
+gboolean vnc_util_check_version(gint major, gint minor, gint micro);
 
 #define VNC_DEBUG(fmt, ...)						\
 	do {								\

@@ -35,6 +35,26 @@ gboolean vnc_util_get_debug(void)
 	return debugFlag;
 }
 
+gint vnc_util_get_version(void)
+{
+	return (VERSION_MAJOR << 16) |
+		(VERSION_MINOR << 8) |
+		VERSION_MICRO;
+}
+
+gboolean vnc_util_check_version(gint major, gint minor, gint micro)
+{
+	return ((VERSION_MAJOR > major) || \
+		((VERSION_MAJOR == major) && (VERSION_MINOR > minor)) || \
+		((VERSION_MAJOR == major) && (VERSION_MINOR == minor) && \
+		(VERSION_MICRO >= micro)));
+}
+
+const gchar *vnc_util_get_version_string(void)
+{
+	return VERSION;
+}
+
 /*
  * Local variables:
  *  c-indent-level: 8

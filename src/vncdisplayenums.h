@@ -1,5 +1,5 @@
 
-/* Generated data (by glib-mkenums) */
+
 
 #ifndef VNC_DISPLAY_ENUMS_H
 #define VNC_DISPLAY_ENUMS_H
@@ -18,5 +18,5 @@ G_END_DECLS
 
 #endif /* VNC_DISPLAY_ENUMS_H */
 
-/* Generated data ends here */
+
 

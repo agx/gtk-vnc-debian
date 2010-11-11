@@ -19,6 +19,7 @@
  */
 
 #include "vncdisplay.h"
+#include "vncutil.h"
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <stdlib.h>
@@ -30,6 +31,53 @@
 #if WITH_LIBVIEW
 #include <libview/autoDrawer.h>
 #endif
+
+#ifndef GDK_Return
+#define GDK_Return GDK_KEY_Return
+#endif
+#ifndef GDK_Escape
+#define GDK_Escape GDK_KEY_Escape
+#endif
+#ifndef GDK_BackSpace
+#define GDK_BackSpace GDK_KEY_BackSpace
+#endif
+#ifndef GDK_Delete
+#define GDK_Delete GDK_KEY_Delete
+#endif
+#ifndef GDK_Control_L
+#define GDK_Control_L GDK_KEY_Control_L
+#endif
+#ifndef GDK_Alt_L
+#define GDK_Alt_L GDK_KEY_Alt_L
+#endif
+#ifndef GDK_F1
+#define GDK_F1 GDK_KEY_F1
+#endif
+#ifndef GDK_F2
+#define GDK_F2 GDK_KEY_F2
+#endif
+#ifndef GDK_F3
+#define GDK_F3 GDK_KEY_F3
+#endif
+#ifndef GDK_F4
+#define GDK_F4 GDK_KEY_F4
+#endif
+#ifndef GDK_F5
+#define GDK_F5 GDK_KEY_F5
+#endif
+#ifndef GDK_F6
+#define GDK_F6 GDK_KEY_F6
+#endif
+#ifndef GDK_F7
+#define GDK_F7 GDK_KEY_F7
+#endif
+#ifndef GDK_F8
+#define GDK_F8 GDK_KEY_F8
+#endif
+#ifndef GDK_F11
+#define GDK_F11 GDK_KEY_F11
+#endif
+
 
 static gchar **args = NULL;
 static const GOptionEntry options [] =
@@ -495,6 +543,7 @@ static gboolean window_state_event(GtkWidget *widget,
 
 int main(int argc, char **argv)
 {
+	gchar *name;
 	GOptionContext *context;
 	GError *error = NULL;
 	char port[1024], hostname[1024];
@@ -519,8 +568,11 @@ int main(int argc, char **argv)
 	GtkWidget *showgrabkeydlg;
 	const char *help_msg = "Run 'gvncviewer --help' to see a full list of available command line options";
 
+	name = g_strdup_printf("- Simple VNC Client on Gtk-VNC %s",
+                                 vnc_util_get_version_string());
+
 	/* Setup command line options */
-	context = g_option_context_new ("- Simple VNC Client");
+	context = g_option_context_new (name);
 	g_option_context_add_main_entries (context, options, NULL);
 	g_option_context_add_group (context, gtk_get_option_group (TRUE));
 	g_option_context_add_group (context, vnc_display_get_option_group ());

@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.4.1],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.4.2],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -13,9 +13,10 @@ AM_INIT_AUTOMAKE([1.10 -Wno-portability])
 LT_PREREQ([2.2.6])
 LT_INIT([win32-dll disable-static])
 
-AC_CONFIG_MACRO_DIR([gnulib/m4])
+AC_CONFIG_MACRO_DIR([m4])
 
 GNOME_MAINTAINER_MODE_DEFINES
+AM_MAINTAINER_MODE([enable])
 
 # Use the silent-rules feature when possible.
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -28,6 +29,8 @@ dnl ****************************************************************************
 
 GOBJECT_REQUIRED=2.10.0
 AC_SUBST(GOBJECT_REQUIRED)
+GIO_REQUIRED=2.10.0
+AC_SUBST(GIO_REQUIRED)
 GDK_PIXBUF_REQUIRED=2.10.0
 AC_SUBST(GDK_PIXBUF_REQUIRED)
 GNUTLS_REQUIRED=1.4.0
@@ -37,17 +40,23 @@ PYGTK_REQUIRED=2.0.0
 VIEW_REQUIRED=0.6.0
 GTHREAD_REQUIRED=2.0.0
 PYTHON_REQUIRED=2.4
+CAIRO_REQUIRED=1.2.0
 
 FIREFOX_PLUGIN_REQUIRED=2.0.0
 MOZILLA_PLUGIN_REQUIRED=1.8
 GOBJECT_INTROSPECTION_REQUIRED=0.6.2
+GOBJECT_INTROSPECTION_DESIRED=0.9.4
 
 dnl *******************************************************************************
-dnl Setup GNULIB - must be before anything else in this file
+dnl Get the version information at compile-time
 dnl *******************************************************************************
+VERSION_MAJOR=`echo $VERSION | awk -F. '{print $1}'`
+VERSION_MINOR=`echo $VERSION | awk -F. '{print $2}'`
+VERSION_MICRO=`echo $VERSION | awk -F. '{print $3}'`
 
-gl_EARLY
-gl_INIT
+AC_DEFINE_UNQUOTED(VERSION_MAJOR, $VERSION_MAJOR, [Major version number of package])
+AC_DEFINE_UNQUOTED(VERSION_MINOR, $VERSION_MINOR, [Minor version number of package])
+AC_DEFINE_UNQUOTED(VERSION_MICRO, $VERSION_MICRO, [Micro version number of package])
 
 dnl *******************************************************************************
 dnl Setup core compilers / build helpers
@@ -88,7 +97,7 @@ case "$with_gtk" in
        GTK_VNC_API_VERSION=1.0
        ;;
   3.0) GTK_API_VERSION=3.0
-       GTK_REQUIRED=2.90.4
+       GTK_REQUIRED=2.91.3
        GTK_VNC_API_VERSION=2.0
        ;;
 esac
@@ -99,7 +108,7 @@ AC_SUBST([GTK_VNC_API_VERSION])
 AM_CONDITIONAL([HAVE_GTK_2],[test "$with_gtk" = "2.0"])
 AM_CONDITIONAL([HAVE_GTK_3],[test "$with_gtk" = "3.0"])
 
-AC_CHECK_HEADERS([pwd.h winsock2.h termios.h])
+AC_CHECK_HEADERS([pwd.h termios.h])
 
 AC_ARG_WITH(python,
 [  --with-python           build python bindings],
@@ -158,6 +167,10 @@ PKG_CHECK_MODULES(GOBJECT, gobject-2.0 >= $GOBJECT_REQUIRED)
 AC_SUBST(GOBJECT_CFLAGS)
 AC_SUBST(GOBJECT_LIBS)
 
+PKG_CHECK_MODULES(GIO, gio-2.0 >= $GIO_REQUIRED)
+AC_SUBST(GIO_CFLAGS)
+AC_SUBST(GIO_LIBS)
+
 PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= $GDK_PIXBUF_REQUIRED)
 AC_SUBST(GDK_PIXBUF_CFLAGS)
 AC_SUBST(GDK_PIXBUF_LIBS)
@@ -170,15 +183,9 @@ PKG_CHECK_MODULES(X11, x11,,AC_MSG_NOTICE([Not building against X11]))
 AC_SUBST(X11_CFLAGS)
 AC_SUBST(X11_LIBS)
 
-save_CFLAGS="$CFLAGS"
-save_LIBS="$LIBS"
-CFLAGS="$CFLAGS $GTK_CFLAGS"
-LIBS="$LIBS $GTK_LIBS"
-AC_CHECK_FUNC([gdk_cairo_create], [WITH_GTK_CAIRO=1], [WITH_GTK_CAIRO=0])
-CFLAGS="$save_CFLAGS"
-LIBS="$save_LIBS"
-
-AC_DEFINE_UNQUOTED(WITH_GTK_CAIRO, [$WITH_GTK_CAIRO], [Whether to use cairo for GTK rendering])
+PKG_CHECK_MODULES(CAIRO, cairo >= $CAIRO_REQUIRED)
+AC_SUBST(CAIRO_CFLAGS)
+AC_SUBST(CAIRO_LIBS)
 
 
 AC_ARG_WITH(libview,
@@ -360,17 +367,30 @@ AC_ARG_ENABLE([introspection],
         AS_HELP_STRING([--enable-introspection], [enable GObject introspection]),
         [], [enable_introspection=check])
 
+has_symbol_prefix=no
 if test "x$enable_introspection" != "xno" ; then
         PKG_CHECK_MODULES([GOBJECT_INTROSPECTION],
-                          [gobject-introspection-1.0 >= $GOBJECT_INTROSPECTION_REQUIRED],
-                          [enable_introspection=yes],
+                          [gobject-introspection-1.0 >= $GOBJECT_INTROSPECTION_DESIRED],
                           [
-                             if test "x$enable_introspection" = "xcheck"; then
-			       enable_introspection=no
-                             else
-                               AC_MSG_ERROR([gobject-introspection is not available])
-                             fi
+                             enable_introspection=yes
+                             has_symbol_prefix=yes
+                          ],
+                          [
+                          PKG_CHECK_MODULES([GOBJECT_INTROSPECTION],
+                              [gobject-introspection-1.0 >= $GOBJECT_INTROSPECTION_REQUIRED],
+                              [
+                                 enable_introspection=yes
+                                 has_symbol_prefix=no
+                              ],
+                              [
+                                 if test "x$enable_introspection" = "xcheck"; then
+			           enable_introspection=no
+                                 else
+                                   AC_MSG_ERROR([gobject-introspection is not available])
+                                 fi
+                              ])
                           ])
+
         if test "x$enable_introspection" = "xyes" ; then
           AC_DEFINE([WITH_GOBJECT_INTROSPECTION], [1], [enable GObject introspection support])
           AC_SUBST(GOBJECT_INTROSPECTION_CFLAGS)
@@ -380,11 +400,10 @@ if test "x$enable_introspection" != "xno" ; then
         fi
 fi
 AM_CONDITIONAL([WITH_GOBJECT_INTROSPECTION], [test "x$enable_introspection" = "xyes"])
+AM_CONDITIONAL([G_IR_SCANNER_SYMBOL_PREFIX], [test "x$has_symbol_prefix" = "xyes"])
 
 AC_CONFIG_FILES(
   Makefile
-  gnulib/lib/Makefile
-  gnulib/tests/Makefile
   src/Makefile
   tools/Makefile
   examples/Makefile
@@ -399,12 +418,6 @@ AC_CONFIG_FILES(
 
 AC_OUTPUT
 
-if [ test "$WITH_GTK_CAIRO" = 1 ]; then
-  with_scaling=yes
-else
-  with_scaling=no
-fi
-
 echo "
 Configure summary:
 
@@ -416,7 +429,6 @@ Configure summary:
 	Python binding .............:  ${WITH_PYTHON}
 	Install example programs ...:  ${WITH_EXAMPLES}
 	Browser plugin .............:  ${enable_plugin}
-	Scaling support.............:  ${with_scaling}
 	SASL support................:  ${enable_sasl}
 	GTK+ version................:  ${GTK_API_VERSION}
 "

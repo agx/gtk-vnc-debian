@@ -26,21 +26,30 @@ To browse or report bugs, go to our bugzilla page at:
   http://bugzilla.gnome.org/browse.cgi?product=gtk-vnc
 
 
-Installation caveats
---------------------
+Installation notes
+------------------
 
- * GTK3: The build defaults to using GTK2. To enable GTK3 support
-   the flag '--with-gtk' must be passed to configure.
+ * GTK2/GTK3: The build defaults to using GTK2. To enable
+   *experimental* GTK3 support the flag '--with-gtk'
+   must be passed to configure.
 
          ./configure --with-gtk=3.0
 
-   NB: the traditional python bindings are disabled when gtk3
-   is used. Applications should use the GObject introspection
-   bindings instead.
+   Notes on GTK3 support:
 
-   NB: when built against GTK3, the library name for gtk-vnc
-   will become 'gtk-vnc-2.0.so' and the pkg-config file will
-   also be 'gtk-vnc-2.0'.  The gvnc library is unaffected.
+    - The GTK3 build will not be guarenteed ABI stable until
+      the release after GTK3 itself is declared ABI stable.
+
+    - The traditional python bindings are disabled when GTK3
+      is used. Applications should use the GObject introspection
+      bindings instead.
+
+    - When built against GTK3, the library name for gtk-vnc
+      will become 'gtk-vnc-2.0.so' and the pkg-config file will
+      also be 'gtk-vnc-2.0'.
+
+    - The gvnc library is unaffected by GTK2/GTK3 build
+      since it only depends on GLib/GIO
 
  * NetBSD: You must run configure using
 

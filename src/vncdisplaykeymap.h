@@ -24,9 +24,10 @@
 
 #include <glib.h>
 
-const guint8 const *vnc_display_keymap_x2pc_table(void);
-guint16 vnc_display_keymap_x2pc(const guint8 *keycode_map,
-				guint16 keycode);
+const guint16 const *vnc_display_keymap_gdk2rfb_table(size_t *maplen);
+guint16 vnc_display_keymap_gdk2rfb(const guint16 *keycode_map,
+				   size_t keycode_maplen,
+				   guint16 keycode);
 void vnc_display_keyval_set_entries(void);
 void vnc_display_keyval_free_entries(void);
 guint vnc_display_keyval_from_keycode(guint keycode, guint keyval);

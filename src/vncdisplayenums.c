@@ -1,5 +1,5 @@
 
-/* Generated data (by glib-mkenums) */
+
 
 #include <glib-object.h>
 #include "vncdisplayenums.h"
@@ -64,5 +64,5 @@ vnc_display_depth_color_get_type (void)
 }
 
 
-/* Generated data ends here */
+
 
