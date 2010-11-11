@@ -1,6 +1,33 @@
     GTK VNC News
     ============
 
+Nov  3, 2010: Release 0.4.1
+===========================
+
+New features:
+
+ o OS-X VNC authentiction scheme
+ o Add API to query library version
+
+Bug fixes:
+
+ o Disable extended key events if display keymap
+   cannot be determined
+ o Rewritten keymap code to work on non-Xorg
+   servers and native OS-X/Win32 GTK backends.
+ o Many more language translations
+ o Strict bounds checking on all framebuffer updates
+ o Fixed parameter for vnc-server-cut-text signal
+ o Fixed build with latest GTK3 development snapshot
+
+Code cleanup:
+
+ o Switched over to GIO for socket connections
+ o Removed all use of GNULIB now GIO handles all
+   portability issues with sockets.
+ o Mandate use of Cairo for all drawing, removing
+   any use of GdkPixmap, GdkImage, GdkBitmap.
+
 Jul 14, 2010: Release 0.4.1
 ===========================
 

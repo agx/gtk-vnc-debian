@@ -1,4 +1,377 @@
+2010-11-05  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update NEWS/README/configure.ac  for 0.4.2 release
+	* NEWS: List of new features/bugs fixed
+	* README: Expand on GTK3 notes
+	* configure.ac: Increase version number
+
+2010-11-03  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix data type of arg to cut-text signal in VncConnection
+	The vnc-server-cut-text signal is marshalled by
+
+	  g_cclosure_marshal_VOID__STRING
+
+	so its argument must be a 'const char *', not a 'GString *'
+	datatype.
+
+	* src/vncconnection.c: Fix data type for cut-text signal arg
+
+2010-10-29  Carles Ferrando  <carles.ferrando@gmail.com>
+
+	Added Catalan (Valencian) translation
+
+2010-10-29  Kjartan Maraas  <kmaraas@gnome.org>
+
+	Add nb
+
+	Updated Norwegian bokmål translation.
+
+2010-10-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Enable building of a sub-RPM for gtk3
+	Allow a single RPM to build both gtk2 and gtk3 libraries
+
+	* gtk-vnc.spec.in: Add gtk-vnc2 sub-RPM for gtk3 binaries
+
+	Cope with building against newer gobject-introspection
+	Newer gobject-introspection wants --symbol-prefix and
+	--identifier-prefix instead of --strip-prefix. Test
+	for such a version and use the new style options if
+	appropriate
+
+	* configure.ac: Check for new gobject introspection
+	* src/Makefile.am: Adapt to g-ir-scanner flags
+
+	Fix rendering artifacts when running in scaling mode
+	The expose region was not large enough when running in scaling mode
+	resulting in horizontal & vertical line artifacts when moving
+	windows around on the virtual desktop. The previous fix used in
+	Gtk2 was not sufficient for Gtk3, so change the fix to be entirely
+	within the on_framebuffer_update handler
+
+	* src/vncdisplay.c: Hack to fix rendering artifacts
+
+	Add compat macro for GDK_DISPLAY
+	The GDK_DISPLAY macro is removed in Gtk3, add a compatibility
+	macro to allow build with Gtk2 and Gtk3
+
+	* src/vncdisplaykeymap.c: Add GDK_DISPLAY compat
+
+	Add compatability code for GDK symbolic keys
+	The GDK key macros were changed from GDK_ to GDK_KEY_ in GTK3.
+	Add some compatibility #ifdefs to allow the same macros to be
+	used on both Gtk2 and Gtk3.
+
+	* examples/gvncviewer.c: Add GDK_KEY compat
+	* src/vncdisplaykeymap.c: Add GDK_KEY compat
+
+2010-10-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Refactor drawing code to allow compatibility with Gtk3
+	In Gtk3, the expose_event is replaced with a 'draw' callback.
+	This is provided with a 'cairo_t' context that is already
+	configured with the clip region.
+
+	Split the current expose_event into two parts, the first
+	which creates a cairo_t based on the GdkEventExpose data,
+	and the second method which draws to that cairo_t. The
+	expose_event is conditionally disabled for Gtk3 builds,
+	just leaving the draw method which works on Gtk2 and Gtk3
+
+	* src/vncdisplay.c: Pull drawing code out of expose_event
+	  method and disable expose_event on Gtk3
+
+	Remove the server side framebuffer cached in GdkPixmap
+	For rendering efficiency a GdkPixmap was kept on the server
+	duplicating what was in the old GdkImage object on the client
+	side. The client was changed to use a cairo image surface.
+	This can easily be rendered straight to the window and does
+	not appear to have any performance degradation. Thus the
+	GdkPixmap can be eliminated, avoiding the extra memory usage
+	that entails
+
+	* src/vncdisplay.c: Remove the GdkPixmap copy of the framebuffer
+
+	Change cursor to use GDK_BLANK_CURSOR instead of a GdkPixmap
+	The GdkPixmap class has been removed in GTK3. Since Gtk 2.16
+	there is a standard GDK_BLANK_CURSOR which can replace their
+	usage and works across Gtk 2 and 3.
+
+	* src/vncdisplay.c: Use GDK_BLANK_CURSOR
+
+2010-10-25  Daniel P. Berrange  <berrange@redhat.com>
+
+	Clear out more fields when closing a vnc connection
+	Be more paranoid about reseting internal fields when closing
+	a VNC connection, to prevent surprises when reconnecting
+
+	* src/vncconnection.c: Clear out more fields when closing
+	  a connection
+
+	Add strict bounds checking on framebuffer updates
+	Some broken VNC servers send frame buffer updates which stray
+	outside the boundary of the desktop. This will lead to memory
+	corruption when rendering, so explicitly check for this and
+	drop the VNC connection.
+
+	* src/vncconnection.c: Add framebuffer update bounds checking
+
+2010-10-21  Michal Novotny  <minovotn@redhat.com>
+
+	Introduce vnc_util_get_version() functions to get version
+	this is the patch to allow user to get the GTK-VNC version using the
+	vnc_util_get_version() and vnc_util_get_version_string() functions.
+	Both the functions returns the version numbers based on the VERSION
+	definition as created by autotools. Also, in version 2 (previous
+	version) a new function called vnc_util_check_version() has been added
+	to check whether the version of gtk-vnc is equal or higher to version
+	requested. Function vnc_util_check_version() is defined as:
+
+	gboolean vnc_util_check_version(gint major, gint minor, gint micro);
+
+	The version of gtk-vnc is written in a "major.minor.micro" format
+	and since the version number didn't change once the package was
+	compiled version 3 is using VERSION_{MAJOR,MINOR,MICRO} constants
+	being parsed and set by configure itself rather then parsing it
+	at run-time.
+
+	Then there are 2 version functions. The difference between those
+	functions is that vnc_util_get_version() returns the gint value
+	based on bit flags that have to be converted to get the version
+	number in the string format. It's designed for further processing of
+	the major, minor and release versions.
+
+	If you want to get the version number only (e.g. to let the user
+	know the GTK-VNC version he/she is using) you can use the second
+	function called the vnc_util_get_version_string() which returns
+	the string representation, e.g. 0.4.1.
+
+	For the vnc_util_get_version() function the gint is being returned
+	with setting up appropriate bits. You can get the versions using
+	following formula:
+
+	ver = vnc_util_get_version();
+	major = (ver >> 24) & 0xff;
+	minor = (ver >> 16) & 0xff;
+	micro = (ver >> 8 ) & 0xff;
+
+	I think this patch could be useful for mainly for reason mentioned
+	above. To check whether the user has at least 0.4.1 version of
+	gtk-vnc using the vnc_util_check_version(0, 4, 1) is preferred.
+	The vnc_util_get_version() function is a low-level function that
+	could be useful to get the version number to be converted further.
+
+2010-09-17  Guido Günther  <agx@sigxcpu.org>
+
+	Don't close the socket before the coroutine shut down
+	The connection shutdown needs the socket intact:
+
+	7  0xb6d38cdf in vnc_connection_tls_push (transport=0x8d84108, data=0x8df33c0, len=229) at vncconnection.c:942
+	8  0xb6b30437 in ?? () from /usr/lib/libgnutls.so.26
+	9  0xb6b2d12c in _gnutls_send_int () from /usr/lib/libgnutls.so.26
+	10 0xb6b4d682 in gnutls_alert_send () from /usr/lib/libgnutls.so.26
+	11 0xb6b2d662 in gnutls_bye () from /usr/lib/libgnutls.so.26
+	12 0xb6d3a620 in vnc_connection_close (conn=0x8d84108) at vncconnection.c:4323
+
+	so close the socket after the coroutine shutdown. Otherwise it fills the
+	console with:
+
+	(gvncviewer:11056): GLib-GIO-CRITICAL **: g_socket_send: assertion `G_IS_SOCKET (socket) && buffer != NULL' failed
+
+	and gets stuck in an endless loop.
+
+2010-09-17  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add missing keytable entry for KEY_KATAKANAHIRAGANA
+	* src/keymaps.csv: Add XT code for KEY_KATAKANAHIRAGANA
+
+	Fix auth subtype choosing logic in vncdisplay
+	The method for choosing auth subtypes was rather flawed. Rewrite
+	it to work correctly. Introduce an explicit list of vencrypt
+	subtypes, since these are distinct from main subtypes. Improve
+	debug logging in auth choice code.
+
+	* src/vncdisplay.c: Fix auth type choice
+	* src/vncconnection.c: Improve auth debugging & invoke correct
+	  signal for auth subtype choice
+
+2010-09-08  Guido Günther  <agx@sigxcpu.org>
+
+	Simplify logic in host open code
+	The second else clause checks for conn_error != NULL twice and since we
+	don't use it to determine the return value we can clear it
+	unconditionally.
+
+	* src/vncconnection.c: Simplify logic in vnc_connection_open_host_internal
+
+	Clear error when trying next IP address
+	If connecting to an IP address fails, the GError must be
+	cleared before trying the next address, otherwise the
+	error will be overwritten on next failure
+
+	* src/vncconnection.c: Clear error when trying next IP addr
+
+2010-09-02  Jonh Wendell  <jwendell@gnome.org>
+
+	Check if we have an error before reading or writing to the socket
+	If, in the middle of an operation the widget is destroyed, we
+	should check the has_error variable otherwise we can try to
+	read/write from/to an invalid socket.
+
+	Fix logic for removing unwanted encodings
+
+2010-08-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix files list in mingw32 specfile
+	The files for gtk-vnc and gvnc were inverted in the mingw32
+	RPM specfile
+
+2010-08-27  Marek Černocký  <marek@manet.cz>
+
+	Add Czech translation
+
+2010-08-27  Jonh Wendell  <jwendell@gnome.org>
+
+	Check if we have a valid socket before trying to close it
+	If we attempt to destroy the widget while VncConnection still
+	is trying to connect to the host, then priv->sock is not valid yet.
+
+2010-08-22  Shushi Kurose  <md81bird@hitaki.net>
+
+	Updated Japanese translation.
+
+2010-08-20  Håkon Enger  <hakon.enger@gmail.com>
+
+	Support Mac OS VNC authentication
+
+2010-08-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add comment about where each keymap datasource came from
+	To assist in people identifying/resolving mistakes, add a note
+	about where each data source from keymaps.csv came from. Most
+	are from Linux kernel source data tables, a few were manually
+	matched up (Xwin/OS-X)
+
+	* src/keymap-gen.pl: Record data sources for keymaps.csv
+
+	Ensure automake maintainer mode is enabled
+
+	Add a cairo based framebuffer implementation
+	In GTK3, GdkImage has been removed completely. The vncimageframebuffer
+	class cannot thus be used. Replace it with a vnccairoframebuffer
+	class instead, but keep the old one around in GTK2 builds for ABI
+	compatability.
+
+	* src/vnccairoframebuffer.c, src/vnccairoframebuffer.h,
+	  src/libgtk-vnc_sym.version: Add new framebuffer impl
+	  based on Cairo.
+	* src/Makefile.am: Disable GdkImage based framebuffer on
+	  GTK3 builds
+	* src/vncdisplay.c: Always use Cairo based framebuffer
+
+	Fix typo in keycode names & improve error message
+	Fix typo in evdev keycode names left over from debugging. Improve
+	the error message when finding unknown keycodes
+
+	Mandate the use of Cairo for all drawing
+	Cairo has been used for GTK drawing for a long time and is now
+	mandatory in GTK3. Drop support for non-Cairo drawing ops since
+	they're obsolete.
+
+	* configure.ac: Check for Cairo
+	* src/vncdisplay.c: Drop non-cairo drawing
+
+2010-08-15  Daniel P. Berrange  <dan@berrange.com>
+
+	Reset xmit_buffer fields to fix reconnect
+	If a vnc_connection object was closed and reopened old data
+	in the xmit_buffer fields would cause a crash, since it was
+	not re-initialized
+
+2010-08-04  Lucian Adrian Grijincu  <lucian.grijincu@gmail.com>
+
+	Updated Romanian translation
+
+2010-08-03  Nils-Christoph Fiedler  <ncfiedler@gnome.org>
+
+	Added LowGerman translation
+
+	Added LowGerman translation
+
+2010-07-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Rewrite keymap code to work on more platforms
+	The current keymap code assumes an Xorg server on Linux with
+	either evdev or kbd drivers. This adds heuristics to detect
+	XQuartz (Xorg on OS-X) and XWin (Xorg on Cygwin). Further it
+	adds support for native GDK on OS-X and Win32.
+
+	It is not possible to assume that keycodes < 87 have a 1-1
+	mapping to RFB (XT) keycodes. Thus the keymap arrays must
+	have a complete dataset, all special casing is removed.
+
+	All master  keymaps are defined in a CSV file. THis covers
+	Linux keycodes, OSX keycodes, AT set1, 2 & 3, XT keycodes,
+	the XT encoding used by the Linux KBD driver, USB keycodes,
+	Win32 keycodes, the XT encoding used by Xorg on Cygwin,
+	the XT encoding used by Xorg on Linux with kbd driver.
+
+	Further RFB and final Xorg driver mappings are derived
+	from these master maps automatically. The keymap-gen.pl
+	tool can generate lookup tables between all possible
+	keycode sets as required.
+
+	eg To generate a map from native Win32 keycodes to RFB
+	keycodes
+
+	   keymap-gen.pl keymaps.csv win32 rfb
+
+	* gtk-vnc.spec.in, mingw32-gtk-vnc.spec.in: Require Text::CSV
+	  for generating keymaps
+	* src/Makefile.am: Generate keymaps dynamically
+	* src/keymap-gen.pl: Tool to generate keymaps from CSV file
+	* src/keymaps.csv: Master keymap definitions
+	* src/vncconnection.c: Improve keypress log message
+	* src/vncdisplay.c: Convert to guint16 for keymap table
+	* src/vncdisplaykeymap.c, src/vncdisplaykeymap.h: Use a
+	  new dynamically generated, full keymap.
+
+2010-07-20  Daniel P. Berrange  <dan@berrange.com>
+
+	Disable extended key events if keymap is unknown
+	Currently if we cannot determine the GDK keymap, we default to
+	the XT keymap. This is not a good choice because is causes
+	definite breakage on several platforms. If the keymap cannot
+	be determined, it is safer to disable the extended key event
+	support completely & rely on traditional VNC keysyms.
+
+	Also rename the x2pc methods to be gdk2rfb, since that's what
+	the conversion is actually doing.
+
+	Change way encodings are disabled at runtime
+	The approach for disabling pseudo encodings is fragile because
+	it relies on ordering in the array. Rewrite to allow removing
+	arbitrary encodings
+
+	Remove all gnulib code
+	Since the port to use GIO for sockets, there is no requirement
+	for gnulib. Delete it all
+
+	Switch over to use GIO for socket connections / DNS resolution
+	GIO provides GSocket and GResolver classes that can replace all
+	current use of POSIX sockets / DNS resolution APIs. This gives
+	cross platform portability for free, removing the need to use
+	gnulib for socket portability
+
+	* configure.ac: Check for GIO
+	* src/Makefile.am: Link to GIO
+	* src/vncconnection.c: Switch to using GSocket & friends
+	* src/vncdisplay.c: Remove winsock initialization code
+
 2010-07-14  Daniel P. Berrange  <dan@berrange.com>
+
+	Remove a few uses of stdint in favour of glib int types
 
 	Resync RPM specfiles based on latest Fedora devel
 

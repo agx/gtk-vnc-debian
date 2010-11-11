@@ -65,6 +65,9 @@
 
 	vnc_util_set_debug;
 	vnc_util_get_debug;
+	vnc_util_get_version;
+	vnc_util_get_version_string;
+	vnc_util_check_version;
 
 	vnc_pixel_format_new;
 	vnc_pixel_format_copy;

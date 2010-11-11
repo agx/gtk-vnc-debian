@@ -23,13 +23,14 @@ endif
 
 libgvnc_1_0_la_LIBADD = \
 			@GOBJECT_LIBS@ \
+			@GIO_LIBS@ \
 			@GTHREAD_LIBS@ \
 			@GDK_PIXBUF_LIBS@ \
 			@GNUTLS_LIBS@ \
-			@SASL_LIBS@ \
-			../gnulib/lib/libgnu.la
+			@SASL_LIBS@
 libgvnc_1_0_la_CFLAGS = \
 			@GOBJECT_CFLAGS@ \
+			@GIO_CFLAGS@ \
 			@GTHREAD_CFLAGS@ \
 			@GDK_PIXBUF_CFLAGS@ \
 			@GNUTLS_CFLAGS@ \
@@ -37,9 +38,7 @@ libgvnc_1_0_la_CFLAGS = \
 			@WARNING_CFLAGS@ \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-			-DG_LOG_DOMAIN=\"gvnc\" \
-			-I$(top_srcdir)/gnulib/lib \
-			-I../gnulib/lib
+			-DG_LOG_DOMAIN=\"gvnc\"
 libgvnc_1_0_la_LDFLAGS = \
 			$(VERSION_SCRIPT_FLAGS)$(GVNC_VERSION_FILE) \
 			-version-info 0:1:0 $(NO_UNDEFINED_FLAGS)
@@ -82,17 +81,14 @@ endif
 gtk_vnc_LIBADD = \
 			@GTK_LIBS@ \
 			@X11_LIBS@ \
-			libgvnc-1.0.la \
-			../gnulib/lib/libgnu.la
+			libgvnc-1.0.la
 gtk_vnc_CFLAGS = \
 			@GTK_CFLAGS@ \
 			@X11_CFLAGS@ \
 			@WARNING_CFLAGS@ \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-			-DG_LOG_DOMAIN=\"gtk-vnc\" \
-			-I$(top_srcdir)/gnulib/lib \
-			-I../gnulib/lib
+			-DG_LOG_DOMAIN=\"gtk-vnc\"
 
 gtk_vnc_includedir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
 gtk_vnc_include_HEADERS = \
@@ -102,12 +98,19 @@ gtk_vnc_include_HEADERS = \
 			vncimageframebuffer.h
 
 gtk_vnc_SOURCES = \
-			vncimageframebuffer.h vncimageframebuffer.c \
+			vnccairoframebuffer.h vnccairoframebuffer.c \
 			vncdisplay.h vncdisplay.c \
 			vncdisplayenums.h vncdisplayenums.c \
 			vncdisplaykeymap.h vncdisplaykeymap.c \
 			vncgrabsequence.h vncgrabsequence.c \
 			vncmarshal.h vncmarshal.c
+
+if HAVE_GTK_2
+gtk_vnc_SOURCES += \
+			vncimageframebuffer.h vncimageframebuffer.c
+else
+EXTRA_DIST +=		vncimageframebuffer.h vncimageframebuffer.c
+endif
 
 gtk_vnc_LDFLAGS = \
 			$(VERSION_SCRIPT_FLAGS)$(GTK_VNC_VERSION_FILE) \
@@ -126,6 +129,41 @@ libgtk_vnc_2_0_la_CFLAGS = $(gtk_vnc_CFLAGS)
 libgtk_vnc_2_0_la_LDFLAGS = $(gtk_vnc_LDFLAGS) -version-info 0:2:0
 libgtk_vnc_2_0_la_SOURCES = $(gtk_vnc_SOURCES)
 endif
+
+EXTRA_DIST += keymap-gen.pl keymaps.csv
+
+KEYMAP_GEN = $(srcdir)/keymap-gen.pl
+
+KEYMAPS = \
+	vncdisplaykeymap_xorgevdev2rfb.c \
+	vncdisplaykeymap_xorgkbd2rfb.c \
+	vncdisplaykeymap_xorgxquartz2rfb.c \
+	vncdisplaykeymap_xorgxwin2rfb.c \
+	vncdisplaykeymap_osx2rfb.c \
+	vncdisplaykeymap_win322rfb.c
+
+$(KEYMAPS): $(KEYMAP_GEN) keymaps.csv
+BUILT_SOURCES += $(KEYMAPS)
+
+vncdisplaykeymap.c: $(KEYMAPS)
+
+vncdisplaykeymap_xorgevdev2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgevdev rfb > $@ || rm $@
+
+vncdisplaykeymap_xorgkbd2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgkbd rfb > $@ || rm $@
+
+vncdisplaykeymap_xorgxquartz2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgxquartz rfb > $@ || rm $@
+
+vncdisplaykeymap_xorgxwin2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgxwin rfb > $@ || rm $@
+
+vncdisplaykeymap_osx2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv osx rfb > $@ || rm $@
+
+vncdisplaykeymap_win322rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv win32 rfb > $@ || rm $@
 
 
 vncdisplayenums.c: vncdisplay.h
@@ -191,9 +229,11 @@ vncdisplay.c:: vncmarshal.h vncdisplayenums.h
 
 vncconnection.c:: vncmarshal.h vncconnectionenums.h
 
-CLEANFILES = vncmarshal.c vncmarshal.h \
+BUILT_SOURCES += vncmarshal.c vncmarshal.h \
 	vncdisplayenums.h vncdisplayenums.c \
 	vncconnectionenums.h vncconnectionenums.c
+
+CLEANFILES = $(BUILT_SOURCES)
 
 if WITH_PYTHON
 pyexec_LTLIBRARIES = gtkvnc.la
@@ -236,17 +276,28 @@ GVNC_INTROSPECTION_SRCS = \
 			$(srcdir)/vncutil.h $(srcdir)/vncutil.c
 
 GTK_VNC_INTROSPECTION_SRCS = \
-			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c \
+			$(srcdir)/vnccairoframebuffer.h $(srcdir)/vnccairoframebuffer.c \
 			$(srcdir)/vncdisplay.h $(srcdir)/vncdisplay.c \
 			$(srcdir)/vncgrabsequence.h $(srcdir)/vncgrabsequence.c \
 			$(builddir)/vncdisplayenums.h $(builddir)/vncdisplayenums.c
+
+if HAVE_GTK_2
+GTK_VNC_INTROSPECTION_SRCS += \
+			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c
+endif
+
+if G_IR_SCANNER_SYMBOL_PREFIX
+PREFIX_ARGS = --symbol-prefix=vnc --identifier-prefix=Vnc
+else
+PREFIX_ARGS = --strip-prefix=Vnc
+endif
 
 GVnc-1.0.gir: libgvnc-1.0.la $(G_IR_SCANNER) Makefile.am
 	$(AM_V_GEN)$(G_IR_SCANNER) -v \
                 --namespace GVnc \
                 --nsversion 1.0 \
 		--include GObject-2.0 \
-		--strip-prefix=Vnc \
+		$(PREFIX_ARGS) \
                 --library=$(builddir)/libgvnc-1.0.la \
                 --add-include-path=$(top_srcdir) \
                 --add-include-path=$(srcdir) \
@@ -268,7 +319,7 @@ GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION
 		--include GObject-2.0 \
 		--include Gtk-$(GTK_API_VERSION) \
 		--include GVnc-1.0 \
-		--strip-prefix=Vnc \
+		$(PREFIX_ARGS) \
                 --library=$(builddir)/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
                 --add-include-path=$(top_srcdir) \
                 --add-include-path=$(srcdir) \

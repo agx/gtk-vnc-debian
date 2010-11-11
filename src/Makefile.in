@@ -41,55 +41,27 @@ host_triplet = @host@
 @WITH_UCONTEXT_TRUE@am__append_3 = coroutine_gthread.c
 @WITH_UCONTEXT_FALSE@am__append_4 = coroutine_gthread.c
 @WITH_UCONTEXT_FALSE@am__append_5 = continuation.h continuation.c coroutine_ucontext.c
-@HAVE_GTK_2_TRUE@am__append_6 = libgtk-vnc-1.0.la
-@HAVE_GTK_2_FALSE@am__append_7 = libgtk-vnc-2.0.la
-@WITH_PYTHON_TRUE@am__append_8 = vnc.defs vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_9 = vnc.override
-@WITH_PYTHON_FALSE@am__append_10 = vnc.override vncmodule.c
-@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_11 = $(gir_DATA) $(typelibs_DATA)
+@HAVE_GTK_2_TRUE@am__append_6 = \
+@HAVE_GTK_2_TRUE@			vncimageframebuffer.h vncimageframebuffer.c
+
+@HAVE_GTK_2_FALSE@am__append_7 = vncimageframebuffer.h vncimageframebuffer.c
+@HAVE_GTK_2_TRUE@am__append_8 = libgtk-vnc-1.0.la
+@HAVE_GTK_2_FALSE@am__append_9 = libgtk-vnc-2.0.la
+@WITH_PYTHON_TRUE@am__append_10 = vnc.defs vncmodule.defs.c
+@WITH_PYTHON_TRUE@am__append_11 = vnc.override
+@WITH_PYTHON_FALSE@am__append_12 = vnc.override vncmodule.c
+@HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_13 = \
+@HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c
+
+@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_14 = $(gir_DATA) $(typelibs_DATA)
 subdir = src
 DIST_COMMON = $(gtk_vnc_include_HEADERS) $(gvnc_include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/gnulib/m4/alloca.m4 \
-	$(top_srcdir)/gnulib/m4/arpa_inet_h.m4 \
-	$(top_srcdir)/gnulib/m4/errno_h.m4 \
-	$(top_srcdir)/gnulib/m4/extensions.m4 \
-	$(top_srcdir)/gnulib/m4/float_h.m4 \
-	$(top_srcdir)/gnulib/m4/getaddrinfo.m4 \
-	$(top_srcdir)/gnulib/m4/gnulib-common.m4 \
-	$(top_srcdir)/gnulib/m4/gnulib-comp.m4 \
-	$(top_srcdir)/gnulib/m4/include_next.m4 \
-	$(top_srcdir)/gnulib/m4/inet_ntop.m4 \
-	$(top_srcdir)/gnulib/m4/intltool.m4 \
-	$(top_srcdir)/gnulib/m4/intmax_t.m4 \
-	$(top_srcdir)/gnulib/m4/inttypes_h.m4 \
-	$(top_srcdir)/gnulib/m4/libtool.m4 \
-	$(top_srcdir)/gnulib/m4/longlong.m4 \
-	$(top_srcdir)/gnulib/m4/ltoptions.m4 \
-	$(top_srcdir)/gnulib/m4/ltsugar.m4 \
-	$(top_srcdir)/gnulib/m4/ltversion.m4 \
-	$(top_srcdir)/gnulib/m4/lt~obsolete.m4 \
-	$(top_srcdir)/gnulib/m4/malloc.m4 \
-	$(top_srcdir)/gnulib/m4/netinet_in_h.m4 \
-	$(top_srcdir)/gnulib/m4/onceonly.m4 \
-	$(top_srcdir)/gnulib/m4/printf.m4 \
-	$(top_srcdir)/gnulib/m4/size_max.m4 \
-	$(top_srcdir)/gnulib/m4/snprintf.m4 \
-	$(top_srcdir)/gnulib/m4/socklen.m4 \
-	$(top_srcdir)/gnulib/m4/sockpfaf.m4 \
-	$(top_srcdir)/gnulib/m4/stdbool.m4 \
-	$(top_srcdir)/gnulib/m4/stdint.m4 \
-	$(top_srcdir)/gnulib/m4/stdint_h.m4 \
-	$(top_srcdir)/gnulib/m4/stdio_h.m4 \
-	$(top_srcdir)/gnulib/m4/stdlib_h.m4 \
-	$(top_srcdir)/gnulib/m4/sys_socket_h.m4 \
-	$(top_srcdir)/gnulib/m4/unistd_h.m4 \
-	$(top_srcdir)/gnulib/m4/vasnprintf.m4 \
-	$(top_srcdir)/gnulib/m4/wchar.m4 \
-	$(top_srcdir)/gnulib/m4/wchar_t.m4 \
-	$(top_srcdir)/gnulib/m4/wint_t.m4 \
-	$(top_srcdir)/gnulib/m4/xsize.m4 $(top_srcdir)/acinclude.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/intltool.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -136,21 +108,24 @@ gtkvnc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(gtkvnc_la_CFLAGS) \
 	$(CFLAGS) $(gtkvnc_la_LDFLAGS) $(LDFLAGS) -o $@
 @WITH_PYTHON_TRUE@am_gtkvnc_la_rpath = -rpath $(pyexecdir)
-am__DEPENDENCIES_1 = libgvnc-1.0.la ../gnulib/lib/libgnu.la
+am__DEPENDENCIES_1 = libgvnc-1.0.la
 @HAVE_GTK_2_TRUE@libgtk_vnc_1_0_la_DEPENDENCIES =  \
 @HAVE_GTK_2_TRUE@	$(am__DEPENDENCIES_1)
-am__libgtk_vnc_1_0_la_SOURCES_DIST = vncimageframebuffer.h \
-	vncimageframebuffer.c vncdisplay.h vncdisplay.c \
+am__libgtk_vnc_1_0_la_SOURCES_DIST = vnccairoframebuffer.h \
+	vnccairoframebuffer.c vncdisplay.h vncdisplay.c \
 	vncdisplayenums.h vncdisplayenums.c vncdisplaykeymap.h \
 	vncdisplaykeymap.c vncgrabsequence.h vncgrabsequence.c \
-	vncmarshal.h vncmarshal.c
-am__objects_1 = libgtk_vnc_1_0_la-vncimageframebuffer.lo \
+	vncmarshal.h vncmarshal.c vncimageframebuffer.h \
+	vncimageframebuffer.c
+@HAVE_GTK_2_TRUE@am__objects_1 =  \
+@HAVE_GTK_2_TRUE@	libgtk_vnc_1_0_la-vncimageframebuffer.lo
+am__objects_2 = libgtk_vnc_1_0_la-vnccairoframebuffer.lo \
 	libgtk_vnc_1_0_la-vncdisplay.lo \
 	libgtk_vnc_1_0_la-vncdisplayenums.lo \
 	libgtk_vnc_1_0_la-vncdisplaykeymap.lo \
 	libgtk_vnc_1_0_la-vncgrabsequence.lo \
-	libgtk_vnc_1_0_la-vncmarshal.lo
-@HAVE_GTK_2_TRUE@am_libgtk_vnc_1_0_la_OBJECTS = $(am__objects_1)
+	libgtk_vnc_1_0_la-vncmarshal.lo $(am__objects_1)
+@HAVE_GTK_2_TRUE@am_libgtk_vnc_1_0_la_OBJECTS = $(am__objects_2)
 libgtk_vnc_1_0_la_OBJECTS = $(am_libgtk_vnc_1_0_la_OBJECTS)
 libgtk_vnc_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
@@ -159,25 +134,28 @@ libgtk_vnc_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 @HAVE_GTK_2_TRUE@am_libgtk_vnc_1_0_la_rpath = -rpath $(libdir)
 @HAVE_GTK_2_FALSE@libgtk_vnc_2_0_la_DEPENDENCIES =  \
 @HAVE_GTK_2_FALSE@	$(am__DEPENDENCIES_1)
-am__libgtk_vnc_2_0_la_SOURCES_DIST = vncimageframebuffer.h \
-	vncimageframebuffer.c vncdisplay.h vncdisplay.c \
+am__libgtk_vnc_2_0_la_SOURCES_DIST = vnccairoframebuffer.h \
+	vnccairoframebuffer.c vncdisplay.h vncdisplay.c \
 	vncdisplayenums.h vncdisplayenums.c vncdisplaykeymap.h \
 	vncdisplaykeymap.c vncgrabsequence.h vncgrabsequence.c \
-	vncmarshal.h vncmarshal.c
-am__objects_2 = libgtk_vnc_2_0_la-vncimageframebuffer.lo \
+	vncmarshal.h vncmarshal.c vncimageframebuffer.h \
+	vncimageframebuffer.c
+@HAVE_GTK_2_TRUE@am__objects_3 =  \
+@HAVE_GTK_2_TRUE@	libgtk_vnc_2_0_la-vncimageframebuffer.lo
+am__objects_4 = libgtk_vnc_2_0_la-vnccairoframebuffer.lo \
 	libgtk_vnc_2_0_la-vncdisplay.lo \
 	libgtk_vnc_2_0_la-vncdisplayenums.lo \
 	libgtk_vnc_2_0_la-vncdisplaykeymap.lo \
 	libgtk_vnc_2_0_la-vncgrabsequence.lo \
-	libgtk_vnc_2_0_la-vncmarshal.lo
-@HAVE_GTK_2_FALSE@am_libgtk_vnc_2_0_la_OBJECTS = $(am__objects_2)
+	libgtk_vnc_2_0_la-vncmarshal.lo $(am__objects_3)
+@HAVE_GTK_2_FALSE@am_libgtk_vnc_2_0_la_OBJECTS = $(am__objects_4)
 libgtk_vnc_2_0_la_OBJECTS = $(am_libgtk_vnc_2_0_la_OBJECTS)
 libgtk_vnc_2_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) \
 	$(libgtk_vnc_2_0_la_LDFLAGS) $(LDFLAGS) -o $@
 @HAVE_GTK_2_FALSE@am_libgtk_vnc_2_0_la_rpath = -rpath $(libdir)
-libgvnc_1_0_la_DEPENDENCIES = ../gnulib/lib/libgnu.la
+libgvnc_1_0_la_DEPENDENCIES =
 am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h d3des.h d3des.c dh.h \
 	dh.c vncpixelformat.h vncpixelformat.c vncframebuffer.h \
 	vncframebuffer.c vncbaseframebufferblt.h vncbaseframebuffer.h \
@@ -186,9 +164,9 @@ am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h d3des.h d3des.c dh.h \
 	vncconnectionblt.h vncconnectionenums.h vncconnectionenums.c \
 	vncmarshal.h vncmarshal.c vncutil.h vncutil.c continuation.h \
 	continuation.c coroutine_ucontext.c coroutine_gthread.c
-@WITH_UCONTEXT_TRUE@am__objects_3 = libgvnc_1_0_la-continuation.lo \
+@WITH_UCONTEXT_TRUE@am__objects_5 = libgvnc_1_0_la-continuation.lo \
 @WITH_UCONTEXT_TRUE@	libgvnc_1_0_la-coroutine_ucontext.lo
-@WITH_UCONTEXT_FALSE@am__objects_4 =  \
+@WITH_UCONTEXT_FALSE@am__objects_6 =  \
 @WITH_UCONTEXT_FALSE@	libgvnc_1_0_la-coroutine_gthread.lo
 am_libgvnc_1_0_la_OBJECTS = libgvnc_1_0_la-d3des.lo \
 	libgvnc_1_0_la-dh.lo libgvnc_1_0_la-vncpixelformat.lo \
@@ -198,7 +176,7 @@ am_libgvnc_1_0_la_OBJECTS = libgvnc_1_0_la-d3des.lo \
 	libgvnc_1_0_la-vncconnection.lo \
 	libgvnc_1_0_la-vncconnectionenums.lo \
 	libgvnc_1_0_la-vncmarshal.lo libgvnc_1_0_la-vncutil.lo \
-	$(am__objects_3) $(am__objects_4)
+	$(am__objects_5) $(am__objects_6)
 libgvnc_1_0_la_OBJECTS = $(am_libgvnc_1_0_la_OBJECTS)
 libgvnc_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
@@ -242,23 +220,17 @@ ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
-ALLOCA = @ALLOCA@
-ALLOCA_H = @ALLOCA_H@
 ALL_LINGUAS = @ALL_LINGUAS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
-ARPA_INET_H = @ARPA_INET_H@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BITSIZEOF_PTRDIFF_T = @BITSIZEOF_PTRDIFF_T@
-BITSIZEOF_SIG_ATOMIC_T = @BITSIZEOF_SIG_ATOMIC_T@
-BITSIZEOF_SIZE_T = @BITSIZEOF_SIZE_T@
-BITSIZEOF_WCHAR_T = @BITSIZEOF_WCHAR_T@
-BITSIZEOF_WINT_T = @BITSIZEOF_WINT_T@
+CAIRO_CFLAGS = @CAIRO_CFLAGS@
+CAIRO_LIBS = @CAIRO_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
@@ -279,99 +251,19 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
-EMULTIHOP_HIDDEN = @EMULTIHOP_HIDDEN@
-EMULTIHOP_VALUE = @EMULTIHOP_VALUE@
-ENOLINK_HIDDEN = @ENOLINK_HIDDEN@
-ENOLINK_VALUE = @ENOLINK_VALUE@
-EOVERFLOW_HIDDEN = @EOVERFLOW_HIDDEN@
-EOVERFLOW_VALUE = @EOVERFLOW_VALUE@
-ERRNO_H = @ERRNO_H@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 FIREFOX_PLUGIN_CFLAGS = @FIREFOX_PLUGIN_CFLAGS@
 FIREFOX_PLUGIN_LIBS = @FIREFOX_PLUGIN_LIBS@
-FLOAT_H = @FLOAT_H@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 GDK_PIXBUF_REQUIRED = @GDK_PIXBUF_REQUIRED@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+GIO_CFLAGS = @GIO_CFLAGS@
+GIO_LIBS = @GIO_LIBS@
+GIO_REQUIRED = @GIO_REQUIRED@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
-GNULIB_ACCEPT = @GNULIB_ACCEPT@
-GNULIB_BIND = @GNULIB_BIND@
-GNULIB_CALLOC_POSIX = @GNULIB_CALLOC_POSIX@
-GNULIB_CHOWN = @GNULIB_CHOWN@
-GNULIB_CONNECT = @GNULIB_CONNECT@
-GNULIB_DUP2 = @GNULIB_DUP2@
-GNULIB_ENVIRON = @GNULIB_ENVIRON@
-GNULIB_FCHDIR = @GNULIB_FCHDIR@
-GNULIB_FFLUSH = @GNULIB_FFLUSH@
-GNULIB_FOPEN = @GNULIB_FOPEN@
-GNULIB_FPRINTF = @GNULIB_FPRINTF@
-GNULIB_FPRINTF_POSIX = @GNULIB_FPRINTF_POSIX@
-GNULIB_FPUTC = @GNULIB_FPUTC@
-GNULIB_FPUTS = @GNULIB_FPUTS@
-GNULIB_FREOPEN = @GNULIB_FREOPEN@
-GNULIB_FSEEK = @GNULIB_FSEEK@
-GNULIB_FSEEKO = @GNULIB_FSEEKO@
-GNULIB_FSYNC = @GNULIB_FSYNC@
-GNULIB_FTELL = @GNULIB_FTELL@
-GNULIB_FTELLO = @GNULIB_FTELLO@
-GNULIB_FTRUNCATE = @GNULIB_FTRUNCATE@
-GNULIB_FWRITE = @GNULIB_FWRITE@
-GNULIB_GETCWD = @GNULIB_GETCWD@
-GNULIB_GETDELIM = @GNULIB_GETDELIM@
-GNULIB_GETDTABLESIZE = @GNULIB_GETDTABLESIZE@
-GNULIB_GETLINE = @GNULIB_GETLINE@
-GNULIB_GETLOGIN_R = @GNULIB_GETLOGIN_R@
-GNULIB_GETPAGESIZE = @GNULIB_GETPAGESIZE@
-GNULIB_GETPEERNAME = @GNULIB_GETPEERNAME@
-GNULIB_GETSOCKNAME = @GNULIB_GETSOCKNAME@
-GNULIB_GETSOCKOPT = @GNULIB_GETSOCKOPT@
-GNULIB_GETSUBOPT = @GNULIB_GETSUBOPT@
-GNULIB_INET_NTOP = @GNULIB_INET_NTOP@
-GNULIB_INET_PTON = @GNULIB_INET_PTON@
-GNULIB_LCHOWN = @GNULIB_LCHOWN@
-GNULIB_LISTEN = @GNULIB_LISTEN@
-GNULIB_LSEEK = @GNULIB_LSEEK@
-GNULIB_MALLOC_POSIX = @GNULIB_MALLOC_POSIX@
-GNULIB_MKDTEMP = @GNULIB_MKDTEMP@
-GNULIB_MKSTEMP = @GNULIB_MKSTEMP@
-GNULIB_OBSTACK_PRINTF = @GNULIB_OBSTACK_PRINTF@
-GNULIB_OBSTACK_PRINTF_POSIX = @GNULIB_OBSTACK_PRINTF_POSIX@
-GNULIB_PERROR = @GNULIB_PERROR@
-GNULIB_PRINTF = @GNULIB_PRINTF@
-GNULIB_PRINTF_POSIX = @GNULIB_PRINTF_POSIX@
-GNULIB_PUTC = @GNULIB_PUTC@
-GNULIB_PUTCHAR = @GNULIB_PUTCHAR@
-GNULIB_PUTENV = @GNULIB_PUTENV@
-GNULIB_PUTS = @GNULIB_PUTS@
-GNULIB_READLINK = @GNULIB_READLINK@
-GNULIB_REALLOC_POSIX = @GNULIB_REALLOC_POSIX@
-GNULIB_RECV = @GNULIB_RECV@
-GNULIB_RECVFROM = @GNULIB_RECVFROM@
-GNULIB_RPMATCH = @GNULIB_RPMATCH@
-GNULIB_SEND = @GNULIB_SEND@
-GNULIB_SENDTO = @GNULIB_SENDTO@
-GNULIB_SETENV = @GNULIB_SETENV@
-GNULIB_SETSOCKOPT = @GNULIB_SETSOCKOPT@
-GNULIB_SLEEP = @GNULIB_SLEEP@
-GNULIB_SNPRINTF = @GNULIB_SNPRINTF@
-GNULIB_SOCKET = @GNULIB_SOCKET@
-GNULIB_SPRINTF_POSIX = @GNULIB_SPRINTF_POSIX@
-GNULIB_STDIO_H_SIGPIPE = @GNULIB_STDIO_H_SIGPIPE@
-GNULIB_STRTOD = @GNULIB_STRTOD@
-GNULIB_UNISTD_H_SIGPIPE = @GNULIB_UNISTD_H_SIGPIPE@
-GNULIB_UNSETENV = @GNULIB_UNSETENV@
-GNULIB_VASPRINTF = @GNULIB_VASPRINTF@
-GNULIB_VFPRINTF = @GNULIB_VFPRINTF@
-GNULIB_VFPRINTF_POSIX = @GNULIB_VFPRINTF_POSIX@
-GNULIB_VPRINTF = @GNULIB_VPRINTF@
-GNULIB_VPRINTF_POSIX = @GNULIB_VPRINTF_POSIX@
-GNULIB_VSNPRINTF = @GNULIB_VSNPRINTF@
-GNULIB_VSPRINTF_POSIX = @GNULIB_VSPRINTF_POSIX@
-GNULIB_WCWIDTH = @GNULIB_WCWIDTH@
-GNULIB_WRITE = @GNULIB_WRITE@
 GNUTLS_CFLAGS = @GNUTLS_CFLAGS@
 GNUTLS_LIBS = @GNUTLS_LIBS@
 GNUTLS_REQUIRED = @GNUTLS_REQUIRED@
@@ -390,57 +282,6 @@ GTK_REQUIRED = @GTK_REQUIRED@
 GTK_VNC_API_VERSION = @GTK_VNC_API_VERSION@
 G_IR_COMPILER = @G_IR_COMPILER@
 G_IR_SCANNER = @G_IR_SCANNER@
-HAVE_ARPA_INET_H = @HAVE_ARPA_INET_H@
-HAVE_CALLOC_POSIX = @HAVE_CALLOC_POSIX@
-HAVE_DECL_ENVIRON = @HAVE_DECL_ENVIRON@
-HAVE_DECL_GETDELIM = @HAVE_DECL_GETDELIM@
-HAVE_DECL_GETLINE = @HAVE_DECL_GETLINE@
-HAVE_DECL_GETLOGIN_R = @HAVE_DECL_GETLOGIN_R@
-HAVE_DECL_INET_NTOP = @HAVE_DECL_INET_NTOP@
-HAVE_DECL_INET_PTON = @HAVE_DECL_INET_PTON@
-HAVE_DECL_OBSTACK_PRINTF = @HAVE_DECL_OBSTACK_PRINTF@
-HAVE_DECL_SNPRINTF = @HAVE_DECL_SNPRINTF@
-HAVE_DECL_VSNPRINTF = @HAVE_DECL_VSNPRINTF@
-HAVE_DECL_WCWIDTH = @HAVE_DECL_WCWIDTH@
-HAVE_DUP2 = @HAVE_DUP2@
-HAVE_FSEEKO = @HAVE_FSEEKO@
-HAVE_FSYNC = @HAVE_FSYNC@
-HAVE_FTELLO = @HAVE_FTELLO@
-HAVE_FTRUNCATE = @HAVE_FTRUNCATE@
-HAVE_GETDTABLESIZE = @HAVE_GETDTABLESIZE@
-HAVE_GETPAGESIZE = @HAVE_GETPAGESIZE@
-HAVE_GETSUBOPT = @HAVE_GETSUBOPT@
-HAVE_INTTYPES_H = @HAVE_INTTYPES_H@
-HAVE_LONG_LONG_INT = @HAVE_LONG_LONG_INT@
-HAVE_MALLOC_POSIX = @HAVE_MALLOC_POSIX@
-HAVE_MKDTEMP = @HAVE_MKDTEMP@
-HAVE_NETINET_IN_H = @HAVE_NETINET_IN_H@
-HAVE_OS_H = @HAVE_OS_H@
-HAVE_READLINK = @HAVE_READLINK@
-HAVE_REALLOC_POSIX = @HAVE_REALLOC_POSIX@
-HAVE_RPMATCH = @HAVE_RPMATCH@
-HAVE_SETENV = @HAVE_SETENV@
-HAVE_SIGNED_SIG_ATOMIC_T = @HAVE_SIGNED_SIG_ATOMIC_T@
-HAVE_SIGNED_WCHAR_T = @HAVE_SIGNED_WCHAR_T@
-HAVE_SIGNED_WINT_T = @HAVE_SIGNED_WINT_T@
-HAVE_SLEEP = @HAVE_SLEEP@
-HAVE_STDINT_H = @HAVE_STDINT_H@
-HAVE_STRTOD = @HAVE_STRTOD@
-HAVE_SYS_BITYPES_H = @HAVE_SYS_BITYPES_H@
-HAVE_SYS_INTTYPES_H = @HAVE_SYS_INTTYPES_H@
-HAVE_SYS_PARAM_H = @HAVE_SYS_PARAM_H@
-HAVE_SYS_SOCKET_H = @HAVE_SYS_SOCKET_H@
-HAVE_SYS_TYPES_H = @HAVE_SYS_TYPES_H@
-HAVE_UNISTD_H = @HAVE_UNISTD_H@
-HAVE_UNSETENV = @HAVE_UNSETENV@
-HAVE_UNSIGNED_LONG_LONG_INT = @HAVE_UNSIGNED_LONG_LONG_INT@
-HAVE_VASPRINTF = @HAVE_VASPRINTF@
-HAVE_WCHAR_H = @HAVE_WCHAR_H@
-HAVE_WINSOCK2_H = @HAVE_WINSOCK2_H@
-HAVE_WINT_T = @HAVE_WINT_T@
-HAVE_WS2TCPIP_H = @HAVE_WS2TCPIP_H@
-HAVE__BOOL = @HAVE__BOOL@
-INCLUDE_NEXT = @INCLUDE_NEXT@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -454,14 +295,11 @@ INTLTOOL_PERL = @INTLTOOL_PERL@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
-LIBINTL = @LIBINTL@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
-LIBTESTS_LIBDEPS = @LIBTESTS_LIBDEPS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
@@ -472,17 +310,6 @@ MOZILLA_PLUGIN_LIBS = @MOZILLA_PLUGIN_LIBS@
 MSGFMT = @MSGFMT@
 MSGFMT_OPTS = @MSGFMT_OPTS@
 MSGMERGE = @MSGMERGE@
-NETINET_IN_H = @NETINET_IN_H@
-NEXT_ARPA_INET_H = @NEXT_ARPA_INET_H@
-NEXT_ERRNO_H = @NEXT_ERRNO_H@
-NEXT_FLOAT_H = @NEXT_FLOAT_H@
-NEXT_NETINET_IN_H = @NEXT_NETINET_IN_H@
-NEXT_STDINT_H = @NEXT_STDINT_H@
-NEXT_STDIO_H = @NEXT_STDIO_H@
-NEXT_STDLIB_H = @NEXT_STDLIB_H@
-NEXT_SYS_SOCKET_H = @NEXT_SYS_SOCKET_H@
-NEXT_UNISTD_H = @NEXT_UNISTD_H@
-NEXT_WCHAR_H = @NEXT_WCHAR_H@
 NM = @NM@
 NMEDIT = @NMEDIT@
 NO_UNDEFINED_FLAGS = @NO_UNDEFINED_FLAGS@
@@ -495,6 +322,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
@@ -503,8 +331,6 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
-PRAGMA_SYSTEM_HEADER = @PRAGMA_SYSTEM_HEADER@
-PTRDIFF_T_SUFFIX = @PTRDIFF_T_SUFFIX@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
 PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
@@ -515,63 +341,22 @@ PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
 REBUILD = @REBUILD@
-REPLACE_CHOWN = @REPLACE_CHOWN@
-REPLACE_FCHDIR = @REPLACE_FCHDIR@
-REPLACE_FFLUSH = @REPLACE_FFLUSH@
-REPLACE_FOPEN = @REPLACE_FOPEN@
-REPLACE_FPRINTF = @REPLACE_FPRINTF@
-REPLACE_FREOPEN = @REPLACE_FREOPEN@
-REPLACE_FSEEK = @REPLACE_FSEEK@
-REPLACE_FSEEKO = @REPLACE_FSEEKO@
-REPLACE_FTELL = @REPLACE_FTELL@
-REPLACE_FTELLO = @REPLACE_FTELLO@
-REPLACE_GETCWD = @REPLACE_GETCWD@
-REPLACE_GETLINE = @REPLACE_GETLINE@
-REPLACE_GETPAGESIZE = @REPLACE_GETPAGESIZE@
-REPLACE_LCHOWN = @REPLACE_LCHOWN@
-REPLACE_LSEEK = @REPLACE_LSEEK@
-REPLACE_MKSTEMP = @REPLACE_MKSTEMP@
-REPLACE_OBSTACK_PRINTF = @REPLACE_OBSTACK_PRINTF@
-REPLACE_PERROR = @REPLACE_PERROR@
-REPLACE_PRINTF = @REPLACE_PRINTF@
-REPLACE_PUTENV = @REPLACE_PUTENV@
-REPLACE_SNPRINTF = @REPLACE_SNPRINTF@
-REPLACE_SPRINTF = @REPLACE_SPRINTF@
-REPLACE_STDIO_WRITE_FUNCS = @REPLACE_STDIO_WRITE_FUNCS@
-REPLACE_STRTOD = @REPLACE_STRTOD@
-REPLACE_VASPRINTF = @REPLACE_VASPRINTF@
-REPLACE_VFPRINTF = @REPLACE_VFPRINTF@
-REPLACE_VPRINTF = @REPLACE_VPRINTF@
-REPLACE_VSNPRINTF = @REPLACE_VSNPRINTF@
-REPLACE_VSPRINTF = @REPLACE_VSPRINTF@
-REPLACE_WCWIDTH = @REPLACE_WCWIDTH@
-REPLACE_WRITE = @REPLACE_WRITE@
 SASL_CFLAGS = @SASL_CFLAGS@
 SASL_LIBS = @SASL_LIBS@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
-SIG_ATOMIC_T_SUFFIX = @SIG_ATOMIC_T_SUFFIX@
-SIZE_T_SUFFIX = @SIZE_T_SUFFIX@
-STDBOOL_H = @STDBOOL_H@
-STDINT_H = @STDINT_H@
 STRIP = @STRIP@
-SYS_SOCKET_H = @SYS_SOCKET_H@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 VERSION_SCRIPT_FLAGS = @VERSION_SCRIPT_FLAGS@
 VIEW_CFLAGS = @VIEW_CFLAGS@
 VIEW_LIBS = @VIEW_LIBS@
-VOID_UNSETENV = @VOID_UNSETENV@
 WARNING_CFLAGS = @WARNING_CFLAGS@
 WARNING_PYTHON_CFLAGS = @WARNING_PYTHON_CFLAGS@
-WCHAR_H = @WCHAR_H@
-WCHAR_T_SUFFIX = @WCHAR_T_SUFFIX@
-WINT_T_SUFFIX = @WINT_T_SUFFIX@
 X11_CFLAGS = @X11_CFLAGS@
 X11_LIBS = @X11_LIBS@
 XGETTEXT = @XGETTEXT@
-abs_aux_dir = @abs_aux_dir@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -595,10 +380,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-gl_LIBOBJS = @gl_LIBOBJS@
-gl_LTLIBOBJS = @gl_LTLIBOBJS@
-gltests_LIBOBJS = @gltests_LIBOBJS@
-gltests_LTLIBOBJS = @gltests_LTLIBOBJS@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -612,7 +393,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -633,24 +413,27 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = libgvnc_sym.version libgtk-vnc_sym.version vncmarshal.txt \
-	$(am__append_3) $(am__append_5) $(am__append_9) \
-	$(am__append_10)
-lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_6) $(am__append_7)
-BUILT_SOURCES = $(am__append_1)
+	$(am__append_3) $(am__append_5) $(am__append_7) keymap-gen.pl \
+	keymaps.csv $(am__append_11) $(am__append_12)
+lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_8) $(am__append_9)
+BUILT_SOURCES = $(am__append_1) $(KEYMAPS) vncmarshal.c vncmarshal.h \
+	vncdisplayenums.h vncdisplayenums.c vncconnectionenums.h \
+	vncconnectionenums.c
 @USE_VERSION_DEFS_FALSE@GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 @USE_VERSION_DEFS_TRUE@GVNC_VERSION_FILE = $(builddir)/libgvnc_sym.def
 @USE_VERSION_DEFS_FALSE@GTK_VNC_VERSION_FILE = $(srcdir)/libgtk-vnc_sym.version
 @USE_VERSION_DEFS_TRUE@GTK_VNC_VERSION_FILE = $(builddir)/libgtk-vnc_sym.def
 libgvnc_1_0_la_LIBADD = \
 			@GOBJECT_LIBS@ \
+			@GIO_LIBS@ \
 			@GTHREAD_LIBS@ \
 			@GDK_PIXBUF_LIBS@ \
 			@GNUTLS_LIBS@ \
-			@SASL_LIBS@ \
-			../gnulib/lib/libgnu.la
+			@SASL_LIBS@
 
 libgvnc_1_0_la_CFLAGS = \
 			@GOBJECT_CFLAGS@ \
+			@GIO_CFLAGS@ \
 			@GTHREAD_CFLAGS@ \
 			@GDK_PIXBUF_CFLAGS@ \
 			@GNUTLS_CFLAGS@ \
@@ -658,9 +441,7 @@ libgvnc_1_0_la_CFLAGS = \
 			@WARNING_CFLAGS@ \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-			-DG_LOG_DOMAIN=\"gvnc\" \
-			-I$(top_srcdir)/gnulib/lib \
-			-I../gnulib/lib
+			-DG_LOG_DOMAIN=\"gvnc\"
 
 libgvnc_1_0_la_LDFLAGS = \
 			$(VERSION_SCRIPT_FLAGS)$(GVNC_VERSION_FILE) \
@@ -688,8 +469,7 @@ libgvnc_1_0_la_SOURCES = coroutine.h d3des.h d3des.c dh.h dh.c \
 gtk_vnc_LIBADD = \
 			@GTK_LIBS@ \
 			@X11_LIBS@ \
-			libgvnc-1.0.la \
-			../gnulib/lib/libgnu.la
+			libgvnc-1.0.la
 
 gtk_vnc_CFLAGS = \
 			@GTK_CFLAGS@ \
@@ -697,9 +477,7 @@ gtk_vnc_CFLAGS = \
 			@WARNING_CFLAGS@ \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-			-DG_LOG_DOMAIN=\"gtk-vnc\" \
-			-I$(top_srcdir)/gnulib/lib \
-			-I../gnulib/lib
+			-DG_LOG_DOMAIN=\"gtk-vnc\"
 
 gtk_vnc_includedir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
 gtk_vnc_include_HEADERS = \
@@ -708,14 +486,10 @@ gtk_vnc_include_HEADERS = \
 			vncgrabsequence.h \
 			vncimageframebuffer.h
 
-gtk_vnc_SOURCES = \
-			vncimageframebuffer.h vncimageframebuffer.c \
-			vncdisplay.h vncdisplay.c \
-			vncdisplayenums.h vncdisplayenums.c \
-			vncdisplaykeymap.h vncdisplaykeymap.c \
-			vncgrabsequence.h vncgrabsequence.c \
-			vncmarshal.h vncmarshal.c
-
+gtk_vnc_SOURCES = vnccairoframebuffer.h vnccairoframebuffer.c \
+	vncdisplay.h vncdisplay.c vncdisplayenums.h vncdisplayenums.c \
+	vncdisplaykeymap.h vncdisplaykeymap.c vncgrabsequence.h \
+	vncgrabsequence.c vncmarshal.h vncmarshal.c $(am__append_6)
 gtk_vnc_LDFLAGS = \
 			$(VERSION_SCRIPT_FLAGS)$(GTK_VNC_VERSION_FILE) \
 			$(NO_UNDEFINED_FLAGS)
@@ -728,9 +502,16 @@ gtk_vnc_LDFLAGS = \
 @HAVE_GTK_2_FALSE@libgtk_vnc_2_0_la_CFLAGS = $(gtk_vnc_CFLAGS)
 @HAVE_GTK_2_FALSE@libgtk_vnc_2_0_la_LDFLAGS = $(gtk_vnc_LDFLAGS) -version-info 0:2:0
 @HAVE_GTK_2_FALSE@libgtk_vnc_2_0_la_SOURCES = $(gtk_vnc_SOURCES)
-CLEANFILES = vncmarshal.c vncmarshal.h vncdisplayenums.h \
-	vncdisplayenums.c vncconnectionenums.h vncconnectionenums.c \
-	$(am__append_8) $(am__append_11)
+KEYMAP_GEN = $(srcdir)/keymap-gen.pl
+KEYMAPS = \
+	vncdisplaykeymap_xorgevdev2rfb.c \
+	vncdisplaykeymap_xorgkbd2rfb.c \
+	vncdisplaykeymap_xorgxquartz2rfb.c \
+	vncdisplaykeymap_xorgxwin2rfb.c \
+	vncdisplaykeymap_osx2rfb.c \
+	vncdisplaykeymap_win322rfb.c
+
+CLEANFILES = $(BUILT_SOURCES) $(am__append_10) $(am__append_14)
 @WITH_PYTHON_TRUE@pyexec_LTLIBRARIES = gtkvnc.la
 @WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la @PYGTK_LIBS@
 @WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @PYTHON_INCLUDES@ \
@@ -750,12 +531,17 @@ CLEANFILES = vncmarshal.c vncmarshal.h vncdisplayenums.h \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(builddir)/vncconnectionenums.h $(builddir)/vncconnectionenums.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncutil.h $(srcdir)/vncutil.c
 
-@WITH_GOBJECT_INTROSPECTION_TRUE@GTK_VNC_INTROSPECTION_SRCS = \
-@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c \
-@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncdisplay.h $(srcdir)/vncdisplay.c \
-@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncgrabsequence.h $(srcdir)/vncgrabsequence.c \
-@WITH_GOBJECT_INTROSPECTION_TRUE@			$(builddir)/vncdisplayenums.h $(builddir)/vncdisplayenums.c
-
+@WITH_GOBJECT_INTROSPECTION_TRUE@GTK_VNC_INTROSPECTION_SRCS = $(srcdir)/vnccairoframebuffer.h \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vnccairoframebuffer.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncdisplay.h \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncdisplay.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.h \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.h \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_13)
+@G_IR_SCANNER_SYMBOL_PREFIX_FALSE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --strip-prefix=Vnc
+@G_IR_SCANNER_SYMBOL_PREFIX_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --symbol-prefix=vnc --identifier-prefix=Vnc
 @WITH_GOBJECT_INTROSPECTION_TRUE@girdir = $(datadir)/gir-1.0
 @WITH_GOBJECT_INTROSPECTION_TRUE@gir_DATA = GVnc-1.0.gir GtkVnc-$(GTK_VNC_API_VERSION).gir
 @WITH_GOBJECT_INTROSPECTION_TRUE@typelibsdir = $(libdir)/girepository-1.0
@@ -874,12 +660,14 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkvnc_la-vncmodule.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkvnc_la-vncmodule.defs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vnccairoframebuffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncdisplay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncdisplayenums.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncdisplaykeymap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncgrabsequence.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncmarshal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_2_0_la-vnccairoframebuffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_2_0_la-vncdisplay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_2_0_la-vncdisplayenums.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_2_0_la-vncdisplaykeymap.Plo@am__quote@
@@ -941,13 +729,13 @@ gtkvnc_la-vncmodule.defs.lo: vncmodule.defs.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtkvnc_la_CFLAGS) $(CFLAGS) -c -o gtkvnc_la-vncmodule.defs.lo `test -f 'vncmodule.defs.c' || echo '$(srcdir)/'`vncmodule.defs.c
 
-libgtk_vnc_1_0_la-vncimageframebuffer.lo: vncimageframebuffer.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vncimageframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Tpo -c -o libgtk_vnc_1_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Plo
+libgtk_vnc_1_0_la-vnccairoframebuffer.lo: vnccairoframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vnccairoframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vnccairoframebuffer.Tpo -c -o libgtk_vnc_1_0_la-vnccairoframebuffer.lo `test -f 'vnccairoframebuffer.c' || echo '$(srcdir)/'`vnccairoframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk_vnc_1_0_la-vnccairoframebuffer.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-vnccairoframebuffer.Plo
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncimageframebuffer.c' object='libgtk_vnc_1_0_la-vncimageframebuffer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vnccairoframebuffer.c' object='libgtk_vnc_1_0_la-vnccairoframebuffer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vnccairoframebuffer.lo `test -f 'vnccairoframebuffer.c' || echo '$(srcdir)/'`vnccairoframebuffer.c
 
 libgtk_vnc_1_0_la-vncdisplay.lo: vncdisplay.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vncdisplay.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vncdisplay.Tpo -c -o libgtk_vnc_1_0_la-vncdisplay.lo `test -f 'vncdisplay.c' || echo '$(srcdir)/'`vncdisplay.c
@@ -989,13 +777,21 @@ libgtk_vnc_1_0_la-vncmarshal.lo: vncmarshal.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vncmarshal.lo `test -f 'vncmarshal.c' || echo '$(srcdir)/'`vncmarshal.c
 
-libgtk_vnc_2_0_la-vncimageframebuffer.lo: vncimageframebuffer.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_2_0_la-vncimageframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_2_0_la-vncimageframebuffer.Tpo -c -o libgtk_vnc_2_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk_vnc_2_0_la-vncimageframebuffer.Tpo $(DEPDIR)/libgtk_vnc_2_0_la-vncimageframebuffer.Plo
+libgtk_vnc_1_0_la-vncimageframebuffer.lo: vncimageframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vncimageframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Tpo -c -o libgtk_vnc_1_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Tpo $(DEPDIR)/libgtk_vnc_1_0_la-vncimageframebuffer.Plo
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncimageframebuffer.c' object='libgtk_vnc_2_0_la-vncimageframebuffer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncimageframebuffer.c' object='libgtk_vnc_1_0_la-vncimageframebuffer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_2_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_1_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
+
+libgtk_vnc_2_0_la-vnccairoframebuffer.lo: vnccairoframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_2_0_la-vnccairoframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_2_0_la-vnccairoframebuffer.Tpo -c -o libgtk_vnc_2_0_la-vnccairoframebuffer.lo `test -f 'vnccairoframebuffer.c' || echo '$(srcdir)/'`vnccairoframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk_vnc_2_0_la-vnccairoframebuffer.Tpo $(DEPDIR)/libgtk_vnc_2_0_la-vnccairoframebuffer.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vnccairoframebuffer.c' object='libgtk_vnc_2_0_la-vnccairoframebuffer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_2_0_la-vnccairoframebuffer.lo `test -f 'vnccairoframebuffer.c' || echo '$(srcdir)/'`vnccairoframebuffer.c
 
 libgtk_vnc_2_0_la-vncdisplay.lo: vncdisplay.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_2_0_la-vncdisplay.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_2_0_la-vncdisplay.Tpo -c -o libgtk_vnc_2_0_la-vncdisplay.lo `test -f 'vncdisplay.c' || echo '$(srcdir)/'`vncdisplay.c
@@ -1036,6 +832,14 @@ libgtk_vnc_2_0_la-vncmarshal.lo: vncmarshal.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncmarshal.c' object='libgtk_vnc_2_0_la-vncmarshal.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_2_0_la-vncmarshal.lo `test -f 'vncmarshal.c' || echo '$(srcdir)/'`vncmarshal.c
+
+libgtk_vnc_2_0_la-vncimageframebuffer.lo: vncimageframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_2_0_la-vncimageframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_2_0_la-vncimageframebuffer.Tpo -c -o libgtk_vnc_2_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgtk_vnc_2_0_la-vncimageframebuffer.Tpo $(DEPDIR)/libgtk_vnc_2_0_la-vncimageframebuffer.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncimageframebuffer.c' object='libgtk_vnc_2_0_la-vncimageframebuffer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_2_0_la-vncimageframebuffer.lo `test -f 'vncimageframebuffer.c' || echo '$(srcdir)/'`vncimageframebuffer.c
 
 libgvnc_1_0_la-d3des.lo: d3des.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-d3des.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-d3des.Tpo -c -o libgvnc_1_0_la-d3des.lo `test -f 'd3des.c' || echo '$(srcdir)/'`d3des.c
@@ -1456,6 +1260,28 @@ uninstall-am: uninstall-girDATA uninstall-gtk_vnc_includeHEADERS \
 	chmod a-w $@-tmp && \
 	mv $@-tmp $@
 
+$(KEYMAPS): $(KEYMAP_GEN) keymaps.csv
+
+vncdisplaykeymap.c: $(KEYMAPS)
+
+vncdisplaykeymap_xorgevdev2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgevdev rfb > $@ || rm $@
+
+vncdisplaykeymap_xorgkbd2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgkbd rfb > $@ || rm $@
+
+vncdisplaykeymap_xorgxquartz2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgxquartz rfb > $@ || rm $@
+
+vncdisplaykeymap_xorgxwin2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgxwin rfb > $@ || rm $@
+
+vncdisplaykeymap_osx2rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv osx rfb > $@ || rm $@
+
+vncdisplaykeymap_win322rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv win32 rfb > $@ || rm $@
+
 vncdisplayenums.c: vncdisplay.h
 	$(AM_V_GEN)glib-mkenums    --fhead "#include <glib-object.h>\n" \
 			--fhead "#include \"vncdisplayenums.h\"\n\n" \
@@ -1533,7 +1359,7 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --namespace GVnc \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --nsversion 1.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@		--strip-prefix=Vnc \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		$(PREFIX_ARGS) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --library=$(builddir)/libgvnc-1.0.la \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(srcdir) \
@@ -1555,7 +1381,7 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include Gtk-$(GTK_API_VERSION) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GVnc-1.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@		--strip-prefix=Vnc \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		$(PREFIX_ARGS) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --library=$(builddir)/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(srcdir) \
