@@ -18,7 +18,8 @@ Build-Depends: cdbs,
  quilt,
  libffi-dev,
  libsasl2-dev,
- intltool
+ intltool,
+ libtext-csv-perl
 Build-Conflicts: libffi4-dev
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
 Vcs-Browser: http://git.debian.org/?p=pkg-libvirt/gtk-vnc.git
