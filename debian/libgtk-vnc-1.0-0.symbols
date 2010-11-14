@@ -1,4 +1,7 @@
 libgtk-vnc-1.0.so.0 libgtk-vnc-1.0-0 #MINVER#
+ vnc_cairo_framebuffer_get_surface@Base 0.4.2
+ vnc_cairo_framebuffer_get_type@Base 0.4.2
+ vnc_cairo_framebuffer_new@Base 0.4.2
  vnc_display_client_cut_text@Base 0.3.10
  vnc_display_close@Base 0.3.10
  vnc_display_credential_get_type@Base 0.3.10
@@ -114,5 +117,8 @@ libgvnc-1.0.so.0 libgtk-vnc-1.0-0 #MINVER#
  vnc_pixel_format_free@Base 0.4.1
  vnc_pixel_format_get_type@Base 0.4.1
  vnc_pixel_format_new@Base 0.4.1
+ vnc_util_check_version@Base 0.4.2
  vnc_util_get_debug@Base 0.4.1
+ vnc_util_get_version@Base 0.4.2
+ vnc_util_get_version_string@Base 0.4.2
  vnc_util_set_debug@Base 0.4.1
