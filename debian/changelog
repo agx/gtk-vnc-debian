@@ -1,3 +1,17 @@
+gtk-vnc (0.4.2-1) experimental; urgency=low
+
+  [ Laurent Léonard ]
+  * [7ec0541] Imported Upstream version 0.4.2
+  * [d9fb78f] Drop patches
+    - 0002-Reset-xmit_buffer-fields-to-fix-reconnect.patch - fixed upstream
+    - 0003-Fix-auth-subtype-choosing-logic-in-vncdisplay.patch - fixed upstream
+  * [40bafe2] Add libtext-csv-perl build dependency
+
+  [ Guido Günther ]
+  * [31411b3] Update symbols for 0.4.2
+
+ -- Laurent Léonard <laurent@open-minds.org>  Sun, 14 Nov 2010 19:19:45 +0100
+
 gtk-vnc (0.4.1-4) unstable; urgency=low
 
   * [6f211c3] New patch 0003-Fix-auth-subtype-choosing-logic-in-
