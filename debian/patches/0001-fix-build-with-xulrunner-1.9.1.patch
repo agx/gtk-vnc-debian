@@ -1,6 +1,6 @@
 From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
 Date: Mon, 16 Nov 2009 21:48:41 +0100
-Subject: [PATCH] fix build with xulrunner 1.9.1
+Subject: fix build with xulrunner 1.9.1
 
 Closes: #556840
 Bug: https://bugzilla.gnome.org/show_bug.cgi?id=564718
