@@ -17,7 +17,7 @@
 
 Summary: A GTK2 widget for VNC clients
 Name: gtk-vnc
-Version: 0.4.2
+Version: 0.4.3
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
@@ -33,7 +33,6 @@ BuildRequires: gobject-introspection-devel
 BuildRequires: gir-repository-devel
 %endif
 %endif
-BuildRequires: perl(Text::CSV)
 %if %{with_plugin}
 %if 0%{?fedora} > 8
 BuildRequires: xulrunner-devel
@@ -285,10 +284,3 @@ rm -fr %{buildroot}
 %endif
 
 %changelog
-* Thu Sep 13 2007 Daniel P. Berrange <berrange@redhat.com> - 0.2.0-1
-- Support client cursor offload
-- Fix mixed endian client/server handling
-- Fix colour depths conversions
-
-* Wed Aug 15 2007 Daniel P. Berrange <berrange@redhat.com> - 0.1.0-1
-- Initial official release

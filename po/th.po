@@ -1,0 +1,29 @@
+# Thai translation for gtk-vnc.
+# Copyright (C) 2011 Free Software Foundation, Inc.
+# This file is distributed under the same license as the gtk-vnc package.
+# Akom Chotiphantawanon <knight2000@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gtk-vnc master\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=gtk-"
+"vnc&component=general\n"
+"POT-Creation-Date: 2010-12-14 12:44+0000\n"
+"PO-Revision-Date: 2011-01-05 14:17+0700\n"
+"Last-Translator: Akom Chotiphantawanon <knight2000@gmail.com>\n"
+"Language-Team: Thai <thai-l10n@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/vncdisplay.c:164
+msgid "Enables debug output"
+msgstr "เปิดแสดงข้อความดีบั๊ก"
+
+#: ../src/vncdisplay.c:2274
+msgid "GTK-VNC Options:"
+msgstr "ตัวเลือกของ GTK-VNC:"
+
+#: ../src/vncdisplay.c:2274
+msgid "Show GTK-VNC Options"
+msgstr "แสดงตัวเลือกของ GTK-VNC"

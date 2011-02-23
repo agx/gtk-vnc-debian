@@ -1,3 +1,125 @@
+2011-02-18  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.4.3 release
+	* NEWS: List of changes
+	* README: Remove note about GTK3 being experimental
+	* configure.ac: Update version & GTK3 required version
+	* gtk-vnc.spec.in: Remove bogus changelog
+
+	Remove some unused variables in VncConnection
+	* src/vncconnection.c: Remove unused vars
+
+2011-01-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Make pointer warp check more robust
+	The pointer warp code checks whether the local cursor
+	is hitting a boundary == 0, ==width, or ==height. This
+	is slightly too strict, it should check <= 0, >= width
+	or >= height
+
+	* src/vncdisplay.c: Make boundary check more robust
+
+	Fix warning about unused 'dpy' variable in keymap code
+	In GTK2 paths, GDK_IS_*_DISPLAY(dpy) evaluated to '1'
+	which meant 'dpy' could be unused. Change it to eval
+	to 'dpy == dpy' to trick compiler into thinking the
+	variable is in use.
+
+	* src/vncdisplaykeymap.c: Fix warning of unused variable
+
+2011-01-14  George Stefanakis  <george.stefanakis@gmail.com>
+
+	Updated Greek translation
+
+2011-01-13  Sébastien Granjoux  <seb.sfo@free.fr>
+
+	Fix setup of 'shared flag' when opening connection
+	The VncDisplay class forgot to pass the 'shared flag' onto
+	the VncConnection class when establishing a connection
+
+2011-01-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Refactor keymap handling to cope with multiple GDK backends
+	In GTK3 it is possible to have multiple GDK backends present.
+	The vncdisplaykeymap code needs a minor refactoring to cope
+	with this enhancement. The refactoring also trivially maintains
+	GTK2 compat
+
+2011-01-05  Akom Chotiphantawanon  <knight2000@gmail.com>
+
+	Added Thai translation.
+
+2010-12-14  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix leak of GSource objects which causes performance problems
+	The GLib event loop scales poorly as the number of GSource objects
+	increases. A missing unref on the GSource objects used in the VNC
+	connection meant that many unused instances accumulated, slowing
+	down the event loop processing.
+
+	* src/vncconnection.c: Unref all GSource objects
+
+2010-12-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Adapt to avoid further Gtk3 changes
+	More gdk_drawable calls have gone away in Gtk3. Adapt code to avoid
+	needing to use them, by calling gtk_widget APIs instead.
+
+2010-11-29  Daniel P. Berrange  <berrange@redhat.com>
+
+	Re-introduce a server side Pixmap to cache framebuffer
+	Despite use of clipping during drawing, rendering directly
+	from the client side cairo image, to the window incurred
+	a serious performance penalty for some users' X servers.
+	Re-introduce a server side copy of the VNC desktop using
+	a cairo surface, backed by an X Pixmap. This uses cairo
+	APIs directly, avoiding any need for GdkPixmap.
+
+	Remove check for Text::CSV
+	Revert the check for Text::CSV added in
+
+	  753ddcb203fd9ad26829a065fd4d47c82773e849
+
+	Since the keymap files are now included in EXTRA_DIST, there
+	is no requirement fo Text::CSV at end user build time. Only
+	maintainers required the Text::CSV file when generating a
+	new dist.
+
+2010-11-29  Daniel P. Berrange  <dan@berrange.com>
+
+	Fix framebuffer update boundary check
+	Framebuffer boundary checks need to take into account offset,
+	in addition to width/height
+
+	* src/vncconnection.c: Fix boundary check
+
+	Avoid crash in TLS cleanup code on shutdown
+	The gnutls_bye() method may try to send data on the socket todo
+	graceful TLS shutdown. The priv->sock variable is possibly
+	already NULL at this point if the close was triggered via the
+	vnc_connection_shutdown() method. Change the latter so that
+	it only calls g_socket_close, not actually free'ing the
+	priv->sock object immediately. Also put sanity check code in
+	the TLS push/pull functions to catch future bugs in this area
+
+	Distribute built keymap files
+	Avoid the need for end users to have the Perl Text::CSV module
+	installed, by including the pre-generated keymap source files
+	in the dist.
+
+	* gtk-vnc.spec.in: Remove dep on perl(Text::CSV)
+	* src/Makefile.am: Include keymaps in dist
+
+	Avoid crash in motion event & vnc_display_get_pixbuf
+	If a mouse event occurs before a connection completes setup
+	priv->fb will be NULL and a crash can occur. Likewise if
+	vnc_display_get_pixbuf() is called before priv->fb is set,
+	then a crash occurs. Add checks for NULL in both cases
+
+2010-11-26  Jonh Wendell  <jwendell@gnome.org>
+
+	check for Text::CVS perl module in configure. closes #634621
+
 2010-11-05  Daniel P. Berrange  <berrange@redhat.com>
 
 	Update NEWS/README/configure.ac  for 0.4.2 release

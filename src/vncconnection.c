@@ -234,6 +234,7 @@ static GIOCondition g_io_wait(GSocket *sock, GIOCondition cond)
 	g_source_set_callback(src, (GSourceFunc)g_io_wait_helper, coroutine_self(), NULL);
 	g_source_attach(src, NULL);
 	ret = coroutine_yield(NULL);
+	g_source_unref(src);
 	return *ret;
 }
 
@@ -254,6 +255,7 @@ static GIOCondition g_io_wait_interruptable(struct wait_queue *wait,
 	id = g_source_attach(src, NULL);
 	wait->waiting = TRUE;
 	ret = coroutine_yield(NULL);
+	g_source_unref(src);
 	wait->waiting = FALSE;
 
 	if (ret == NULL) {
@@ -334,6 +336,8 @@ static gboolean g_condition_wait(g_condition_wait_func func, gpointer data)
 	g_source_attach(src, NULL);
 	g_source_set_callback(src, g_condition_wait_helper, coroutine_self(), NULL);
 	coroutine_yield(NULL);
+	g_source_unref(src);
+
 	return TRUE;
 }
 
@@ -939,6 +943,12 @@ static ssize_t vnc_connection_tls_push(gnutls_transport_ptr_t transport,
 	int ret;
 	GError *error = NULL;
 
+	if (!priv->sock) {
+		VNC_DEBUG("Unexpected TLS push on closed socket");
+		errno = EBADF;
+		return -1;
+	}
+
 	ret = g_socket_send(priv->sock, data, len, NULL, &error);
 	if (ret < 0) {
 		if (error) {
@@ -961,6 +971,12 @@ static ssize_t vnc_connection_tls_pull(gnutls_transport_ptr_t transport,
 	VncConnectionPrivate *priv = conn->priv;
 	int ret;
 	GError *error = NULL;
+
+	if (!priv->sock) {
+		VNC_DEBUG("Unexpected TLS pull on closed socket");
+		errno = EBADF;
+		return -1;
+	}
 
 	ret = g_socket_receive(priv->sock, data, len, NULL, &error);
 	if (ret < 0) {
@@ -2083,7 +2099,6 @@ static void vnc_connection_zrle_update(VncConnection *conn,
 {
 	VncConnectionPrivate *priv = conn->priv;
 	guint32 length;
-	guint32 offset;
 	guint16 i, j;
 	guint8 *zlib_data;
 
@@ -2097,7 +2112,6 @@ static void vnc_connection_zrle_update(VncConnection *conn,
 	priv->compressed_buffer = zlib_data;
 	priv->strm = &priv->streams[0];
 
-	offset = 0;
 	for (j = 0; j < height; j += 64) {
 		for (i = 0; i < width; i += 64) {
 			guint16 w, h;
@@ -2299,7 +2313,6 @@ static void vnc_connection_tight_update_jpeg(VncConnection *conn, guint16 x, gui
 	VncConnectionPrivate *priv = conn->priv;
 	GdkPixbufLoader *loader = gdk_pixbuf_loader_new();
 	GdkPixbuf *p;
-	guint8 *pixels;
 
 	if (!gdk_pixbuf_loader_write(loader, data, length, NULL)) {
 		priv->has_error = TRUE;
@@ -2310,8 +2323,6 @@ static void vnc_connection_tight_update_jpeg(VncConnection *conn, guint16 x, gui
 
 	p = g_object_ref(gdk_pixbuf_loader_get_pixbuf(loader));
 	g_object_unref(loader);
-
-	pixels = gdk_pixbuf_get_pixels(p);
 
 	vnc_framebuffer_rgb24_blt(priv->fb,
 				  gdk_pixbuf_get_pixels(p),
@@ -2641,13 +2652,14 @@ static void vnc_connection_ext_key_event(VncConnection *conn)
 
 
 static gboolean vnc_connection_validate_boundary(VncConnection *conn,
+						 guint16 x, guint16 y,
 						 guint16 width, guint16 height)
 {
 	VncConnectionPrivate *priv = conn->priv;
 
-	if (width > priv->width || height > priv->height) {
-		VNC_DEBUG("Framebuffer update %dx%d outside boundary %dx%d",
-			  width, height, priv->width, priv->height);
+	if ((x + width) > priv->width || (y + height) > priv->height) {
+		VNC_DEBUG("Framebuffer update %dx%d at %d,%d outside boundary %dx%d",
+			  width, height, x, y, priv->width, priv->height);
 		priv->has_error = TRUE;
 	}
 
@@ -2669,37 +2681,37 @@ static gboolean vnc_connection_framebuffer_update(VncConnection *conn, gint32 et
 
 	switch (etype) {
 	case VNC_CONNECTION_ENCODING_RAW:
-		if (!vnc_connection_validate_boundary(conn, width, height))
+		if (!vnc_connection_validate_boundary(conn, x, y, width, height))
 			break;
 		vnc_connection_raw_update(conn, x, y, width, height);
 		vnc_connection_update(conn, x, y, width, height);
 		break;
 	case VNC_CONNECTION_ENCODING_COPY_RECT:
-		if (!vnc_connection_validate_boundary(conn, width, height))
+		if (!vnc_connection_validate_boundary(conn, x, y, width, height))
 			break;
 		vnc_connection_copyrect_update(conn, x, y, width, height);
 		vnc_connection_update(conn, x, y, width, height);
 		break;
 	case VNC_CONNECTION_ENCODING_RRE:
-		if (!vnc_connection_validate_boundary(conn, width, height))
+		if (!vnc_connection_validate_boundary(conn, x, y, width, height))
 			break;
 		vnc_connection_rre_update(conn, x, y, width, height);
 		vnc_connection_update(conn, x, y, width, height);
 		break;
 	case VNC_CONNECTION_ENCODING_HEXTILE:
-		if (!vnc_connection_validate_boundary(conn, width, height))
+		if (!vnc_connection_validate_boundary(conn, x, y, width, height))
 			break;
 		vnc_connection_hextile_update(conn, x, y, width, height);
 		vnc_connection_update(conn, x, y, width, height);
 		break;
 	case VNC_CONNECTION_ENCODING_ZRLE:
-		if (!vnc_connection_validate_boundary(conn, width, height))
+		if (!vnc_connection_validate_boundary(conn, x, y, width, height))
 			break;
 		vnc_connection_zrle_update(conn, x, y, width, height);
 		vnc_connection_update(conn, x, y, width, height);
 		break;
 	case VNC_CONNECTION_ENCODING_TIGHT:
-		if (!vnc_connection_validate_boundary(conn, width, height))
+		if (!vnc_connection_validate_boundary(conn, x, y, width, height))
 			break;
 		vnc_connection_tight_update(conn, x, y, width, height);
 		vnc_connection_update(conn, x, y, width, height);
@@ -4461,11 +4473,12 @@ void vnc_connection_shutdown(VncConnection *conn)
 	VNC_DEBUG("Waking up couroutine to shutdown gracefully");
 	g_io_wakeup(&priv->wait);
 
-	if (priv->sock) {
+	/* Closing the socket triggers an I/O error in the
+	 * event loop resulting...eventually.. in a call
+	 * to vnc_connection_close for full cleanup
+	 */
+	if (priv->sock)
 		g_socket_close(priv->sock, NULL);
-		g_object_unref(priv->sock);
-		priv->sock = NULL;
-	}
 }
 
 gboolean vnc_connection_is_open(VncConnection *conn)

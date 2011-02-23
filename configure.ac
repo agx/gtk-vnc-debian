@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.4.2],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.4.3],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -97,7 +97,7 @@ case "$with_gtk" in
        GTK_VNC_API_VERSION=1.0
        ;;
   3.0) GTK_API_VERSION=3.0
-       GTK_REQUIRED=2.91.3
+       GTK_REQUIRED=3.0.0
        GTK_VNC_API_VERSION=2.0
        ;;
 esac
