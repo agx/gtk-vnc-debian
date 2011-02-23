@@ -327,6 +327,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
@@ -412,13 +414,14 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+
+# Avoid need for perl(Text::CSV) by end users
 EXTRA_DIST = libgvnc_sym.version libgtk-vnc_sym.version vncmarshal.txt \
 	$(am__append_3) $(am__append_5) $(am__append_7) keymap-gen.pl \
-	keymaps.csv $(am__append_11) $(am__append_12)
+	keymaps.csv $(KEYMAPS) $(am__append_11) $(am__append_12)
 lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_8) $(am__append_9)
-BUILT_SOURCES = $(am__append_1) $(KEYMAPS) vncmarshal.c vncmarshal.h \
-	vncdisplayenums.h vncdisplayenums.c vncconnectionenums.h \
-	vncconnectionenums.c
+BUILT_SOURCES = $(am__append_1) $(KEYMAPS) $(MARSHAL_FILES) \
+	$(ENUM_FILES)
 @USE_VERSION_DEFS_FALSE@GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 @USE_VERSION_DEFS_TRUE@GVNC_VERSION_FILE = $(builddir)/libgvnc_sym.def
 @USE_VERSION_DEFS_FALSE@GTK_VNC_VERSION_FILE = $(srcdir)/libgtk-vnc_sym.version
@@ -511,7 +514,14 @@ KEYMAPS = \
 	vncdisplaykeymap_osx2rfb.c \
 	vncdisplaykeymap_win322rfb.c
 
-CLEANFILES = $(BUILT_SOURCES) $(am__append_10) $(am__append_14)
+MAINTAINERCLEANFILES = $(KEYMAPS)
+MARSHAL_FILES = vncmarshal.c vncmarshal.h
+ENUM_FILES = \
+	vncdisplayenums.h vncdisplayenums.c \
+	vncconnectionenums.h vncconnectionenums.c
+
+CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_10) \
+	$(am__append_14)
 @WITH_PYTHON_TRUE@pyexec_LTLIBRARIES = gtkvnc.la
 @WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la @PYGTK_LIBS@
 @WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @PYTHON_INCLUDES@ \
@@ -1157,6 +1167,7 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \

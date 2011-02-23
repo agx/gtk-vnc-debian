@@ -50,6 +50,7 @@ struct _VncDisplayPrivate
 
 	VncConnection *conn;
 	VncCairoFramebuffer *fb;
+	cairo_surface_t *fbCache; /* Cache on server display */
 
 	VncDisplayDepthColor depth;
 
@@ -137,10 +138,6 @@ static inline void gdk_drawable_get_size(GdkWindow *w, gint *ww, gint *wh)
 	*ww = gdk_window_get_width(w);
 	*wh = gdk_window_get_height(w);
 }
-
-#define gdk_drawable_get_display(w) gdk_window_get_display(w)
-#define gdk_drawable_get_screen(w) gdk_window_get_screen(w)
-#define gdk_drawable_get_visual(w) gdk_window_get_visual(w)
 
 #define GtkObject GtkWidget
 #define GtkObjectClass GtkWidgetClass
@@ -282,6 +279,32 @@ static GdkCursor *create_null_cursor(void)
 	return cursor;
 }
 
+
+static void setup_surface_cache(VncDisplay *dpy, cairo_t *crWin, int w, int h)
+{
+	VncDisplayPrivate *priv = dpy->priv;
+	cairo_surface_t *win = cairo_get_target(crWin);
+	cairo_t *crCache;
+
+	if (priv->fbCache)
+		return;
+
+	/* Creates a Pixmap on the X11 server matching the Window */
+	priv->fbCache = cairo_surface_create_similar(win,
+						     CAIRO_CONTENT_COLOR,
+						     w, h);
+	crCache = cairo_create(priv->fbCache);
+
+	/* Copy our local framebuffer contents to the Pixmap */
+	cairo_set_source_surface(crCache,
+				 vnc_cairo_framebuffer_get_surface(priv->fb),
+				 0,
+				 0);
+	cairo_paint(crCache);
+
+	cairo_destroy(crCache);
+}
+
 static gboolean draw_event(GtkWidget *widget, cairo_t *cr)
 {
 	VncDisplay *obj = VNC_DISPLAY(widget);
@@ -293,6 +316,8 @@ static gboolean draw_event(GtkWidget *widget, cairo_t *cr)
 	if (priv->fb) {
 		fbw = vnc_framebuffer_get_width(VNC_FRAMEBUFFER(priv->fb));
 		fbh = vnc_framebuffer_get_height(VNC_FRAMEBUFFER(priv->fb));
+
+		setup_surface_cache(obj, cr, fbw, fbh);
 	}
 
 	gdk_drawable_get_size(gtk_widget_get_window(widget), &ww, &wh);
@@ -327,12 +352,12 @@ static gboolean draw_event(GtkWidget *widget, cairo_t *cr)
 			sy = (double)wh / (double)fbh;
 			cairo_scale(cr, sx, sy);
 			cairo_set_source_surface(cr,
-						 vnc_cairo_framebuffer_get_surface(priv->fb),
+						 priv->fbCache,
 						 0,
 						 0);
 		} else {
 			cairo_set_source_surface(cr,
-						 vnc_cairo_framebuffer_get_surface(priv->fb),
+						 priv->fbCache,
 						 mx,
 						 my);
 		}
@@ -557,6 +582,9 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
 	if (priv->conn == NULL || !vnc_connection_is_initialized(priv->conn))
 		return FALSE;
 
+	if (!priv->fb)
+		return FALSE;
+
 	fbw = vnc_framebuffer_get_width(VNC_FRAMEBUFFER(priv->fb));
 	fbh = vnc_framebuffer_get_height(VNC_FRAMEBUFFER(priv->fb));
 
@@ -597,9 +625,8 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
 
 	/* Next adjust the real client pointer */
 	if (!priv->absolute) {
-		GdkDrawable *drawable = GDK_DRAWABLE(gtk_widget_get_window(widget));
-		GdkDisplay *display = gdk_drawable_get_display(drawable);
-		GdkScreen *screen = gdk_drawable_get_screen(drawable);
+		GdkDisplay *display = gtk_widget_get_display(widget);
+		GdkScreen *screen = gtk_widget_get_screen(widget);
 		int x = (int)motion->x_root;
 		int y = (int)motion->y_root;
 
@@ -610,10 +637,10 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
 		 * may still be only half way across the screen. Without
 		 * this warp, the server pointer would thus appear to hit
 		 * an invisible wall */
-		if (x == 0) x += 200;
-		if (y == 0) y += 200;
-		if (x == (gdk_screen_get_width(screen) - 1)) x -= 200;
-		if (y == (gdk_screen_get_height(screen) - 1)) y -= 200;
+		if (x <= 0) x += 200;
+		if (y <= 0) y += 200;
+		if (x >= (gdk_screen_get_width(screen) - 1)) x -= 200;
+		if (y >= (gdk_screen_get_height(screen) - 1)) y -= 200;
 
 		if (x != (int)motion->x_root || y != (int)motion->y_root) {
 			gdk_display_warp_pointer(display, screen, x, y);
@@ -845,6 +872,22 @@ static void on_framebuffer_update(VncConnection *conn G_GNUC_UNUSED,
 
 	gdk_drawable_get_size(gtk_widget_get_window(widget), &ww, &wh);
 
+	/* If we have a pixmap, update the region which changed.
+	 * If we don't have a pixmap, the entire thing will be
+	 * created & rendered during the drawing handler
+	 */
+	if (priv->fbCache) {
+		cairo_t *cr = cairo_create(priv->fbCache);
+		cairo_surface_t *surface = vnc_cairo_framebuffer_get_surface(priv->fb);
+
+		cairo_rectangle(cr, x, y, w, h);
+		cairo_clip(cr);
+		cairo_set_source_surface(cr, surface, 0, 0);
+		cairo_paint(cr);
+
+		cairo_destroy(cr);
+	}
+
 	if (priv->allow_scaling) {
 		double sx, sy;
 
@@ -902,6 +945,10 @@ static void do_framebuffer_init(VncDisplay *obj,
 		g_object_unref(priv->fb);
 		priv->fb = NULL;
 	}
+	if (priv->fbCache) {
+		cairo_surface_destroy(priv->fbCache);
+		priv->fbCache = NULL;
+	}
 
 	if (priv->null_cursor == NULL) {
 		priv->null_cursor = create_null_cursor();
@@ -957,7 +1004,7 @@ static void on_pixel_format_changed(VncConnection *conn G_GNUC_UNUSED,
 static gboolean vnc_display_set_preferred_pixel_format(VncDisplay *display)
 {
 	VncDisplayPrivate *priv = display->priv;
-	GdkVisual *v =  gdk_drawable_get_visual(gtk_widget_get_window(GTK_WIDGET(display)));
+	GdkVisual *v =  gtk_widget_get_visual(GTK_WIDGET(display));
 	VncPixelFormat fmt;
 	const VncPixelFormat *currentFormat;
 
@@ -1208,7 +1255,7 @@ static void on_cursor_changed(VncConnection *conn G_GNUC_UNUSED,
 	}
 
 	if (cursor) {
-		GdkDisplay *display = gdk_drawable_get_display(GDK_DRAWABLE(gtk_widget_get_window(GTK_WIDGET(obj))));
+		GdkDisplay *display = gtk_widget_get_display(GTK_WIDGET(obj));
 		GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data(vnc_cursor_get_data(cursor),
 							     GDK_COLORSPACE_RGB,
 							     TRUE, 8,
@@ -1360,6 +1407,9 @@ gboolean vnc_display_open_fd(VncDisplay *obj, int fd)
 	if (vnc_connection_is_open(priv->conn))
 		return FALSE;
 
+	if (!vnc_connection_set_shared(priv->conn, priv->shared_flag))
+		return FALSE;
+
 	if (!vnc_connection_open_fd(priv->conn, fd))
 		return FALSE;
 
@@ -1373,6 +1423,9 @@ gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *po
 	VncDisplayPrivate *priv = obj->priv;
 
 	if (vnc_connection_is_open(priv->conn))
+		return FALSE;
+
+	if (!vnc_connection_set_shared(priv->conn, priv->shared_flag))
 		return FALSE;
 
 	if (!vnc_connection_open_host(priv->conn, host, port))
@@ -1492,6 +1545,10 @@ static void vnc_display_finalize (GObject *obj)
 	if (priv->fb) {
 		g_object_unref(priv->fb);
 		priv->fb = NULL;
+	}
+	if (priv->fbCache) {
+		cairo_surface_destroy(priv->fbCache);
+		priv->fbCache = NULL;
 	}
 
 	if (priv->null_cursor) {
@@ -2048,6 +2105,9 @@ GdkPixbuf *vnc_display_get_pixbuf(VncDisplay *obj)
 
 	if (!priv->conn ||
 	    !vnc_connection_is_initialized(priv->conn))
+		return NULL;
+
+	if (!priv->fb)
 		return NULL;
 
 	fb = VNC_FRAMEBUFFER(priv->fb);

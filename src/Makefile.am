@@ -145,6 +145,10 @@ KEYMAPS = \
 $(KEYMAPS): $(KEYMAP_GEN) keymaps.csv
 BUILT_SOURCES += $(KEYMAPS)
 
+# Avoid need for perl(Text::CSV) by end users
+EXTRA_DIST += $(KEYMAPS)
+MAINTAINERCLEANFILES = $(KEYMAPS)
+
 vncdisplaykeymap.c: $(KEYMAPS)
 
 vncdisplaykeymap_xorgevdev2rfb.c:
@@ -229,11 +233,14 @@ vncdisplay.c:: vncmarshal.h vncdisplayenums.h
 
 vncconnection.c:: vncmarshal.h vncconnectionenums.h
 
-BUILT_SOURCES += vncmarshal.c vncmarshal.h \
+MARSHAL_FILES = vncmarshal.c vncmarshal.h
+ENUM_FILES = \
 	vncdisplayenums.h vncdisplayenums.c \
 	vncconnectionenums.h vncconnectionenums.c
 
-CLEANFILES = $(BUILT_SOURCES)
+BUILT_SOURCES += $(MARSHAL_FILES) $(ENUM_FILES)
+
+CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES)
 
 if WITH_PYTHON
 pyexec_LTLIBRARIES = gtkvnc.la

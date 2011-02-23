@@ -29,16 +29,13 @@ To browse or report bugs, go to our bugzilla page at:
 Installation notes
 ------------------
 
- * GTK2/GTK3: The build defaults to using GTK2. To enable
-   *experimental* GTK3 support the flag '--with-gtk'
-   must be passed to configure.
+ * GTK2/GTK3: The build currently defaults to using GTK2.
+   To enable GTK3 support the flag '--with-gtk=3.0' must
+   be passed to configure.
 
          ./configure --with-gtk=3.0
 
    Notes on GTK3 support:
-
-    - The GTK3 build will not be guarenteed ABI stable until
-      the release after GTK3 itself is declared ABI stable.
 
     - The traditional python bindings are disabled when GTK3
       is used. Applications should use the GObject introspection

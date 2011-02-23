@@ -1,7 +1,31 @@
     GTK VNC News
     ============
 
-Nov  3, 2010: Release 0.4.1
+Feb 18, 2011: Release 0.4.3
+===========================
+
+New features:
+
+ o None
+
+Bug fixes:
+
+ o Fix crash in pointer motion event handler
+ o Fix crash in vnc_display_get_pixbuf
+ o Fix crash in TLS cleanup code
+ o Fix frambuffer boundary checks
+ o Improve drawing performance with server side pixmap
+ o Fix performance degradation due to leaked GSource
+ o Fix setting of 'shared' connection flag
+ o Make pointer warp boundary detection more robust
+ o Adapt keymap code to build with GDK3 multiple displays
+ o Remove use of gdk_drawable calls to fix GTK3
+
+Code cleanup:
+
+ o Remove need for Text::CSV perl module at build time
+
+Nov  3, 2010: Release 0.4.2
 ===========================
 
 New features:
