@@ -1,3 +1,10 @@
+gtk-vnc (0.4.3-1) unstable; urgency=low
+
+  * [fbdc9dd] Imported Upstream version 0.4.3
+  * [f7c6520] Redo patch
+
+ -- Laurent Léonard <laurent@open-minds.org>  Thu, 24 Feb 2011 11:01:07 +0100
+
 gtk-vnc (0.4.2-1) experimental; urgency=low
 
   [ Laurent Léonard ]
