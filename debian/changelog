@@ -1,3 +1,16 @@
+gtk-vnc (0.4.3-2) unstable; urgency=low
+
+  * [903bf7f] Build a version compiled for GTK+3 too (Closes: #592464)
+    * Split out libgvnc-1.0
+    * Switch to dh
+    * Switch to dh_python2
+    * Install gvnccapture
+  * [2e47637] New patch 0002-Look-for-generated-enums-in-srcdir.patch.
+    Look for generated enums in $(srcdir)
+  * [8b3cc7c] Switch to 3.0 (quilt) source format
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 28 Apr 2011 16:18:38 +0200
+
 gtk-vnc (0.4.3-1) unstable; urgency=low
 
   * [fbdc9dd] Imported Upstream version 0.4.3
