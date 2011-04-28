@@ -13,7 +13,6 @@ Build-Depends:
  libcairo2-dev,
  xulrunner-dev,
  autotools-dev,
- quilt,
  libffi-dev,
  libsasl2-dev,
  intltool,
