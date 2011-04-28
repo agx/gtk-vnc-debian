@@ -4,14 +4,12 @@ Priority: optional
 Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
 Uploaders: Guido Günther <agx@sigxcpu.org>, Laurent Léonard <laurent@open-minds.org>
 DM-Upload-Allowed: yes
-Standards-Version: 3.9.1
-Build-Depends: cdbs,
- debhelper (>= 7),
+Standards-Version: 3.9.2
+Build-Depends:
+ debhelper (>= 7.0.50~),
  python-support,
- libgtk2.0-dev,
  python-dev,
  libgnutls-dev (>= 1.4.0),
- python-gtk2-dev (>= 2.0),
  libcairo2-dev,
  xulrunner-dev,
  autotools-dev,
@@ -19,19 +17,26 @@ Build-Depends: cdbs,
  libffi-dev,
  libsasl2-dev,
  intltool,
- libtext-csv-perl
+ libtext-csv-perl,
+# GTK2 build
+ libgtk2.0-dev,
+ python-gtk2-dev (>= 2.0),
+# GTK3 build
+ libgtk-3-dev,
 Build-Conflicts: libffi4-dev
+X-Python-Version: 2.6
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
 Vcs-Browser: http://git.debian.org/?p=pkg-libvirt/gtk-vnc.git
 
-Package: libgtk-vnc-1.0-0
+Package: libgvnc-1.0-0
 Architecture: any
 Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: A VNC viewer widget for GTK+ (runtime libraries)
+Replaces: libgtk-vnc-1.0-0 (<= 0.4.3-1)
+Description: VNC gobject wrapper (runtime libraries)
  It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
  The core library is written in C and a binding for Python using PyGTK is
@@ -39,15 +44,69 @@ Description: A VNC viewer widget for GTK+ (runtime libraries)
  .
  This package contains the shared library.
 
+Package: libgvnc-1.0-0-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ libgvnc-1.0-0 (=${binary:Version})
+Replaces: libgtk-vnc-1.0-dbg (<= 0.4.3-1)
+Priority: extra
+Description: VNC gobject wrapper (debugging symbols)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the debugging symbols.
+
+Package: libgvnc-1.0-dev
+Architecture: any
+Section: libdevel
+Depends: ${misc:Depends},
+ libgvnc-1.0-0 (= ${binary:Version}),
+ libgtk2.0-dev (>= 2.0),
+ libgnutls-dev (>= 1.4.0),
+ libcairo2-dev (>= 1.2.0)
+Replaces: libgtk-vnc-1.0-dev (<= 0.4.3-1)
+Description: VNC GObject wrapper (development files)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the development headers.
+
+Package: libgtk-vnc-1.0-0
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: VNC viewer widget for GTK+2 (runtime libraries)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the shared library built for GTK+2.
+
 Package: libgtk-vnc-1.0-0-dbg
 Architecture: any
 Section: debug
-Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-vnc-1.0-0 (=${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ libgtk-vnc-1.0-0 (=${binary:Version})
 Priority: extra
-Description: A VNC viewer widget for GTK+ (runtime libraries)
+Description: VNC viewer widget for GTK+2 (debugging symbols)
  It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
  The core library is written in C and a binding for Python using PyGTK is
@@ -58,12 +117,63 @@ Description: A VNC viewer widget for GTK+ (runtime libraries)
 Package: libgtk-vnc-1.0-dev
 Architecture: any
 Section: libdevel
+Depends: ${misc:Depends},
+ libgtk-vnc-1.0-0 (= ${binary:Version}),
+ libgvnc-1.0-dev (= ${binary:Version}),
+ libgtk2.0-dev (>= 2.0),
+ libgnutls-dev (>= 1.4.0),
+ libcairo2-dev (>= 1.2.0)
+Description: VNC viewer widget for GTK+2 (development files)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the development headers.
+
+Package: libgtk-vnc-2.0-0
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: VNC viewer widget for GTK+3 (runtime libraries)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the shared library built for GTK+3.
+
+Package: libgtk-vnc-2.0-0-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-vnc-1.0-0 (=${binary:Version})
+Priority: extra
+Description: VNC viewer widget for GTK+3 (debugging symbols)
+ It is built using coroutines, allowing it to be completely asynchronous while
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
+ certificate authentication.
+ .
+ The core library is written in C and a binding for Python using PyGTK is
+ available. The networking layer supports connections over both IPv4 and IPv6.
+ .
+ This package contains the debugging symbols.
+
+Package: libgtk-vnc-2.0-dev
+Architecture: any
+Section: libdevel
 Depends: ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version}),
  libgtk2.0-dev (>= 2.0), libgnutls-dev (>= 1.4.0), libcairo2-dev (>= 1.2.0)
-Description: A VNC viewer widget for GTK+ (development files)
+Description: VNC viewer widget for GTK+3 (development files)
  It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
  The core library is written in C and a binding for Python using PyGTK is
@@ -74,13 +184,14 @@ Description: A VNC viewer widget for GTK+ (development files)
 Package: python-gtk-vnc
 Architecture: any
 Section: python
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-gtk2 (>= 2.0)
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
+ python-gtk2 (>= 2.0)
 Provides: ${python:Provides}
-XB-Python-Version: ${python:Versions}
-Description: A VNC viewer widget for GTK+ (Python binding)
+Breaks: ${python:Breaks}
+Description: VNC viewer widget for GTK+2 (Python binding)
  It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
  The core library is written in C and a binding for Python using PyGTK is
@@ -91,12 +202,13 @@ Description: A VNC viewer widget for GTK+ (Python binding)
 Package: mozilla-gtk-vnc
 Architecture: any
 Section: web
-Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-vnc-1.0-0 (= ${binary:Version}),
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ libgtk-vnc-1.0-0 (= ${binary:Version}),
  iceweasel | iceape-browser
-Description: A VNC viewer widget for GTK+ (mozilla plugin)
+Description: VNC viewer widget for GTK+2 (mozilla plugin)
  It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
  The core library is written in C and a binding for Python using PyGTK is
@@ -110,11 +222,11 @@ Section: x11
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: VNC viewer using gtk-vnc
  It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the 
- VeNCrypt authentication extension providing SSL/TLS encryption with x509 
+ remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
+ VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the VNC viewer.
+ This package contains the VNC viewer and VNC capture utility.

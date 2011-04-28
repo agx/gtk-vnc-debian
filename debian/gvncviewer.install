@@ -1,1 +1,2 @@
-debian/tmp/usr/bin/gvncviewer
+/usr/bin/gvncviewer
+/usr/bin/gvnccapture
