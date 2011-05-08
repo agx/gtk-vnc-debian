@@ -1,3 +1,11 @@
+gtk-vnc (0.4.3-3) unstable; urgency=low
+
+  * [94cd086] Fix dependencies of dev packages
+  * [68e1891] libgtkvnc-2.0-dev: Add missing dependency on libgvnc-1.0-dev
+    (Closes: #626093)
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 08 May 2011 21:51:37 +0200
+
 gtk-vnc (0.4.3-2) unstable; urgency=low
 
   * [903bf7f] Build a version compiled for GTK+3 too (Closes: #592464)
