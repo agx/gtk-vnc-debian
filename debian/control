@@ -169,6 +169,7 @@ Package: libgtk-vnc-2.0-dev
 Architecture: any
 Section: libdevel
 Depends: ${misc:Depends},
+ libgvnc-1.0-dev (= ${binary:Version}),
  libgtk-vnc-2.0-0 (= ${binary:Version}),
  libgtk-3-dev,
  libgnutls-dev (>= 1.4.0),
