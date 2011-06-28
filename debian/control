@@ -7,7 +7,6 @@ DM-Upload-Allowed: yes
 Standards-Version: 3.9.2
 Build-Depends:
  debhelper (>= 7.0.50~),
- python-support,
  python-dev,
  libgnutls-dev (>= 1.4.0),
  libcairo2-dev,
@@ -23,7 +22,7 @@ Build-Depends:
 # GTK3 build
  libgtk-3-dev,
 Build-Conflicts: libffi4-dev
-X-Python-Version: 2.6
+X-Python-Version: >= 2.5
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
 Vcs-Browser: http://git.debian.org/?p=pkg-libvirt/gtk-vnc.git
 
@@ -190,8 +189,6 @@ Architecture: any
 Section: python
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
  python-gtk2 (>= 2.0)
-Provides: ${python:Provides}
-Breaks: ${python:Breaks}
 Description: VNC viewer widget for GTK+2 (Python binding)
  It is built using coroutines, allowing it to be completely asynchronous while
  remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the

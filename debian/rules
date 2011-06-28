@@ -38,6 +38,9 @@ override_dh_strip:
 	dh_strip -plibgtk-vnc-2.0-0 --dbg-package=libgtk-vnc-2.0-0-dbg
 	dh_strip -pgvncviewer -ppython-gtk-vnc
 
+override_dh_python2:
+	dh_python2 --no-guessing-versions
+
 dh_makeshlibs:
 	dh_makeshlibs -plibgtk-vnc-1.0-0 -V 'libgtk-vnc-1.0-0 (>= 0.3.9)'
 	dh_makeshlibs -pmozila-gtk-vnc --noscripts -X /plugins/
