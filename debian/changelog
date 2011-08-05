@@ -1,3 +1,11 @@
+gtk-vnc (0.4.3-4.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * plugin/gtk-vnc-plugin.[ch], plugin/npshell.c, plugin/npunix.c: Use C99 int
+    types instead of NSPR ones (Closes: #631033)
+
+ -- Mike Hommey <glandium@debian.org>  Fri, 05 Aug 2011 09:07:59 +0200
+
 gtk-vnc (0.4.3-4) unstable; urgency=low
 
   [ Stefano Rivera ]
