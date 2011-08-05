@@ -1,0 +1,165 @@
+From: Mike Hommey <glandium@debian.org>
+Subject: Use C99 int types instead of NSPR ones
+
+Closes: #631033
+
+--- gtk-vnc-0.4.3.orig/plugin/gtk-vnc-plugin.h
++++ gtk-vnc-0.4.3/plugin/gtk-vnc-plugin.h
+@@ -45,10 +45,10 @@
+ #define PLUGIN_DESCRIPTION  "VNC (remote desktop) viewer plugin"
+ 
+ typedef struct {
+-  uint16 mode;
++  uint16_t mode;
+   NPWindow *window;
+-  int32 x, y;
+-  uint32 width, height;
++  int32_t x, y;
++  uint32_t width, height;
+ 
+   NPP instance;
+   NPBool pluginsHidden;
+@@ -61,7 +61,7 @@ typedef struct {
+ 
+ extern NPError GtkVNCXSetWindow (NPP instance, NPWindow* window);
+ extern NPError GtkVNCDestroyWindow (NPP instance);
+-extern int16 GtkVNCXHandleEvent (NPP instance, void* event);
++extern int16_t GtkVNCXHandleEvent (NPP instance, void* event);
+ 
+ #ifdef ENABLE_DEBUG
+ static inline void
+--- gtk-vnc-0.4.3.orig/plugin/gtk-vnc-plugin.c
++++ gtk-vnc-0.4.3/plugin/gtk-vnc-plugin.c
+@@ -275,7 +275,7 @@ GtkVNCDestroyWindow (NPP instance)
+ 
+ static NPWindow windowlessWindow;
+ 
+-int16
++int16_t
+ GtkVNCXHandleEvent(NPP instance, void *event)
+ {
+   XGraphicsExposeEvent exposeEvent;
+--- gtk-vnc-0.4.3.orig/plugin/npshell.c
++++ gtk-vnc-0.4.3/plugin/npshell.c
+@@ -79,6 +79,7 @@ Contributor(s): Adobe Systems Incorporat
+ 
+ #include <stdio.h>
+ #include <string.h>
++#include <stdlib.h>
+ 
+ #include <npapi.h>
+ 
+@@ -111,7 +112,7 @@ NPP_GetValue(NPP instance G_GNUC_UNUSED,
+     *((const char **)value) = PLUGIN_DESCRIPTION;
+     break;
+   case NPPVpluginNeedsXEmbed:
+-    *((PRBool *)value) = PR_TRUE;
++    *((NPBool *)value) = true;
+     break;
+   default:
+     err = NPERR_GENERIC_ERROR;
+@@ -146,15 +147,15 @@ NPP_Shutdown(void)
+ NPError
+ NPP_New(NPMIMEType pluginType G_GNUC_UNUSED,
+         NPP instance,
+-        uint16 mode,
+-        int16 argc,
++        uint16_t mode,
++        int16_t argc,
+         char* argn[],
+         char* argv[],
+         NPSavedData *saved G_GNUC_UNUSED)
+ {
+   PluginInstance *This;
+   NPError err = NPERR_NO_ERROR;
+-  PRBool supportsXEmbed = PR_FALSE;
++  NPBool supportsXEmbed = false;
+   NPNToolkitType toolkit = 0;
+   int i;
+   char *key, *value;
+@@ -170,7 +171,7 @@ NPP_New(NPMIMEType pluginType G_GNUC_UNU
+   err = NPN_GetValue (instance,
+                       NPNVSupportsXEmbedBool,
+                       (void *)&supportsXEmbed);
+-  if (err != NPERR_NO_ERROR || supportsXEmbed != PR_TRUE)
++  if (err != NPERR_NO_ERROR || supportsXEmbed != true)
+     return NPERR_INCOMPATIBLE_VERSION_ERROR;
+ 
+ #if 1
+@@ -244,7 +245,7 @@ NPP_SetWindow(NPP instance, NPWindow* wi
+   return GtkVNCXSetWindow(instance, window);
+ }
+ 
+-int32
++int32_t
+ NPP_WriteReady(NPP instance, NPStream *stream)
+ {
+   /*printf("NPP_WriteReady()\n");*/
+@@ -258,9 +259,9 @@ NPP_WriteReady(NPP instance, NPStream *s
+   return -1L;   /* don't accept any bytes in NPP_Write() */
+ }
+ 
+-int32
++int32_t
+ NPP_Write(NPP instance, NPStream *stream,
+-          int32 offset G_GNUC_UNUSED, int32 len G_GNUC_UNUSED,
++          int32_t offset G_GNUC_UNUSED, int32_t len G_GNUC_UNUSED,
+           void *buffer G_GNUC_UNUSED)
+ {
+   /*printf("NPP_Write()\n");*/
+@@ -377,7 +378,7 @@ NPP_Print(NPP instance, NPPrint* printIn
+     }
+ }
+ 
+-int16 NPP_HandleEvent(NPP instance, void* event)
++int16_t NPP_HandleEvent(NPP instance, void* event)
+ {
+   /*printf("NPP_HandleEvent()\n");*/
+ 
+--- gtk-vnc-0.4.3.orig/plugin/npunix.c
++++ gtk-vnc-0.4.3/plugin/npunix.c
+@@ -305,7 +305,7 @@ NPN_NewStream(NPP instance, NPMIMEType t
+                     type, window, stream_ptr);
+ }
+ 
+-int32
++int32_t
+ NPN_Write(NPP instance, NPStream* stream, int32_t len, void* buffer)
+ {
+     return CallNPN_WriteProc(gNetscapeFuncs.write, instance,
+@@ -439,7 +439,7 @@ Private_SetWindow(NPP instance, NPWindow
+ static NPError
+ Private_NewStream(NPP instance G_GNUC_UNUSED, NPMIMEType type G_GNUC_UNUSED,
+                   NPStream* stream G_GNUC_UNUSED,
+-                  NPBool seekable G_GNUC_UNUSED, uint16* stype G_GNUC_UNUSED)
++                  NPBool seekable G_GNUC_UNUSED, uint16_t* stype G_GNUC_UNUSED)
+ {
+     NPError err = NPERR_NO_ERROR;
+     PLUGINDEBUGSTR("NewStream");
+@@ -447,7 +447,7 @@ Private_NewStream(NPP instance G_GNUC_UN
+     return err;
+ }
+ 
+-static int32
++static int32_t
+ Private_WriteReady(NPP instance, NPStream* stream)
+ {
+     unsigned int result;
+@@ -456,7 +456,7 @@ Private_WriteReady(NPP instance, NPStrea
+     return result;
+ }
+ 
+-static int32
++static int32_t
+ Private_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len,
+         void* buffer)
+ {
+@@ -519,7 +519,7 @@ Private_GetJavaClass(void)
+ }
+ #endif
+ 
+-static int16
++static int16_t
+ Private_HandleEvent(NPP instance, void* event)
+ {
+     return NPP_HandleEvent(instance, event);

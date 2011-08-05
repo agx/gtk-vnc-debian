@@ -1,2 +1,3 @@
 0001-fix-build-with-xulrunner-1.9.1.patch
 0002-Look-for-generated-enums-in-srcdir.patch
+0003-Use-C99-int-types-instead-of-NSPR-ones.patch
