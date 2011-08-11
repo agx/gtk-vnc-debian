@@ -4,8 +4,13 @@
 	dh $@ --with python2
 
 override_dh_auto_configure:
-	dh_auto_configure -B build/gtk2 -- --with-gtk=2.0 --with-python --enable-plugin=yes
-	dh_auto_configure -B build/gtk3 -- --with-gtk=3.0 --with-examples
+	dh_auto_configure -B build/gtk2 -- --with-gtk=2.0 \
+                                           --with-python \
+                                           --enable-plugin=yes \
+                                           --disable-introspection
+	dh_auto_configure -B build/gtk3 -- --with-gtk=3.0 \
+                                           --with-examples \
+                                           --enable-introspection
 
 override_dh_auto_build:
 	dh_auto_build -D build/gtk2
@@ -24,6 +29,7 @@ override_dh_install:
                    -plibgvnc-1.0-dev \
                    -plibgtk-vnc-2.0-0 \
                    -plibgtk-vnc-2.0-dev \
+                   -pgir1.2-gtk-vnc-2.0 \
                    -pgvncviewer \
                   --sourcedir=debian/gtk3
 
