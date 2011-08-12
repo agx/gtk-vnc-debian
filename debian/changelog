@@ -1,3 +1,10 @@
+gtk-vnc (0.4.3-5) unstable; urgency=low
+
+  * Acknowledge NMU - thanks Mike Homey!
+  * [f3b8775] Build gobject introspection data
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 12 Aug 2011 16:44:37 +0200
+
 gtk-vnc (0.4.3-4.1) unstable; urgency=low
 
   * Non-maintainer upload.
