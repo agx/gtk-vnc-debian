@@ -1,3 +1,4 @@
 /usr/lib/libgtk-vnc-2.0.so
 /usr/include/gtk-vnc-2.0/
 /usr/lib/pkgconfig/gtk-vnc-2.0.*
+/usr/share/gir-1.0/GtkVnc-2.0.gir

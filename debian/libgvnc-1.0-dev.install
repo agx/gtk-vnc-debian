@@ -1,3 +1,4 @@
 /usr/lib/libgvnc-1.0.so
 /usr/include/gvnc-1.0/
 /usr/lib/pkgconfig/gvnc-1.0.*
+/usr/share/gir-1.0/GVnc-1.0.gir
