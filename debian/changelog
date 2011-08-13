@@ -1,3 +1,10 @@
+gtk-vnc (0.4.3-6) unstable; urgency=low
+
+  * [5d58ba0] Invoke dh_girrepository
+    to create dependency information for the gir package
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 13 Aug 2011 15:00:21 +0200
+
 gtk-vnc (0.4.3-5) unstable; urgency=low
 
   * Acknowledge NMU - thanks Mike Homey!
