@@ -9,10 +9,10 @@ since this where they're being generated.
  2 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/Makefile.am b/src/Makefile.am
-index 37f8444..2f72fa6 100644
+index c5834cb..3dd6e0e 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -279,14 +279,14 @@ GVNC_INTROSPECTION_SRCS = \
+@@ -291,14 +291,14 @@ GVNC_INTROSPECTION_SRCS = \
  			$(srcdir)/vnccolormap.h $(srcdir)/vnccolormap.c \
  			$(srcdir)/vnccursor.h $(srcdir)/vnccursor.c \
  			$(srcdir)/vncconnection.h $(srcdir)/vncconnection.c \
@@ -30,10 +30,10 @@ index 37f8444..2f72fa6 100644
  if HAVE_GTK_2
  GTK_VNC_INTROSPECTION_SRCS += \
 diff --git a/src/Makefile.in b/src/Makefile.in
-index 5041290..aa91d4b 100644
+index 274dc98..1ced6c8 100644
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -538,7 +538,7 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_10) \
+@@ -548,7 +548,7 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vnccolormap.h $(srcdir)/vnccolormap.c \
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vnccursor.h $(srcdir)/vnccursor.c \
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncconnection.h $(srcdir)/vncconnection.c \
@@ -42,7 +42,7 @@ index 5041290..aa91d4b 100644
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncutil.h $(srcdir)/vncutil.c
  
  @WITH_GOBJECT_INTROSPECTION_TRUE@GTK_VNC_INTROSPECTION_SRCS = $(srcdir)/vnccairoframebuffer.h \
-@@ -547,8 +547,8 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_10) \
+@@ -557,8 +557,8 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
  @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncdisplay.c \
  @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.h \
  @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.c \
@@ -50,7 +50,7 @@ index 5041290..aa91d4b 100644
 -@WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.c \
 +@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncdisplayenums.h \
 +@WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncdisplayenums.c \
- @WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_13)
+ @WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_14)
  @G_IR_SCANNER_SYMBOL_PREFIX_FALSE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --strip-prefix=Vnc
  @G_IR_SCANNER_SYMBOL_PREFIX_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --symbol-prefix=vnc --identifier-prefix=Vnc
 -- 
