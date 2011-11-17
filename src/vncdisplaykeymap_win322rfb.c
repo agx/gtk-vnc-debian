@@ -2,6 +2,8 @@ static const guint16 keymap_win322rfb[] = {
   [0x8] = 0xe,         /* 8 (VK_BACK) => 14 via 14 (KEY_BACKSPACE) */
   [0x9] = 0xf,         /* 9 (VK_TAB) => 15 via 15 (KEY_TAB) */
   [0xd] = 0x1c,        /* 13 (VK_RETURN) => 28 via 28 (KEY_ENTER) */
+  [0x11] = 0x1d,       /* 17 (VK_CONTROL) => 29 via 29 (KEY_LEFTCTRL) */
+  [0x12] = 0x38,       /* 18 (VK_MENU) => 56 via 56 (KEY_LEFTALT) */
   [0x13] = 0xc6,       /* 19 (VK_PAUSE) => 198 via 119 (KEY_PAUSE) */
   [0x14] = 0x3a,       /* 20 (VK_CAPITAL) => 58 via 58 (KEY_CAPSLOCK) */
   [0x19] = 0x8d,       /* 25 (VK_HANJA) => 141 via 123 (KEY_HANJA) */
@@ -104,9 +106,9 @@ static const guint16 keymap_win322rfb[] = {
   [0x91] = 0x46,       /* 145 (VK_SCROLL) => 70 via 70 (KEY_SCROLLLOCK) */
   [0xa0] = 0x2a,       /* 160 (VK_LSHIFT) => 42 via 42 (KEY_LEFTSHIFT) */
   [0xa1] = 0x36,       /* 161 (VK_RSHIFT) => 54 via 54 (KEY_RIGHTSHIFT) */
-  [0xa2] = 0x1d,       /* 162 (VK_LCONTROL) => 29 via 29 (KEY_LEFTCTRL) */
+  [0xa2] = 0x1d,       /* 162 (VK_CONTROL) => 29 via 29 (KEY_LEFTCTRL) */
   [0xa3] = 0x9d,       /* 163 (VK_RCONTROL) => 157 via 97 (KEY_RIGHTCTRL) */
-  [0xa4] = 0x38,       /* 164 (VK_LMENU) => 56 via 56 (KEY_LEFTALT) */
+  [0xa4] = 0x38,       /* 164 (VK_MENU) => 56 via 56 (KEY_LEFTALT) */
   [0xa5] = 0xb8,       /* 165 (VK_RMENU) => 184 via 100 (KEY_RIGHTALT) */
   [0xa6] = 0xea,       /* 166 (VK_BROWSER_BACK) => 234 via 158 (KEY_BACK) */
   [0xa7] = 0xe9,       /* 167 (VK_BROWSER_FORWARD) => 233 via 159 (KEY_FORWARD) */

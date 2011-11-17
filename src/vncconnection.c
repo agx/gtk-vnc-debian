@@ -3876,7 +3876,7 @@ static gboolean vnc_connection_perform_auth_tls(VncConnection *conn)
 	}
 
 	for (i = 0 ; i < nauth ; i++) {
-		VNC_DEBUG("Possible sub-auth %d", auth[i]);
+		VNC_DEBUG("Possible TLS sub-auth %d", auth[i]);
 	}
 
 	if (priv->has_error)
@@ -3885,7 +3885,7 @@ static gboolean vnc_connection_perform_auth_tls(VncConnection *conn)
 	if (priv->has_error)
 		return FALSE;
 
-	VNC_DEBUG("Waiting for auth subtype");
+	VNC_DEBUG("Waiting for TLS auth subtype");
 	g_condition_wait(vnc_connection_has_auth_subtype, conn);
 	if (priv->has_error)
 		return FALSE;
@@ -3949,7 +3949,7 @@ static gboolean vnc_connection_perform_auth_vencrypt(VncConnection *conn)
 	}
 
 	for (i = 0 ; i < nauth ; i++) {
-		VNC_DEBUG("Possible auth %d", auth[i]);
+		VNC_DEBUG("Possible VeNCrypt sub-auth %d", auth[i]);
 	}
 
 	if (priv->has_error)
@@ -3958,7 +3958,7 @@ static gboolean vnc_connection_perform_auth_vencrypt(VncConnection *conn)
 	if (priv->has_error)
 		return FALSE;
 
-	VNC_DEBUG("Waiting for auth subtype");
+	VNC_DEBUG("Waiting for VeNCrypt auth subtype");
 	g_condition_wait(vnc_connection_has_auth_subtype, conn);
 	if (priv->has_error)
 		return FALSE;

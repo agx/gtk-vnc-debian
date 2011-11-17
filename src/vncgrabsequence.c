@@ -71,7 +71,9 @@ VncGrabSequence *vnc_grab_sequence_new_from_string(const gchar *str)
 	for (i = 0 ; i < sequence->nkeysyms ; i++)
 		sequence->keysyms[i] =
 			(guint)gdk_keyval_from_name(keysymstr[i]);
-	
+
+	g_strfreev(keysymstr);
+
 	return sequence;
 
 }

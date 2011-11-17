@@ -1,3 +1,97 @@
+2011-11-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Misc RPM specfile fixes
+
+	Add Perl example program using GTK3
+
+	Update NEWS for 0.4.4 release
+
+2011-11-04  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update automated build to test both GTK2 and GTK3
+
+	Add rules for building GTK3 library on mingw32
+
+	Fix GTK3 build on mingw32
+	The mingw32 linker does not like .def files with symbols which
+	do not exist. Filter out the vnc_image_framebuffer* symbols.
+	Also ensure the python module generated files are not included
+	in the dist
+
+2011-11-02  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	Fix introspection of vnc_display_get_pixbuf()
+
+2011-10-31  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add vala files to RPM spec
+
+2011-10-28  Zeeshan Ali (Khattak)  <zeeshanak@gnome.org>
+
+	Specify location of pkg-config files to gir scanner
+	Fixes fresh build (when gtk-vnc isn't already installed).
+
+	Specify GIR directory to vapigen
+
+	Disable VAPI generation for gtk+ 2.0
+	Disable vala checks and binding generation by default when building
+	against gtk 2.0.
+
+2011-10-26  Zeeshan Ali (Khattak)  <zeeshanak@gnome.org>
+
+	Post release version bump
+	This is needed so apps depending on git master can require the correct
+	version at 'configure' time.
+
+2011-10-26  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	Add vapi bindings generation
+	https://bugzilla.gnome.org/show_bug.cgi?id=662708
+
+2011-09-24  Stanislav Petrek  <stanislav.petrek@gmail.com>
+
+	Added Slovak translation
+
+2011-07-30  Seong-ho, Cho  <darkcircle.0426@gmail.com>
+
+	Add Korean translation
+
+2011-07-12  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix leak of string list when parsing grab sequence string
+
+2011-07-11  Guido Günther  <agx@sigxcpu.org>
+
+	Explicitly link gvncviewer against GTK + libgvnc
+
+2011-07-01  Marc-André Lureau  <marcandre.lureau@redhat.com>
+
+	gtk maps LAlt & LCtrl to Alt and Ctrl keycode, but they are missing from keymaps.csv
+
+2011-06-04  Kristjan SCHMIDT  <kristjan.schmidt@googlemail.com>
+
+	Add Esperanto translation
+
+2011-05-05  Muhammet Kara  <muhammet.k@gmail.com>
+
+	Added Turkish translation
+
+2011-04-14  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix missing OS-X keymapping for letter 'A'
+	The keymap-gen.pl script was not correctly distinguishing
+	keycodes with a value of '0', from undefined keycodes. All
+	were skipped. This meant that the mapping for OS-X ANSI_A
+	key was lost (since it has value 0).
+
+	For similar reasons the XQuartz mapping for the letter A
+	was also lost.
+
+	* src/keymap-gen.pl: Fix handling of 0 vs undef for keycodes
+	* src/keymaps.csv: Remove bogus 0x0 entry in OS-X keymap
+
+	Tweak logging messages for TLS auth sub-types
+
 2011-02-18  Daniel P. Berrange  <berrange@redhat.com>
 
 	Update for 0.4.3 release

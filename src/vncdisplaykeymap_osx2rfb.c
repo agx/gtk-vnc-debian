@@ -1,4 +1,5 @@
 static const guint16 keymap_osx2rfb[] = {
+  [0x0] = 0x1e,        /* 0 (ANSI_A) => 30 via 30 (KEY_A) */
   [0x1] = 0x1f,        /* 1 (ANSI_S) => 31 via 31 (KEY_S) */
   [0x2] = 0x20,        /* 2 (ANSI_D) => 32 via 32 (KEY_D) */
   [0x3] = 0x21,        /* 3 (ANSI_F) => 33 via 33 (KEY_F) */

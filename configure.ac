@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.4.3],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.4.4],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -402,6 +402,30 @@ fi
 AM_CONDITIONAL([WITH_GOBJECT_INTROSPECTION], [test "x$enable_introspection" = "xyes"])
 AM_CONDITIONAL([G_IR_SCANNER_SYMBOL_PREFIX], [test "x$has_symbol_prefix" = "xyes"])
 
+if test "x$with_gtk" = "x3.0"; then
+        default_vala=check
+else
+        default_vala=no
+fi
+
+AC_ARG_ENABLE([vala],
+              AS_HELP_STRING([--enable-vala], [enable Vala binding generation]),
+              [], [enable_vala="$default_vala"])
+if test "x$enable_introspection" = "xyes" ; then
+        if test "x$enable_vala" != "xno" ; then
+                AC_PATH_PROG(VAPIGEN, vapigen, no)
+                if test "x$VAPIGEN" != "xno"; then
+                        if test "x$enable_vala" == "xcheck" ; then
+                                enable_vala=yes
+                                AC_SUBST(VAPIGEN)
+                        fi
+                else
+                        AC_MSG_ERROR([Cannot find the "vapigen" binary in your PATH])
+                fi
+        fi
+fi
+AM_CONDITIONAL([WITH_VALA], [test "x$enable_vala" = "xyes"])
+
 AC_CONFIG_FILES(
   Makefile
   src/Makefile
@@ -409,6 +433,7 @@ AC_CONFIG_FILES(
   examples/Makefile
   plugin/Makefile
   po/Makefile.in
+  vapi/Makefile
   gvnc-1.0.pc
   gtk-vnc-1.0.pc
   gtk-vnc-2.0.pc
