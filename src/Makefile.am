@@ -13,12 +13,20 @@ GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 GTK_VNC_VERSION_FILE = $(srcdir)/libgtk-vnc_sym.version
 endif
 
-%.def: %.version
+%.def: %.version Makefile
+if HAVE_GTK_2
 	$(AM_V_GEN)rm -f -- $@-tmp $@ ; \
 	printf 'EXPORTS\n' > $@-tmp && \
-	sed -e '/^$$/d; /#/d; /:/d; /\}/d; /\*/d; /LIBVIRT_/d; s/[ \t]*\(.*\)\;/    \1/g' $^ >> $@-tmp && \
+	sed -e '/^$$/d; /#/d; /:/d; /\}/d; /\*/d; /LIBVIRT_/d; s/[ \t]*\(.*\)\;/    \1/g' $< >> $@-tmp && \
 	chmod a-w $@-tmp && \
 	mv $@-tmp $@
+else
+	$(AM_V_GEN)rm -f -- $@-tmp $@ ; \
+	printf 'EXPORTS\n' > $@-tmp && \
+	sed -e '/^$$/d; /#/d; /:/d; /\}/d; /\*/d; /vnc_image_framebuffer_*/d; /LIBVIRT_/d; s/[ \t]*\(.*\)\;/    \1/g' $< >> $@-tmp && \
+	chmod a-w $@-tmp && \
+	mv $@-tmp $@
+endif
 
 
 libgvnc_1_0_la_LIBADD = \
@@ -45,6 +53,7 @@ libgvnc_1_0_la_LDFLAGS = \
 
 gvnc_includedir = $(includedir)/gvnc-1.0/
 gvnc_include_HEADERS = \
+			gvnc.h \
 			vncpixelformat.h \
 			vncframebuffer.h \
 			vncbaseframebuffer.h \
@@ -92,6 +101,7 @@ gtk_vnc_CFLAGS = \
 
 gtk_vnc_includedir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
 gtk_vnc_include_HEADERS = \
+			gtk-vnc.h \
 			vncdisplay.h \
 			vncdisplayenums.h \
 			vncgrabsequence.h \
@@ -249,7 +259,9 @@ gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la @PYGTK_LIBS@
 gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @PYTHON_INCLUDES@ \
 		   @PYGTK_CFLAGS@ @WARNING_PYTHON_CFLAGS@
 gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
-gtkvnc_la_SOURCES = vncmodule.c vncmodule.defs.c
+gtkvnc_la_SOURCES = vncmodule.c
+nodist_gtkvnc_la_SOURCES = vncmodule.defs.c
+BUILT_SOURCES += vncmodule.defs.c
 
 CODEGENDIR = $(shell pkg-config --variable=codegendir pygtk-2.0)
 DEFSDIR = $(shell pkg-config --variable=defsdir pygtk-2.0)
@@ -300,7 +312,7 @@ PREFIX_ARGS = --strip-prefix=Vnc
 endif
 
 GVnc-1.0.gir: libgvnc-1.0.la $(G_IR_SCANNER) Makefile.am
-	$(AM_V_GEN)$(G_IR_SCANNER) -v \
+	$(AM_V_GEN)PKG_CONFIG_PATH=$(top_builddir) $(G_IR_SCANNER) -v \
                 --namespace GVnc \
                 --nsversion 1.0 \
 		--include GObject-2.0 \
@@ -309,18 +321,16 @@ GVnc-1.0.gir: libgvnc-1.0.la $(G_IR_SCANNER) Makefile.am
                 --add-include-path=$(top_srcdir) \
                 --add-include-path=$(srcdir) \
                 --add-include-path=$(builddir) \
+		--c-include="gvnc.h" \
                 --output $@ \
                 -I$(top_srcdir) \
                 -I$(srcdir) \
 		--verbose \
-                --pkg=glib-2.0 \
-                --pkg=gthread-2.0 \
-                --pkg=gdk-pixbuf-2.0 \
-                --pkg=gobject-2.0 \
+                --pkg=gvnc-1.0 \
                 $(GVNC_INTROSPECTION_SRCS)
 
 GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION).la $(G_IR_SCANNER) Makefile.am
-	$(AM_V_GEN)$(G_IR_SCANNER) -v \
+	$(AM_V_GEN)PKG_CONFIG_PATH=$(top_builddir) $(G_IR_SCANNER) -v \
                 --namespace GtkVnc \
                 --nsversion $(GTK_VNC_API_VERSION) \
 		--include GObject-2.0 \
@@ -331,15 +341,12 @@ GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION
                 --add-include-path=$(top_srcdir) \
                 --add-include-path=$(srcdir) \
                 --add-include-path=$(builddir) \
+		--c-include="gtk-vnc.h" \
                 --output $@ \
                 -I$(top_srcdir) \
                 -I$(srcdir) \
 		--verbose \
-                --pkg=glib-2.0 \
-                --pkg=gthread-2.0 \
-                --pkg=gdk-pixbuf-2.0 \
-                --pkg=gobject-2.0 \
-                --pkg=gtk+-$(GTK_API_VERSION) \
+                --pkg=gtk-vnc-$(GTK_VNC_API_VERSION) \
                 $(GTK_VNC_INTROSPECTION_SRCS)
 
 girdir = $(datadir)/gir-1.0

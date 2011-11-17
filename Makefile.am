@@ -1,4 +1,4 @@
-SUBDIRS = src tools examples plugin po
+SUBDIRS = src tools examples plugin po vapi
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
 pkgconfig_DATA = @PACKAGE@-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc

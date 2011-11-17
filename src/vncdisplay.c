@@ -2095,6 +2095,14 @@ static void vnc_display_convert_data(GdkPixbuf *pixbuf,
 	}
 }
 
+/**
+ * vnc_display_get_pixbuf:
+ * @obj: a #VncDisplay
+ *
+ * Take a screenshot of the display.
+ *
+ * Returns: (transfer full): a #GdkPixbuf with the screenshot image buffer
+ **/
 GdkPixbuf *vnc_display_get_pixbuf(VncDisplay *obj)
 {
 	VncDisplayPrivate *priv = obj->priv;

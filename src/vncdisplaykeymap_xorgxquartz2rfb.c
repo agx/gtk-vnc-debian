@@ -1,4 +1,5 @@
 static const guint16 keymap_xorgxquartz2rfb[] = {
+  [0x8] = 0x1e,        /* 8 => 30 via 30 (KEY_A) */
   [0x9] = 0x1f,        /* 9 => 31 via 31 (KEY_S) */
   [0xa] = 0x20,        /* 10 => 32 via 32 (KEY_D) */
   [0xb] = 0x21,        /* 11 => 33 via 33 (KEY_F) */

@@ -47,13 +47,14 @@ host_triplet = @host@
 @HAVE_GTK_2_FALSE@am__append_7 = vncimageframebuffer.h vncimageframebuffer.c
 @HAVE_GTK_2_TRUE@am__append_8 = libgtk-vnc-1.0.la
 @HAVE_GTK_2_FALSE@am__append_9 = libgtk-vnc-2.0.la
-@WITH_PYTHON_TRUE@am__append_10 = vnc.defs vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_11 = vnc.override
-@WITH_PYTHON_FALSE@am__append_12 = vnc.override vncmodule.c
-@HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_13 = \
+@WITH_PYTHON_TRUE@am__append_10 = vncmodule.defs.c
+@WITH_PYTHON_TRUE@am__append_11 = vnc.defs vncmodule.defs.c
+@WITH_PYTHON_TRUE@am__append_12 = vnc.override
+@WITH_PYTHON_FALSE@am__append_13 = vnc.override vncmodule.c
+@HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_14 = \
 @HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c
 
-@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_14 = $(gir_DATA) $(typelibs_DATA)
+@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_15 = $(gir_DATA) $(typelibs_DATA)
 subdir = src
 DIST_COMMON = $(gtk_vnc_include_HEADERS) $(gvnc_include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -97,10 +98,12 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES) $(pyexec_LTLIBRARIES)
 @WITH_PYTHON_TRUE@gtkvnc_la_DEPENDENCIES =  \
 @WITH_PYTHON_TRUE@	libgtk-vnc-$(GTK_VNC_API_VERSION).la
-am__gtkvnc_la_SOURCES_DIST = vncmodule.c vncmodule.defs.c
-@WITH_PYTHON_TRUE@am_gtkvnc_la_OBJECTS = gtkvnc_la-vncmodule.lo \
+am__gtkvnc_la_SOURCES_DIST = vncmodule.c
+@WITH_PYTHON_TRUE@am_gtkvnc_la_OBJECTS = gtkvnc_la-vncmodule.lo
+@WITH_PYTHON_TRUE@nodist_gtkvnc_la_OBJECTS =  \
 @WITH_PYTHON_TRUE@	gtkvnc_la-vncmodule.defs.lo
-gtkvnc_la_OBJECTS = $(am_gtkvnc_la_OBJECTS)
+gtkvnc_la_OBJECTS = $(am_gtkvnc_la_OBJECTS) \
+	$(nodist_gtkvnc_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -208,8 +211,9 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(gtkvnc_la_SOURCES) $(libgtk_vnc_1_0_la_SOURCES) \
-	$(libgtk_vnc_2_0_la_SOURCES) $(libgvnc_1_0_la_SOURCES)
+SOURCES = $(gtkvnc_la_SOURCES) $(nodist_gtkvnc_la_SOURCES) \
+	$(libgtk_vnc_1_0_la_SOURCES) $(libgtk_vnc_2_0_la_SOURCES) \
+	$(libgvnc_1_0_la_SOURCES)
 DIST_SOURCES = $(am__gtkvnc_la_SOURCES_DIST) \
 	$(am__libgtk_vnc_1_0_la_SOURCES_DIST) \
 	$(am__libgtk_vnc_2_0_la_SOURCES_DIST) \
@@ -303,6 +307,7 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MOZILLA_PLUGIN_CFLAGS = @MOZILLA_PLUGIN_CFLAGS@
@@ -350,6 +355,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 USE_NLS = @USE_NLS@
+VAPIGEN = @VAPIGEN@
 VERSION = @VERSION@
 VERSION_SCRIPT_FLAGS = @VERSION_SCRIPT_FLAGS@
 VIEW_CFLAGS = @VIEW_CFLAGS@
@@ -363,6 +369,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -418,10 +425,10 @@ top_srcdir = @top_srcdir@
 # Avoid need for perl(Text::CSV) by end users
 EXTRA_DIST = libgvnc_sym.version libgtk-vnc_sym.version vncmarshal.txt \
 	$(am__append_3) $(am__append_5) $(am__append_7) keymap-gen.pl \
-	keymaps.csv $(KEYMAPS) $(am__append_11) $(am__append_12)
+	keymaps.csv $(KEYMAPS) $(am__append_12) $(am__append_13)
 lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_8) $(am__append_9)
 BUILT_SOURCES = $(am__append_1) $(KEYMAPS) $(MARSHAL_FILES) \
-	$(ENUM_FILES)
+	$(ENUM_FILES) $(am__append_10)
 @USE_VERSION_DEFS_FALSE@GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 @USE_VERSION_DEFS_TRUE@GVNC_VERSION_FILE = $(builddir)/libgvnc_sym.def
 @USE_VERSION_DEFS_FALSE@GTK_VNC_VERSION_FILE = $(srcdir)/libgtk-vnc_sym.version
@@ -452,6 +459,7 @@ libgvnc_1_0_la_LDFLAGS = \
 
 gvnc_includedir = $(includedir)/gvnc-1.0/
 gvnc_include_HEADERS = \
+			gvnc.h \
 			vncpixelformat.h \
 			vncframebuffer.h \
 			vncbaseframebuffer.h \
@@ -484,6 +492,7 @@ gtk_vnc_CFLAGS = \
 
 gtk_vnc_includedir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
 gtk_vnc_include_HEADERS = \
+			gtk-vnc.h \
 			vncdisplay.h \
 			vncdisplayenums.h \
 			vncgrabsequence.h \
@@ -520,15 +529,16 @@ ENUM_FILES = \
 	vncdisplayenums.h vncdisplayenums.c \
 	vncconnectionenums.h vncconnectionenums.c
 
-CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_10) \
-	$(am__append_14)
+CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
+	$(am__append_15)
 @WITH_PYTHON_TRUE@pyexec_LTLIBRARIES = gtkvnc.la
 @WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la @PYGTK_LIBS@
 @WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @PYTHON_INCLUDES@ \
 @WITH_PYTHON_TRUE@		   @PYGTK_CFLAGS@ @WARNING_PYTHON_CFLAGS@
 
 @WITH_PYTHON_TRUE@gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
-@WITH_PYTHON_TRUE@gtkvnc_la_SOURCES = vncmodule.c vncmodule.defs.c
+@WITH_PYTHON_TRUE@gtkvnc_la_SOURCES = vncmodule.c
+@WITH_PYTHON_TRUE@nodist_gtkvnc_la_SOURCES = vncmodule.defs.c
 @WITH_PYTHON_TRUE@CODEGENDIR = $(shell pkg-config --variable=codegendir pygtk-2.0)
 @WITH_PYTHON_TRUE@DEFSDIR = $(shell pkg-config --variable=defsdir pygtk-2.0)
 @WITH_GOBJECT_INTROSPECTION_TRUE@GVNC_INTROSPECTION_SRCS = \
@@ -549,7 +559,7 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_10) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.h \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.c \
-@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_13)
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_14)
 @G_IR_SCANNER_SYMBOL_PREFIX_FALSE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --strip-prefix=Vnc
 @G_IR_SCANNER_SYMBOL_PREFIX_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --symbol-prefix=vnc --identifier-prefix=Vnc
 @WITH_GOBJECT_INTROSPECTION_TRUE@girdir = $(datadir)/gir-1.0
@@ -1264,12 +1274,17 @@ uninstall-am: uninstall-girDATA uninstall-gtk_vnc_includeHEADERS \
 	uninstall-pyexecLTLIBRARIES uninstall-typelibsDATA
 
 
-%.def: %.version
-	$(AM_V_GEN)rm -f -- $@-tmp $@ ; \
-	printf 'EXPORTS\n' > $@-tmp && \
-	sed -e '/^$$/d; /#/d; /:/d; /\}/d; /\*/d; /LIBVIRT_/d; s/[ \t]*\(.*\)\;/    \1/g' $^ >> $@-tmp && \
-	chmod a-w $@-tmp && \
-	mv $@-tmp $@
+%.def: %.version Makefile
+@HAVE_GTK_2_TRUE@	$(AM_V_GEN)rm -f -- $@-tmp $@ ; \
+@HAVE_GTK_2_TRUE@	printf 'EXPORTS\n' > $@-tmp && \
+@HAVE_GTK_2_TRUE@	sed -e '/^$$/d; /#/d; /:/d; /\}/d; /\*/d; /LIBVIRT_/d; s/[ \t]*\(.*\)\;/    \1/g' $< >> $@-tmp && \
+@HAVE_GTK_2_TRUE@	chmod a-w $@-tmp && \
+@HAVE_GTK_2_TRUE@	mv $@-tmp $@
+@HAVE_GTK_2_FALSE@	$(AM_V_GEN)rm -f -- $@-tmp $@ ; \
+@HAVE_GTK_2_FALSE@	printf 'EXPORTS\n' > $@-tmp && \
+@HAVE_GTK_2_FALSE@	sed -e '/^$$/d; /#/d; /:/d; /\}/d; /\*/d; /vnc_image_framebuffer_*/d; /LIBVIRT_/d; s/[ \t]*\(.*\)\;/    \1/g' $< >> $@-tmp && \
+@HAVE_GTK_2_FALSE@	chmod a-w $@-tmp && \
+@HAVE_GTK_2_FALSE@	mv $@-tmp $@
 
 $(KEYMAPS): $(KEYMAP_GEN) keymaps.csv
 
@@ -1366,7 +1381,7 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_PYTHON_TRUE@			  --override $(srcdir)/vnc.override vnc.defs > $@
 
 @WITH_GOBJECT_INTROSPECTION_TRUE@GVnc-1.0.gir: libgvnc-1.0.la $(G_IR_SCANNER) Makefile.am
-@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)$(G_IR_SCANNER) -v \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)PKG_CONFIG_PATH=$(top_builddir) $(G_IR_SCANNER) -v \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --namespace GVnc \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --nsversion 1.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
@@ -1375,18 +1390,16 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(builddir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--c-include="gvnc.h" \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --output $@ \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--verbose \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=glib-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gthread-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gdk-pixbuf-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gobject-2.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gvnc-1.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                $(GVNC_INTROSPECTION_SRCS)
 
 @WITH_GOBJECT_INTROSPECTION_TRUE@GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION).la $(G_IR_SCANNER) Makefile.am
-@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)$(G_IR_SCANNER) -v \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)PKG_CONFIG_PATH=$(top_builddir) $(G_IR_SCANNER) -v \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --namespace GtkVnc \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --nsversion $(GTK_VNC_API_VERSION) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
@@ -1397,15 +1410,12 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(builddir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--c-include="gtk-vnc.h" \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --output $@ \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--verbose \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=glib-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gthread-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gdk-pixbuf-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gobject-2.0 \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gtk+-$(GTK_API_VERSION) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gtk-vnc-$(GTK_VNC_API_VERSION) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                $(GTK_VNC_INTROSPECTION_SRCS)
 
 @WITH_GOBJECT_INTROSPECTION_TRUE@%.typelib: %.gir

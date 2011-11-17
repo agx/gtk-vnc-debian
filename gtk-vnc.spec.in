@@ -5,14 +5,18 @@
 %define with_plugin 0
 
 %define with_gir 0
-
-%if 0%{fedora} >= 12
+%if 0%{?fedora} >= 12
 %define with_gir 1
 %endif
 
 %define with_gtk3 0
-%if 0%{fedora} >= 15
+%if 0%{?fedora} >= 15
 %define with_gtk3 1
+%endif
+
+%define with_vala 0
+%if 0%{with_gtk3}
+%define with_vala 1
 %endif
 
 Summary: A GTK2 widget for VNC clients
@@ -42,6 +46,9 @@ BuildRequires: firefox-devel
 %endif
 %if %{with_gtk3}
 BuildRequires: gtk3-devel
+%endif
+%if %{with_vala}
+BuildRequires: vala-tools
 %endif
 
 %description
@@ -238,6 +245,9 @@ rm -fr %{buildroot}
 %if %{with_gir}
 %{_libdir}/girepository-1.0/GVnc-1.0.typelib
 %endif
+%if %{with_vala}
+%{_datadir}/vala/vapi/gvnc-1.0.vapi
+%endif
 
 %files -n gvnc-devel
 %defattr(-, root, root)
@@ -266,6 +276,10 @@ rm -fr %{buildroot}
 %{_libdir}/libgtk-vnc-2.0.so.*
 %if %{with_gir}
 %{_libdir}/girepository-1.0/GtkVnc-2.0.typelib
+%endif
+%if %{with_vala}
+%{_datadir}/vala/vapi/gtk-vnc-2.0.deps
+%{_datadir}/vala/vapi/gtk-vnc-2.0.vapi
 %endif
 
 %files -n gtk-vnc2-devel

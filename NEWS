@@ -1,6 +1,24 @@
     GTK VNC News
     ============
 
+Nov 10, 2011: Release 0.4.4
+===========================
+
+New features:
+
+ o Vala bindings
+
+Bug fixes:
+
+ o Missing OS-X keymapping for the letter 'A'
+ o Update Turkish/Esperanto/Korean/Slovak translations
+ o Mapping for Left Control / Alt keys
+ o Fix leak of string list in grab sequence string
+ o Fix introspection for vnc_display_get_pixbuf
+ o Fix GTK3 build on Mingw32
+ o Improved log messages for TLS auth subtypes
+
+
 Feb 18, 2011: Release 0.4.3
 ===========================
 
