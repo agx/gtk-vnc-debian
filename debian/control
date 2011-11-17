@@ -23,7 +23,9 @@ Build-Depends:
  libgtk-3-dev,
  libgirepository1.0-dev,
  gobject-introspection,
- libtool
+ libtool,
+# for vala bindings
+  valac-0.14
 Build-Conflicts: libffi4-dev
 X-Python-Version: >= 2.5
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
@@ -81,7 +83,7 @@ Description: VNC GObject wrapper (development files)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the development headers.
+ This package contains the development headers and Vala bindings.
 
 Package: libgtk-vnc-1.0-0
 Architecture: any
@@ -186,7 +188,7 @@ Description: VNC viewer widget for GTK+3 (development files)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the development headers.
+ This package contains the development headers and Vala bindings.
 
 Package: gir1.2-gtk-vnc-2.0
 Section: libs

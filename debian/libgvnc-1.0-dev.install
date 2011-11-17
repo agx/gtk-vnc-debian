@@ -2,3 +2,4 @@
 /usr/include/gvnc-1.0/
 /usr/lib/pkgconfig/gvnc-1.0.*
 /usr/share/gir-1.0/GVnc-1.0.gir
+/usr/share/vala/vapi/gvnc-1.0.vapi
