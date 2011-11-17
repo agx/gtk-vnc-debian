@@ -1,3 +1,13 @@
+gtk-vnc (0.4.4-1) unstable; urgency=low
+
+  * [eb795c1] New upstream version 0.4.4
+  * [6cf4ef5] watch: switch to xz tarballs
+  * [2d239ff] Add vala bindings
+  * [e66a270] Drop patch numbers
+  * [d97cb98] Fix build with xulrunner-8.0
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 17 Nov 2011 22:12:37 +0100
+
 gtk-vnc (0.4.3-6) unstable; urgency=low
 
   * [5d58ba0] Invoke dh_girrepository
