@@ -27,97 +27,97 @@
 
 GType vnc_grab_sequence_get_type(void)
 {
-	static GType grab_sequence_type = 0;
+    static GType grab_sequence_type = 0;
 
-	if (G_UNLIKELY(grab_sequence_type == 0)) {
-		grab_sequence_type = g_boxed_type_register_static
-			("VncGrabSequence",
-			 (GBoxedCopyFunc)vnc_grab_sequence_copy,
-			 (GBoxedFreeFunc)vnc_grab_sequence_free);
-	}
+    if (G_UNLIKELY(grab_sequence_type == 0)) {
+        grab_sequence_type = g_boxed_type_register_static
+            ("VncGrabSequence",
+             (GBoxedCopyFunc)vnc_grab_sequence_copy,
+             (GBoxedFreeFunc)vnc_grab_sequence_free);
+    }
 
-	return grab_sequence_type;
+    return grab_sequence_type;
 }
 
 
 VncGrabSequence *vnc_grab_sequence_new(guint nkeysyms, guint *keysyms)
 {
-	VncGrabSequence *sequence;
+    VncGrabSequence *sequence;
 
-	sequence = g_slice_new0(VncGrabSequence);
-	sequence->nkeysyms = nkeysyms;
-	sequence->keysyms = g_new0(guint, nkeysyms);
-	memcpy(sequence->keysyms, keysyms, sizeof(guint)*nkeysyms);
+    sequence = g_slice_new0(VncGrabSequence);
+    sequence->nkeysyms = nkeysyms;
+    sequence->keysyms = g_new0(guint, nkeysyms);
+    memcpy(sequence->keysyms, keysyms, sizeof(guint)*nkeysyms);
 
-	return sequence;
+    return sequence;
 }
 
 
 VncGrabSequence *vnc_grab_sequence_new_from_string(const gchar *str)
 {
-	gchar **keysymstr;
-	int i;
-	VncGrabSequence *sequence;
+    gchar **keysymstr;
+    int i;
+    VncGrabSequence *sequence;
 
-	sequence = g_slice_new0(VncGrabSequence);
+    sequence = g_slice_new0(VncGrabSequence);
 
-	keysymstr = g_strsplit(str, "+", 5);
+    keysymstr = g_strsplit(str, "+", 5);
 
-	sequence->nkeysyms = 0;
-	while (keysymstr[sequence->nkeysyms])
-		sequence->nkeysyms++;
+    sequence->nkeysyms = 0;
+    while (keysymstr[sequence->nkeysyms])
+        sequence->nkeysyms++;
 
-	sequence->keysyms = g_new0(guint, sequence->nkeysyms);
-	for (i = 0 ; i < sequence->nkeysyms ; i++)
-		sequence->keysyms[i] =
-			(guint)gdk_keyval_from_name(keysymstr[i]);
+    sequence->keysyms = g_new0(guint, sequence->nkeysyms);
+    for (i = 0 ; i < sequence->nkeysyms ; i++)
+        sequence->keysyms[i] =
+            (guint)gdk_keyval_from_name(keysymstr[i]);
 
-	g_strfreev(keysymstr);
+    g_strfreev(keysymstr);
 
-	return sequence;
+    return sequence;
 
 }
 
 
 VncGrabSequence *vnc_grab_sequence_copy(VncGrabSequence *srcSequence)
 {
-	VncGrabSequence *sequence;
+    VncGrabSequence *sequence;
 
-	sequence = g_slice_dup(VncGrabSequence, srcSequence);
-	sequence->keysyms = g_new0(guint, srcSequence->nkeysyms);
-	memcpy(sequence->keysyms, srcSequence->keysyms,
-	       sizeof(guint) * sequence->nkeysyms);
+    sequence = g_slice_dup(VncGrabSequence, srcSequence);
+    sequence->keysyms = g_new0(guint, srcSequence->nkeysyms);
+    memcpy(sequence->keysyms, srcSequence->keysyms,
+           sizeof(guint) * sequence->nkeysyms);
 
-	return sequence;
+    return sequence;
 }
 
 
 void vnc_grab_sequence_free(VncGrabSequence *sequence)
 {
-	g_slice_free(VncGrabSequence, sequence);
+    g_slice_free(VncGrabSequence, sequence);
 }
 
 
 gchar *vnc_grab_sequence_as_string(VncGrabSequence *sequence)
 {
-	GString *str = g_string_new("");
-	int i;
+    GString *str = g_string_new("");
+    int i;
 
-	for (i = 0 ; i < sequence->nkeysyms ; i++) {
-		if (i > 0)
-			g_string_append_c(str, '+');
-		g_string_append(str, gdk_keyval_name(sequence->keysyms[i]));
-	}
+    for (i = 0 ; i < sequence->nkeysyms ; i++) {
+        if (i > 0)
+            g_string_append_c(str, '+');
+        g_string_append(str, gdk_keyval_name(sequence->keysyms[i]));
+    }
 
-	return g_string_free(str, FALSE);
+    return g_string_free(str, FALSE);
 
 }
 
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

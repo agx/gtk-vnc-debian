@@ -34,6 +34,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@am__append_1 = \
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@	gvncpulse-1.0.vapi
+
 subdir = vapi
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -195,6 +198,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
+PULSEAUDIO_CFLAGS = @PULSEAUDIO_CFLAGS@
+PULSEAUDIO_LIBS = @PULSEAUDIO_LIBS@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
 PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
@@ -280,12 +285,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 NULL = 
 @WITH_VALA_TRUE@vapidir = $(datadir)/vala/vapi
-@WITH_VALA_TRUE@vapi_DATA = \
-@WITH_VALA_TRUE@	gtk-vnc-$(GTK_VNC_API_VERSION).deps	\
-@WITH_VALA_TRUE@	gtk-vnc-$(GTK_VNC_API_VERSION).vapi	\
-@WITH_VALA_TRUE@	gvnc-1.0.vapi				\
-@WITH_VALA_TRUE@	$(NULL)
-
+@WITH_VALA_TRUE@vapi_DATA = gtk-vnc-$(GTK_VNC_API_VERSION).deps \
+@WITH_VALA_TRUE@	gtk-vnc-$(GTK_VNC_API_VERSION).vapi \
+@WITH_VALA_TRUE@	gvnc-1.0.vapi $(NULL) $(am__append_1)
 CLEANFILES = $(vapi_DATA)
 all: all-am
 
@@ -501,6 +503,14 @@ uninstall-am: uninstall-vapiDATA
 @WITH_VALA_TRUE@	$(AM_V_GEN)$(VAPIGEN)			\
 @WITH_VALA_TRUE@		--library gvnc-1.0		\
 @WITH_VALA_TRUE@		$<
+
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@gvncpulse-1.0.vapi: $(top_builddir)/src/GVncPulse-1.0.gir gvnc-1.0.vapi
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@	$(AM_V_GEN)$(VAPIGEN)			\
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@		--vapidir=$(builddir)				\
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@		--pkg gvnc-1.0					\
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@		--library gvncpulse-1.0				\
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@		--girdir=$(top_builddir)/src			\
+@HAVE_PULSEAUDIO_TRUE@@WITH_VALA_TRUE@		$<
 
 @WITH_VALA_TRUE@gtk-vnc-$(GTK_VNC_API_VERSION).vapi: $(top_builddir)/src/GtkVnc-$(GTK_VNC_API_VERSION).gir gvnc-1.0.vapi
 @WITH_VALA_TRUE@	$(AM_V_GEN)$(VAPIGEN)					\

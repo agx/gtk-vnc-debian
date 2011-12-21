@@ -16,6 +16,7 @@ gvnccapture_LDADD = \
 		$(GOBJECT_LIBS) \
 		$(GDK_PIXBUF_LIBS)
 gvnccapture_CFLAGS = \
+		-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 		$(GOBJECT_CFLAGS) \
 		$(GDK_PIXBUF_CFLAGS) \
 		$(WARNING_CFLAGS) \

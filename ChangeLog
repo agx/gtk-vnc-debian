@@ -1,3 +1,200 @@
+2011-12-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.5.0 release
+
+2011-12-21  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	windows: fix broken left shift
+	On Windows, the received key when pressing left shift is VK_SHIFT 0x10
+	Patch from spice-gtk
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=666171
+
+2011-12-21  Christophe Fergeau  <cfergeau@redhat.com>
+
+	properly free xkbDesk
+	valgrind detects a memory leak if it's not freed using
+	xkbFreeKeyboard.
+
+2011-12-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix some more indentation mistakes
+
+2011-12-15  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update AUTHORS file
+
+	Add support for '--system' arg to autogen.sh
+
+	Add --pkg statements for all external libs needed in build
+	Ensure g-ir-scanner adds -I and -L flags for all external
+	libraries required to build
+
+2011-12-13  Christophe Fergeau  <cfergeau@redhat.com>
+
+	Include locale.h in gvnccapture.c
+	It uses setlocale and LC_ALL, without this header compilation fails
+	on RHEL 6.2
+
+	More fixing for gir generation
+	I missed the new GVncPulse.gir file in the previous fix
+
+	Fix GIR generation
+	Overriding PKG_CONFIG_PATH when generating GtkVnc-2.0.gir is
+	wrong since this means that if glib/... is installed in a prefix that
+	is not one of the default pkg-config paths, then it won't be found.
+	PKG_CONFIG_PATH is overridden so that g-ir-scanner can find GVnc-1.0.gir
+	in the build tree. Since g-ir-scanner provides --include-uninstalled
+	for that purpose, use that instead.
+
+2011-12-11  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update AUTHORS file
+
+2011-12-11  Daniel Korostil  <ted.korostiled@gmail.com>
+
+	Added uk translation
+
+2011-12-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Import GNULIB framework for checking code style / rules
+	Add a new 'make syntax-check' rule which validates some
+	aspects of coding style. This is imported from GNULIB
+
+	Remove trailing whitespace at end of lines
+
+	Ensure <config.h> is always the first header included
+
+	Remove redundant 'const' annotations
+
+	use "test C1 && test C2", not "test C1 -a C2" etc
+
+	Remove trailing blank lines from COPYING.LIB
+
+	Remove use of @FOO@ syntax from Makefile.am in favour of $(FOO)
+
+	Ensure vars are fully quoted in configure.ac
+
+	Fix mistakes in copyright header
+
+	Update authors file & add a mailmap for non-primary addrs
+
+	Ensure gvnccapture calls bindtextdomain to setup localization
+
+	Remove useless if before free
+
+	Change debug function into a null macro
+
+	Death to tabs
+	Remove all tabs, change indentation level to 4 spaces. Add
+	emacs magic to files which were missing it. Reindent all
+	files with new rules
+
+	Batch up incoming audio samples for upto 100ms
+	The length of samples received from the guest can be very
+	small (as little as 1 sample). If this is dispatched directly
+	to the audio sink this can cause excessive CPU consumption
+	and context switching. Batch up incoming data for upto 100ms
+	until dispatching it
+
+	Convert connection over to use audio objects
+	* src/vncconnection.c, src/vncconnection.h: Convert to use
+	  VncAudio, VncAudioFormat & VncAudioSample objects
+	* examples/Makefile.am, examples/gvncviewer.c: Convert to
+	  use new API & pulse audio object impl
+	* src/vncmarshal.txt: Remove unused marshaller
+
+	Make decoding of audio extension more robust
+	Add checks for unknown QEMU messages and crazy sized audio
+	data packets
+
+	Remove all audio APIs from VncDisplay since we expose the connection
+	Now that there is a vnc_display_get_connection() method there is
+	no need to duplicate all the audio APIs & signals in the VncDisplay
+	class
+
+	Fix compiler warning in gvnccapture.c
+	Recent GCC warn about assignments to variables which are then
+	not used.
+
+	Introduce pulse audio bridge for GVnc
+	Introduce a new library libgvncpulse-1.0.so which provides an
+	implementation of VncAudio that uses Pulse Audio for output
+
+	* Makefile.am, gvncpulse-1.0.pc.in: Add pkgconfig file for
+	  libgvncpulse
+	* gtk-vnc.spec.in: Add gvncpulse & gvncpulse-devel sub-RPMS
+	* src/Makefile.am, src/gvncpulse.h, src/libgvncpulse_sym.version
+	  Add gvncpulse-1.0 library
+	* src/vncaudiopulse.c, src/vncaudiopulse.h: Pulse audio
+	  impl of VncAudio
+	* vapi/Makefile.am: Build vala binding for pulse audio
+
+	Introduce a basic impl of audio handler
+	Introduce a basic implementation of the audio handler which
+	emits a signal for each method. This enables apps to support
+	audio playback without needing to create subclasses. It also
+	isolates subclasses from extensions in the interface
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncbaseaudio.c, src/vncbaseaudio.h: Introduce basic
+	  audio handler
+
+	Introduce an interface for handling audio data
+	Define a new interface VncAudio which is used to handle playback
+	of audio data
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncaudio.c, src/vncaudio.h: Add interface for handling
+	  audio data
+
+	Introduce a basic data type for audio samples
+	To avoid having to pass around all the parameters individually,
+	introduce a boxed data type for audio samples
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncaudiosample.c, src/vncaudiosample.h: Boxed type for
+	  audio samples
+
+	Introduce a basic data type for audio formats
+	To avoid having to pass around all the parameters individually,
+	introduce a boxed data type for audio formats
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncaudioformat.c, src/vncaudioformat.h: Boxed type for
+	  audio formats
+
+2011-12-09  Steven Carr  <Steven.Carr@scaa-usa.com>
+
+	Introduce support for the VNC audio tunnel extension
+	Add support for handling VNC audio extension and a pulse
+	audio implementation to the gvncviewer.c
+
+	* src/vncconnection.c, src/vncconnection.h: Handle VNC
+	  audio extension
+	* src/vncdisplay.c, src/vncdisplay.h: Passthrough audio
+	  control to connection
+	* src/vncmarshal.txt: New signal types
+	* examples/gvncviewer.c, examples/Makefile.am: Pulse
+	  audio impl
+	* configure.ac: Check for pulse audio
+
+2011-12-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add a 'connection' property to VncDisplay class
+	Allow apps access to the VncConnection behind the VncDisplay
+	instance, by adding a property and a getter API
+
+	* src/vncdisplay.c: Add a 'connection' property to allow
+	  apps to get the VncConnection object
+
+	Adapt to avoid deprecated gnutls functions
+	Switch to using gnutls_priority_set_direct on newer GNUTLS
+
+2011-11-18  Algimantas Margevičius  <gymka@mail.ru>
+
+	Added Lithuanian translation
+
 2011-11-10  Daniel P. Berrange  <berrange@redhat.com>
 
 	Misc RPM specfile fixes

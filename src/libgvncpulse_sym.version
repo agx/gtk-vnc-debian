@@ -1,0 +1,8 @@
+{
+    global:
+	vnc_audio_pulse_get_type;
+	vnc_audio_pulse_new;
+
+    local:
+        *;
+};

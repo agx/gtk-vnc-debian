@@ -31,22 +31,22 @@
 
 struct coroutine
 {
-	size_t stack_size;
-	void *(*entry)(void *);
-	int (*release)(struct coroutine *);
+    size_t stack_size;
+    void *(*entry)(void *);
+    int (*release)(struct coroutine *);
 
-	/* read-only */
-	int exited;
+    /* read-only */
+    int exited;
 
-	/* private */
-	struct coroutine *caller;
-	void *data;
+    /* private */
+    struct coroutine *caller;
+    void *data;
 
 #if WITH_UCONTEXT
-	struct continuation cc;
+    struct continuation cc;
 #else
-	GThread *thread;
-	gboolean runnable;
+    GThread *thread;
+    gboolean runnable;
 #endif
 };
 
@@ -65,8 +65,8 @@ void *coroutine_yield(void *arg);
 #endif
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

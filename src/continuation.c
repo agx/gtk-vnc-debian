@@ -28,62 +28,62 @@
  * union is a quick hack to let us do that
  */
 union cc_arg {
-	void *p;
-	int i[2];
+    void *p;
+    int i[2];
 };
 
 static void continuation_trampoline(int i0, int i1)
 {
-	union cc_arg arg;
-	struct continuation *cc;
-	arg.i[0] = i0;
-	arg.i[1] = i1;
-	cc = arg.p;
+    union cc_arg arg;
+    struct continuation *cc;
+    arg.i[0] = i0;
+    arg.i[1] = i1;
+    cc = arg.p;
 
-	cc->entry(cc);
+    cc->entry(cc);
 }
 
 int cc_init(struct continuation *cc)
 {
-	volatile union cc_arg arg;
-	arg.p = cc;
-	if (getcontext(&cc->uc) == -1)
-		return -1;
+    volatile union cc_arg arg;
+    arg.p = cc;
+    if (getcontext(&cc->uc) == -1)
+        return -1;
 
-	cc->uc.uc_link = &cc->last;
-	cc->uc.uc_stack.ss_sp = cc->stack;
-	cc->uc.uc_stack.ss_size = cc->stack_size;
-	cc->uc.uc_stack.ss_flags = 0;
+    cc->uc.uc_link = &cc->last;
+    cc->uc.uc_stack.ss_sp = cc->stack;
+    cc->uc.uc_stack.ss_size = cc->stack_size;
+    cc->uc.uc_stack.ss_flags = 0;
 
-	makecontext(&cc->uc, (void *)continuation_trampoline, 2, arg.i[0], arg.i[1]);
+    makecontext(&cc->uc, (void *)continuation_trampoline, 2, arg.i[0], arg.i[1]);
 
-	return 0;
+    return 0;
 }
 
 int cc_release(struct continuation *cc)
 {
-	if (cc->release)
-		return cc->release(cc);
+    if (cc->release)
+        return cc->release(cc);
 
-	return 0;
+    return 0;
 }
 
 int cc_swap(struct continuation *from, struct continuation *to)
 {
-	to->exited = 0;
-	if (getcontext(&to->last) == -1)
-		return -1;
-	else if (to->exited == 0)
-		to->exited = 1;
-	else if (to->exited == 1)
-		return 1;
+    to->exited = 0;
+    if (getcontext(&to->last) == -1)
+        return -1;
+    else if (to->exited == 0)
+        to->exited = 1;
+    else if (to->exited == 1)
+        return 1;
 
-	return swapcontext(&from->uc, &to->uc);
+    return swapcontext(&from->uc, &to->uc);
 }
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

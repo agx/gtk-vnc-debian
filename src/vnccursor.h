@@ -41,29 +41,29 @@ typedef struct _VncCursorPrivate VncCursorPrivate;
 
 struct _VncCursor
 {
-	GObject parent;
+    GObject parent;
 
-	VncCursorPrivate *priv;
+    VncCursorPrivate *priv;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 struct _VncCursorClass
 {
-	GObjectClass parent_class;
+    GObjectClass parent_class;
 
-	/*
-	 * If adding fields to this struct, remove corresponding
-	 * amount of padding to avoid changing overall struct size
-	 */
-	gpointer _vnc_reserved[VNC_PADDING];
+    /*
+     * If adding fields to this struct, remove corresponding
+     * amount of padding to avoid changing overall struct size
+     */
+    gpointer _vnc_reserved[VNC_PADDING];
 };
 
 
 GType vnc_cursor_get_type(void);
 VncCursor *vnc_cursor_new(guint8 *rgba24data,
-			  guint16 hotx, guint16 hoty,
-			  guint16 width, guint16 height);
+                          guint16 hotx, guint16 hoty,
+                          guint16 width, guint16 height);
 
 const guint8 *vnc_cursor_get_data(VncCursor *cursor);
 
@@ -78,8 +78,8 @@ G_END_DECLS
 #endif /* VNC_CURSOR_H */
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

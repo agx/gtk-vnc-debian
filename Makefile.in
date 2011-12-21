@@ -34,11 +34,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@HAVE_PULSEAUDIO_TRUE@am__append_1 = gvncpulse-1.0.pc
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/gtk-vnc-1.0.pc.in $(srcdir)/gtk-vnc-2.0.pc.in \
 	$(srcdir)/gtk-vnc.spec.in $(srcdir)/gvnc-1.0.pc.in \
+	$(srcdir)/gvncpulse-1.0.pc.in \
 	$(srcdir)/mingw32-gtk-vnc.spec.in $(top_srcdir)/configure \
 	AUTHORS COPYING.LIB ChangeLog INSTALL NEWS build-aux/compile \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
@@ -56,8 +58,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(SHELL) $(top_srcdir)/build-aux/mkinstalldirs
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = gvnc-1.0.pc gtk-vnc-1.0.pc gtk-vnc-2.0.pc \
-	gtk-vnc.spec mingw32-gtk-vnc.spec
+CONFIG_CLEAN_FILES = gvnc-1.0.pc gvncpulse-1.0.pc gtk-vnc-1.0.pc \
+	gtk-vnc-2.0.pc gtk-vnc.spec mingw32-gtk-vnc.spec
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
@@ -256,6 +258,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
+PULSEAUDIO_CFLAGS = @PULSEAUDIO_CFLAGS@
+PULSEAUDIO_LIBS = @PULSEAUDIO_LIBS@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
 PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
@@ -341,10 +345,12 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = src tools examples plugin po vapi
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
-pkgconfig_DATA = @PACKAGE@-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc
+pkgconfig_DATA = $(PACKAGE)-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc \
+	$(am__append_1)
 pkgconfigdir = $(libdir)/pkgconfig
 EXTRA_DIST = \
 	gvnc-1.0.pc.in			\
+	gvncpulse-1.0.pc.in		\
 	$(PACKAGE)-1.0.pc.in		\
 	$(PACKAGE)-2.0.pc.in		\
 	$(PACKAGE).spec.in		\
@@ -449,6 +455,8 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 distclean-hdr:
 	-rm -f config.h stamp-h1
 gvnc-1.0.pc: $(top_builddir)/config.status $(srcdir)/gvnc-1.0.pc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+gvncpulse-1.0.pc: $(top_builddir)/config.status $(srcdir)/gvncpulse-1.0.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 gtk-vnc-1.0.pc: $(top_builddir)/config.status $(srcdir)/gtk-vnc-1.0.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

@@ -1,5 +1,23 @@
 {
     global:
+	vnc_audio_playback_start;
+	vnc_audio_playback_stop;
+	vnc_audio_playback_data;
+	vnc_audio_get_type;
+
+	vnc_audio_format_new;
+	vnc_audio_format_copy;
+	vnc_audio_format_free;
+	vnc_audio_format_get_type;
+
+	vnc_audio_sample_new;
+	vnc_audio_sample_copy;
+	vnc_audio_sample_free;
+	vnc_audio_sample_get_type;
+
+	vnc_base_audio_new;
+	vnc_base_audio_get_type;
+
 	vnc_cursor_get_type;
 	vnc_cursor_new;
 	vnc_cursor_get_data;
@@ -62,6 +80,11 @@
 	vnc_connection_auth_get_type;
 	vnc_connection_auth_vencrypt_get_type;
 	vnc_connection_credential_get_type;
+	vnc_connection_audio_enable;
+	vnc_connection_audio_disable;
+	vnc_connection_set_audio_format;
+	vnc_connection_get_audio_format;
+	vnc_connection_set_audio;
 
 	vnc_util_set_debug;
 	vnc_util_get_debug;

@@ -25,15 +25,15 @@
 
 struct continuation
 {
-	char *stack;
-	size_t stack_size;
-	void (*entry)(struct continuation *cc);
-	int (*release)(struct continuation *cc);
+    char *stack;
+    size_t stack_size;
+    void (*entry)(struct continuation *cc);
+    int (*release)(struct continuation *cc);
 
-	/* private */
-	ucontext_t uc;
-	ucontext_t last;
-	int exited;
+    /* private */
+    ucontext_t uc;
+    ucontext_t last;
+    int exited;
 };
 
 int cc_init(struct continuation *cc);
@@ -45,14 +45,14 @@ int cc_release(struct continuation *cc);
 int cc_swap(struct continuation *from, struct continuation *to);
 
 #define offset_of(type, member) ((unsigned long)(&((type *)0)->member))
-#define container_of(obj, type, member) \
-        (type *)(((char *)obj) - offset_of(type, member))
+#define container_of(obj, type, member)                 \
+    (type *)(((char *)obj) - offset_of(type, member))
 
 #endif
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

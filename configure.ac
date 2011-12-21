@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.4.4],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.5.0],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -54,9 +54,20 @@ VERSION_MAJOR=`echo $VERSION | awk -F. '{print $1}'`
 VERSION_MINOR=`echo $VERSION | awk -F. '{print $2}'`
 VERSION_MICRO=`echo $VERSION | awk -F. '{print $3}'`
 
-AC_DEFINE_UNQUOTED(VERSION_MAJOR, $VERSION_MAJOR, [Major version number of package])
-AC_DEFINE_UNQUOTED(VERSION_MINOR, $VERSION_MINOR, [Minor version number of package])
-AC_DEFINE_UNQUOTED(VERSION_MICRO, $VERSION_MICRO, [Micro version number of package])
+AC_DEFINE_UNQUOTED([VERSION_MAJOR], [$VERSION_MAJOR], [Major version number of package])
+AC_DEFINE_UNQUOTED([VERSION_MINOR], [$VERSION_MINOR], [Minor version number of package])
+AC_DEFINE_UNQUOTED([VERSION_MICRO], [$VERSION_MICRO], [Micro version number of package])
+
+# Autoconf 2.61a.99 and earlier don't support linking a file only
+# in VPATH builds.  But since GNUmakefile is for maintainer use
+# only, it does not matter if we skip the link with older autoconf.
+# Automake 1.10.1 and earlier try to remove GNUmakefile in non-VPATH
+# builds, so use a shell variable to bypass this.
+GNUmakefile=GNUmakefile
+m4_if(m4_version_compare([2.61a.100],
+        m4_defn([m4_PACKAGE_VERSION])), [1], [],
+      [AC_CONFIG_LINKS([$GNUmakefile:$GNUmakefile], [],
+        [GNUmakefile=$GNUmakefile])])
 
 dnl *******************************************************************************
 dnl Setup core compilers / build helpers
@@ -70,7 +81,7 @@ dnl Internationalization
 dnl *******************************************************************************
 GETTEXT_PACKAGE=gtk-vnc
 AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],"$GETTEXT_PACKAGE", [GETTEXT package name])
 
 IT_PROG_INTLTOOL([0.40.0])
 AM_GLIB_GNU_GETTEXT
@@ -200,9 +211,19 @@ if test "${withval}" = "yes"; then
   PKG_CHECK_MODULES(VIEW, libview >= $VIEW_REQUIRED,
 		   [WITH_LIBVIEW=1], [WITH_LIBVIEW=0])
 fi
-AC_DEFINE_UNQUOTED(WITH_LIBVIEW,[$WITH_LIBVIEW], [Whether to use libview])
+AC_DEFINE_UNQUOTED([WITH_LIBVIEW],[$WITH_LIBVIEW], [Whether to use libview])
 AC_SUBST(VIEW_CFLAGS)
 AC_SUBST(VIEW_LIBS)
+
+
+PKG_CHECK_MODULES(PULSEAUDIO, libpulse-simple, WANT_PULSEAUDIO="yes", AC_MSG_NOTICE([Not building against libpulse]))
+if test "x$WANT_PULSEAUDIO" = xyes; then
+    AC_DEFINE_UNQUOTED([HAVE_PULSEAUDIO], 1,[Define if we have and want pulseaudio.])
+fi
+AM_CONDITIONAL([HAVE_PULSEAUDIO], [test "x$WANT_PULSEAUDIO" = "xyes"])
+AC_SUBST(PULSEAUDIO_CFLAGS)
+AC_SUBST(PULSEAUDIO_LIBS)
+
 
 PKG_CHECK_MODULES(GNUTLS, gnutls >= $GNUTLS_REQUIRED)
 dnl Not all versions of gnutls include -lgcrypt and -lgpg-error, and we need it
@@ -223,7 +244,7 @@ SASL_CFLAGS=
 SASL_LIBS=
 enable_sasl=no
 if test "x$with_sasl" != "xno"; then
-  if test "x$with_sasl" != "xyes" -a "x$with_sasl" != "xcheck"; then
+  if test "x$with_sasl" != "xyes" && test "x$with_sasl" != "xcheck"; then
     SASL_CFLAGS="-I$with_sasl"
     SASL_LIBS="-L$with_sasl"
   fi
@@ -241,7 +262,7 @@ if test "x$with_sasl" != "xno"; then
   if test "x$with_sasl" != "xno" ; then
     AC_CHECK_LIB([sasl2], [sasl_client_init],[with_sasl2=yes],[with_sasl2=no])
   fi
-  if test "x$with_sasl2" = "xno" -a "x$with_sasl" != "xno" ; then
+  if test "x$with_sasl2" = "xno" && test "x$with_sasl" != "xno" ; then
     AC_CHECK_LIB([sasl], [sasl_client_init],[with_sasl=yes],[with_sasl=no])
   fi
   if test "x$with_sasl2" = "xyes"; then
@@ -253,13 +274,13 @@ if test "x$with_sasl" != "xno"; then
   fi
   CFLAGS="$old_cflags"
   LIBS="$old_libs"
-  if test "x$with_sasl2" = "xyes" -o "x$with_sasl" = "xyes" ; then
+  if test "x$with_sasl2" = "xyes" || test "x$with_sasl" = "xyes" ; then
     AC_DEFINE_UNQUOTED([HAVE_SASL], 1,
       [whether Cyrus SASL is available for authentication])
     enable_sasl=yes
   fi
 fi
-AM_CONDITIONAL([HAVE_SASL], [test "x$with_sasl2" = "xyes" -o "x$with_sasl" = "xyes"])
+AM_CONDITIONAL([HAVE_SASL], [test "x$with_sasl2" = "xyes" || test "x$with_sasl" = "xyes"])
 AC_SUBST([SASL_CFLAGS])
 AC_SUBST([SASL_LIBS])
 
@@ -296,7 +317,7 @@ if test "$with_coroutine" = "gthread"; then
 fi
 AC_SUBST(GTHREAD_CFLAGS)
 AC_SUBST(GTHREAD_LIBS)
-AC_DEFINE_UNQUOTED(WITH_UCONTEXT,[$WITH_UCONTEXT], [Whether to use ucontext coroutine impl])
+AC_DEFINE_UNQUOTED([WITH_UCONTEXT],[$WITH_UCONTEXT], [Whether to use ucontext coroutine impl])
 AM_CONDITIONAL(WITH_UCONTEXT, [test "$WITH_UCONTEXT" != "0"])
 
 if test "$WITH_PYTHON" = "yes"; then
@@ -435,6 +456,7 @@ AC_CONFIG_FILES(
   po/Makefile.in
   vapi/Makefile
   gvnc-1.0.pc
+  gvncpulse-1.0.pc
   gtk-vnc-1.0.pc
   gtk-vnc-2.0.pc
   gtk-vnc.spec

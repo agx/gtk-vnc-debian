@@ -27,38 +27,38 @@ static gboolean debugFlag = FALSE;
 
 void vnc_util_set_debug(gboolean enabled)
 {
-	debugFlag = enabled;
+    debugFlag = enabled;
 }
 
 gboolean vnc_util_get_debug(void)
 {
-	return debugFlag;
+    return debugFlag;
 }
 
 gint vnc_util_get_version(void)
 {
-	return (VERSION_MAJOR << 16) |
-		(VERSION_MINOR << 8) |
-		VERSION_MICRO;
+    return (VERSION_MAJOR << 16) |
+        (VERSION_MINOR << 8) |
+        VERSION_MICRO;
 }
 
 gboolean vnc_util_check_version(gint major, gint minor, gint micro)
 {
-	return ((VERSION_MAJOR > major) || \
-		((VERSION_MAJOR == major) && (VERSION_MINOR > minor)) || \
-		((VERSION_MAJOR == major) && (VERSION_MINOR == minor) && \
-		(VERSION_MICRO >= micro)));
+    return ((VERSION_MAJOR > major) || \
+            ((VERSION_MAJOR == major) && (VERSION_MINOR > minor)) || \
+            ((VERSION_MAJOR == major) && (VERSION_MINOR == minor) && \
+             (VERSION_MICRO >= micro)));
 }
 
 const gchar *vnc_util_get_version_string(void)
 {
-	return VERSION;
+    return VERSION;
 }
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

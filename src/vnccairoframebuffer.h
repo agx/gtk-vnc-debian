@@ -43,29 +43,29 @@ typedef struct _VncCairoFramebufferClass VncCairoFramebufferClass;
 
 struct _VncCairoFramebuffer
 {
-	VncBaseFramebuffer parent;
+    VncBaseFramebuffer parent;
 
-	VncCairoFramebufferPrivate *priv;
+    VncCairoFramebufferPrivate *priv;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 struct _VncCairoFramebufferClass
 {
-	VncBaseFramebufferClass parent_class;
+    VncBaseFramebufferClass parent_class;
 
-	/*
-	 * If adding fields to this struct, remove corresponding
-	 * amount of padding to avoid changing overall struct size
-	 */
-	gpointer _vnc_reserved[VNC_PADDING];
+    /*
+     * If adding fields to this struct, remove corresponding
+     * amount of padding to avoid changing overall struct size
+     */
+    gpointer _vnc_reserved[VNC_PADDING];
 };
 
 
 GType vnc_cairo_framebuffer_get_type(void) G_GNUC_CONST;
 
 VncCairoFramebuffer *vnc_cairo_framebuffer_new(guint16 width, guint16 height,
-					       const VncPixelFormat *remoteFormat);
+                                               const VncPixelFormat *remoteFormat);
 
 cairo_surface_t *vnc_cairo_framebuffer_get_surface(VncCairoFramebuffer *fb);
 
@@ -76,8 +76,8 @@ G_END_DECLS
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

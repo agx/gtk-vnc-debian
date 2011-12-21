@@ -26,88 +26,88 @@
 
 GType vnc_color_map_get_type(void)
 {
-	static GType color_map_type = 0;
+    static GType color_map_type = 0;
 
-	if (G_UNLIKELY(color_map_type == 0)) {
-		color_map_type = g_boxed_type_register_static
-			("VncColorMap",
-			 (GBoxedCopyFunc)vnc_color_map_copy,
-			 (GBoxedFreeFunc)vnc_color_map_free);
-	}
+    if (G_UNLIKELY(color_map_type == 0)) {
+        color_map_type = g_boxed_type_register_static
+            ("VncColorMap",
+             (GBoxedCopyFunc)vnc_color_map_copy,
+             (GBoxedFreeFunc)vnc_color_map_free);
+    }
 
-	return color_map_type;
+    return color_map_type;
 }
 
 
 VncColorMap *vnc_color_map_new(guint16 offset, guint16 size)
 {
-	VncColorMap *map;
+    VncColorMap *map;
 
-	map = g_slice_new0(VncColorMap);
-	map->offset = offset;
-	map->size = size;
-	map->colors = g_new0(VncColorMapEntry, size);
+    map = g_slice_new0(VncColorMap);
+    map->offset = offset;
+    map->size = size;
+    map->colors = g_new0(VncColorMapEntry, size);
 
-	return map;
+    return map;
 }
 
 
 VncColorMap *vnc_color_map_copy(VncColorMap *srcMap)
 {
-	VncColorMap *map;
+    VncColorMap *map;
 
-	map = g_slice_dup(VncColorMap, srcMap);
-	map->colors = g_new0(VncColorMapEntry, srcMap->size);
-	memcpy(map->colors, srcMap->colors,
-	       sizeof(VncColorMapEntry) * map->size);
+    map = g_slice_dup(VncColorMap, srcMap);
+    map->colors = g_new0(VncColorMapEntry, srcMap->size);
+    memcpy(map->colors, srcMap->colors,
+           sizeof(VncColorMapEntry) * map->size);
 
-	return map;
+    return map;
 }
 
 
 void vnc_color_map_free(VncColorMap *map)
 {
-	g_slice_free(VncColorMap, map);
+    g_slice_free(VncColorMap, map);
 }
 
 
 gboolean vnc_color_map_set(VncColorMap *map,
-			   guint16 idx,
-			   guint16 red,
-			   guint16 green,
-			   guint16 blue)
+                           guint16 idx,
+                           guint16 red,
+                           guint16 green,
+                           guint16 blue)
 {
-	if (idx >= (map->size + map->offset))
-		return FALSE;
+    if (idx >= (map->size + map->offset))
+        return FALSE;
 
-	map->colors[idx - map->offset].red = red;
-	map->colors[idx - map->offset].green = green;
-	map->colors[idx - map->offset].blue = blue;
+    map->colors[idx - map->offset].red = red;
+    map->colors[idx - map->offset].green = green;
+    map->colors[idx - map->offset].blue = blue;
 
-	return TRUE;
+    return TRUE;
 }
 
 
 gboolean vnc_color_map_lookup(VncColorMap *map,
-			      guint16 idx,
-			      guint16 *red,
-			      guint16 *green,
-			      guint16 *blue)
+                              guint16 idx,
+                              guint16 *red,
+                              guint16 *green,
+                              guint16 *blue)
 {
-	if (idx >= (map->size + map->offset))
-		return FALSE;
+    if (idx >= (map->size + map->offset))
+        return FALSE;
 
-	*red = map->colors[idx - map->offset].red;
-	*green = map->colors[idx - map->offset].green;
-	*blue = map->colors[idx - map->offset].blue;
+    *red = map->colors[idx - map->offset].red;
+    *green = map->colors[idx - map->offset].green;
+    *blue = map->colors[idx - map->offset].blue;
 
-	return TRUE;
+    return TRUE;
 }
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

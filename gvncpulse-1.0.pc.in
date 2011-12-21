@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: GVNC Pulse
+Description: Pulse audio bridge for VNC client connections
+Requires: gvnc-1.0 = @VERSION@
+Version: @VERSION@
+Libs: -L${libdir} -lgvncpulse-1.0
+Cflags: -I${includedir}/gvncpulse-1.0

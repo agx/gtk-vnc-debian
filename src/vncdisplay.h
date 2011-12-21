@@ -25,6 +25,7 @@
 #include <gtk/gtk.h>
 #include <glib.h>
 #include <vncgrabsequence.h>
+#include <vncconnection.h>
 
 G_BEGIN_DECLS
 
@@ -42,119 +43,117 @@ typedef struct _VncDisplayPrivate VncDisplayPrivate;
 
 struct _VncDisplay
 {
-	GtkDrawingArea parent;
+    GtkDrawingArea parent;
 
-	VncDisplayPrivate *priv;
+    VncDisplayPrivate *priv;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 struct _VncDisplayClass
 {
-	GtkDrawingAreaClass parent_class;
+    GtkDrawingAreaClass parent_class;
 
-	/* Signals */
-	void		(* vnc_connected)	(VncDisplay *display);
-	void		(* vnc_initialized)	(VncDisplay *display);
-	void		(* vnc_disconnected)	(VncDisplay *display);
-	void		(* vnc_auth_credential)	(VncDisplay *display, GValueArray *credList);
+    /* Signals */
+    void (* vnc_connected)(VncDisplay *display);
+    void (* vnc_initialized)(VncDisplay *display);
+    void (* vnc_disconnected)(VncDisplay *display);
+    void (* vnc_auth_credential)(VncDisplay *display, GValueArray *credList);
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
-typedef enum
-{
-	VNC_DISPLAY_CREDENTIAL_PASSWORD,
-	VNC_DISPLAY_CREDENTIAL_USERNAME,
-	VNC_DISPLAY_CREDENTIAL_CLIENTNAME,
+typedef enum {
+    VNC_DISPLAY_CREDENTIAL_PASSWORD,
+    VNC_DISPLAY_CREDENTIAL_USERNAME,
+    VNC_DISPLAY_CREDENTIAL_CLIENTNAME,
 } VncDisplayCredential;
 
-typedef enum
-{
-	VNC_DISPLAY_KEY_EVENT_PRESS = 1,
-	VNC_DISPLAY_KEY_EVENT_RELEASE = 2,
-	VNC_DISPLAY_KEY_EVENT_CLICK = 3,
+typedef enum {
+    VNC_DISPLAY_KEY_EVENT_PRESS = 1,
+    VNC_DISPLAY_KEY_EVENT_RELEASE = 2,
+    VNC_DISPLAY_KEY_EVENT_CLICK = 3,
 } VncDisplayKeyEvent;
 
-typedef enum
-{
-	VNC_DISPLAY_DEPTH_COLOR_DEFAULT = 0,
-	VNC_DISPLAY_DEPTH_COLOR_FULL,
-	VNC_DISPLAY_DEPTH_COLOR_MEDIUM,
-	VNC_DISPLAY_DEPTH_COLOR_LOW,
-	VNC_DISPLAY_DEPTH_COLOR_ULTRA_LOW
+typedef enum {
+    VNC_DISPLAY_DEPTH_COLOR_DEFAULT = 0,
+    VNC_DISPLAY_DEPTH_COLOR_FULL,
+    VNC_DISPLAY_DEPTH_COLOR_MEDIUM,
+    VNC_DISPLAY_DEPTH_COLOR_LOW,
+    VNC_DISPLAY_DEPTH_COLOR_ULTRA_LOW
 } VncDisplayDepthColor;
 
-GType		vnc_display_get_type(void);
-GtkWidget *	vnc_display_new(void);
+GType vnc_display_get_type(void);
+GtkWidget *vnc_display_new(void);
 
-gboolean	vnc_display_open_fd(VncDisplay *obj, int fd);
-gboolean	vnc_display_open_host(VncDisplay *obj, const char *host, const char *port);
-gboolean	vnc_display_is_open(VncDisplay *obj);
-void		vnc_display_close(VncDisplay *obj);
+gboolean vnc_display_open_fd(VncDisplay *obj, int fd);
+gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *port);
+gboolean vnc_display_is_open(VncDisplay *obj);
+void vnc_display_close(VncDisplay *obj);
 
-void            vnc_display_send_keys(VncDisplay *obj, const guint *keyvals, int nkeyvals);
-/* FIXME: can we just eliminate the old send_keys interface? */
-void            vnc_display_send_keys_ex(VncDisplay *obj, const guint *keyvals,
-					 int nkeyvals, VncDisplayKeyEvent kind);
+VncConnection *vnc_display_get_connection(VncDisplay *obj);
 
-void		vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask);
-void		vnc_display_set_grab_keys(VncDisplay *obj, VncGrabSequence *seq);
-VncGrabSequence	*vnc_display_get_grab_keys(VncDisplay *obj);
+void vnc_display_send_keys(VncDisplay *obj, const guint *keyvals, int nkeyvals);
+void vnc_display_send_keys_ex(VncDisplay *obj, const guint *keyvals,
+                              int nkeyvals, VncDisplayKeyEvent kind);
 
-gboolean	vnc_display_set_credential(VncDisplay *obj, int type, const gchar *data);
+void vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask);
+void vnc_display_set_grab_keys(VncDisplay *obj, VncGrabSequence *seq);
+VncGrabSequence        *vnc_display_get_grab_keys(VncDisplay *obj);
 
-void		vnc_display_set_pointer_local(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_pointer_local(VncDisplay *obj);
+gboolean vnc_display_set_credential(VncDisplay *obj, int type, const gchar *data);
 
-void		vnc_display_set_pointer_grab(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_pointer_grab(VncDisplay *obj);
+void vnc_display_set_pointer_local(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_pointer_local(VncDisplay *obj);
 
-void		vnc_display_set_keyboard_grab(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_keyboard_grab(VncDisplay *obj);
+void vnc_display_set_pointer_grab(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_pointer_grab(VncDisplay *obj);
 
-void		vnc_display_set_read_only(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_read_only(VncDisplay *obj);
+void vnc_display_set_keyboard_grab(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_keyboard_grab(VncDisplay *obj);
 
-GdkPixbuf *	vnc_display_get_pixbuf(VncDisplay *obj);
+void vnc_display_set_read_only(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_read_only(VncDisplay *obj);
 
-int		vnc_display_get_width(VncDisplay *obj);
-int		vnc_display_get_height(VncDisplay *obj);
-const char *	vnc_display_get_name(VncDisplay *obj);
+GdkPixbuf *vnc_display_get_pixbuf(VncDisplay *obj);
 
-void		vnc_display_client_cut_text(VncDisplay *obj, const gchar *text);
+int vnc_display_get_width(VncDisplay *obj);
+int vnc_display_get_height(VncDisplay *obj);
+const char *vnc_display_get_name(VncDisplay *obj);
 
-void		vnc_display_set_lossy_encoding(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_lossy_encoding(VncDisplay *obj);
+void vnc_display_client_cut_text(VncDisplay *obj, const gchar *text);
 
-gboolean	vnc_display_set_scaling(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_scaling(VncDisplay *obj);
+void vnc_display_set_lossy_encoding(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_lossy_encoding(VncDisplay *obj);
 
-void		vnc_display_set_force_size(VncDisplay *obj, gboolean enable);
-gboolean	vnc_display_get_force_size(VncDisplay *obj);
+gboolean vnc_display_set_scaling(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_scaling(VncDisplay *obj);
 
-void		vnc_display_set_shared_flag(VncDisplay *obj, gboolean shared);
-gboolean	vnc_display_get_shared_flag(VncDisplay *obj);
+void vnc_display_set_force_size(VncDisplay *obj, gboolean enable);
+gboolean vnc_display_get_force_size(VncDisplay *obj);
 
-void			vnc_display_set_depth(VncDisplay *obj, VncDisplayDepthColor depth);
-VncDisplayDepthColor	vnc_display_get_depth(VncDisplay *obj);
+void vnc_display_set_shared_flag(VncDisplay *obj, gboolean shared);
+gboolean vnc_display_get_shared_flag(VncDisplay *obj);
 
-void		vnc_display_force_grab(VncDisplay *obj, gboolean enable);
+void vnc_display_set_depth(VncDisplay *obj, VncDisplayDepthColor depth);
+VncDisplayDepthColor vnc_display_get_depth(VncDisplay *obj);
 
-gboolean	vnc_display_is_pointer_absolute(VncDisplay *obj);
+void vnc_display_force_grab(VncDisplay *obj, gboolean enable);
 
-GOptionGroup *  vnc_display_get_option_group(void);
-const GOptionEntry *  vnc_display_get_option_entries(void);
+gboolean vnc_display_is_pointer_absolute(VncDisplay *obj);
 
-gboolean	vnc_display_request_update(VncDisplay *obj);
+GOptionGroup *vnc_display_get_option_group(void);
+const GOptionEntry *vnc_display_get_option_entries(void);
+
+gboolean vnc_display_request_update(VncDisplay *obj);
 
 G_END_DECLS
 
 #endif /* VNC_DISPLAY_H */
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

@@ -24,48 +24,48 @@
 
 GType vnc_pixel_format_get_type(void)
 {
-	static GType pixel_format_type = 0;
+    static GType pixel_format_type = 0;
 
-	if (G_UNLIKELY(pixel_format_type == 0)) {
-		pixel_format_type = g_boxed_type_register_static
-			("VncPixelFormat",
-			 (GBoxedCopyFunc)vnc_pixel_format_copy,
-			 (GBoxedFreeFunc)vnc_pixel_format_free);
-	}
+    if (G_UNLIKELY(pixel_format_type == 0)) {
+        pixel_format_type = g_boxed_type_register_static
+            ("VncPixelFormat",
+             (GBoxedCopyFunc)vnc_pixel_format_copy,
+             (GBoxedFreeFunc)vnc_pixel_format_free);
+    }
 
-	return pixel_format_type;
+    return pixel_format_type;
 }
 
 
 VncPixelFormat *vnc_pixel_format_new(void)
 {
-	VncPixelFormat *format;
+    VncPixelFormat *format;
 
-	format = g_slice_new0(VncPixelFormat);
+    format = g_slice_new0(VncPixelFormat);
 
-	return format;
+    return format;
 }
 
 
 VncPixelFormat *vnc_pixel_format_copy(VncPixelFormat *srcFormat)
 {
-	VncPixelFormat *format;
+    VncPixelFormat *format;
 
-	format = g_slice_dup(VncPixelFormat, srcFormat);
+    format = g_slice_dup(VncPixelFormat, srcFormat);
 
-	return format;
+    return format;
 }
 
 
 void vnc_pixel_format_free(VncPixelFormat *format)
 {
-	g_slice_free(VncPixelFormat, format);
+    g_slice_free(VncPixelFormat, format);
 }
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

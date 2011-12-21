@@ -93,7 +93,7 @@ static NPNetscapeFuncs   gNetscapeFuncs;    /* Netscape Function table */
 
 void
 NPN_Version(int* plugin_major, int* plugin_minor,
-         int* netscape_major, int* netscape_minor)
+            int* netscape_major, int* netscape_minor)
 {
     *plugin_major = NP_VERSION_MAJOR;
     *plugin_minor = NP_VERSION_MINOR;
@@ -108,14 +108,14 @@ NPError
 NPN_GetValue(NPP instance, NPNVariable variable, void *r_value)
 {
     return CallNPN_GetValueProc(gNetscapeFuncs.getvalue,
-                    instance, variable, r_value);
+                                instance, variable, r_value);
 }
 
 NPError
 NPN_SetValue(NPP instance, NPPVariable variable, void *value)
 {
     return CallNPN_SetValueProc(gNetscapeFuncs.setvalue,
-                    instance, variable, value);
+                                instance, variable, value);
 }
 
 NPError
@@ -132,10 +132,10 @@ NPN_GetURLNotify(NPP instance, const char* url, const char* window, void* notify
 
 NPError
 NPN_PostURL(NPP instance, const char* url, const char* window,
-         uint32 len, const char* buf, NPBool file)
+            uint32 len, const char* buf, NPBool file)
 {
     return CallNPN_PostURLProc(gNetscapeFuncs.posturl, instance,
-                    url, window, len, buf, file);
+                               url, window, len, buf, file);
 }
 
 NPError
@@ -143,36 +143,36 @@ NPN_PostURLNotify(NPP instance, const char* url, const char* window, uint32 len,
                   const char* buf, NPBool file, void* notifyData)
 {
     return CallNPN_PostURLNotifyProc(gNetscapeFuncs.posturlnotify,
-            instance, url, window, len, buf, file, notifyData);
+                                     instance, url, window, len, buf, file, notifyData);
 }
 
 NPError
 NPN_RequestRead(NPStream* stream, NPByteRange* rangeList)
 {
     return CallNPN_RequestReadProc(gNetscapeFuncs.requestread,
-                    stream, rangeList);
+                                   stream, rangeList);
 }
 
 NPError
 NPN_NewStream(NPP instance, NPMIMEType type, const char *window,
-          NPStream** stream_ptr)
+              NPStream** stream_ptr)
 {
     return CallNPN_NewStreamProc(gNetscapeFuncs.newstream, instance,
-                    type, window, stream_ptr);
+                                 type, window, stream_ptr);
 }
 
 int32
 NPN_Write(NPP instance, NPStream* stream, int32 len, void* buffer)
 {
     return CallNPN_WriteProc(gNetscapeFuncs.write, instance,
-                    stream, len, buffer);
+                             stream, len, buffer);
 }
 
 NPError
 NPN_DestroyStream(NPP instance, NPStream* stream, NPError reason)
 {
     return CallNPN_DestroyStreamProc(gNetscapeFuncs.destroystream,
-                        instance, stream, reason);
+                                     instance, stream, reason);
 }
 
 void
@@ -217,7 +217,7 @@ JRIEnv* NPN_GetJavaEnv()
 jref NPN_GetJavaPeer(NPP instance)
 {
     return CallNPN_GetJavaPeerProc(gNetscapeFuncs.getJavaPeer,
-                       instance);
+                                   instance);
 }
 #endif
 
@@ -225,14 +225,14 @@ void
 NPN_InvalidateRect(NPP instance, NPRect *invalidRect)
 {
     CallNPN_InvalidateRectProc(gNetscapeFuncs.invalidaterect, instance,
-        invalidRect);
+                               invalidRect);
 }
 
 void
 NPN_InvalidateRegion(NPP instance, NPRegion invalidRegion)
 {
     CallNPN_InvalidateRegionProc(gNetscapeFuncs.invalidateregion, instance,
-        invalidRegion);
+                                 invalidRegion);
 }
 
 void
@@ -244,13 +244,13 @@ NPN_ForceRedraw(NPP instance)
 void NPN_PushPopupsEnabledState(NPP instance, NPBool enabled)
 {
     CallNPN_PushPopupsEnabledStateProc(gNetscapeFuncs.pushpopupsenabledstate,
-        instance, enabled);
+                                       instance, enabled);
 }
 
 void NPN_PopPopupsEnabledState(NPP instance)
 {
     CallNPN_PopPopupsEnabledStateProc(gNetscapeFuncs.poppopupsenabledstate,
-        instance);
+                                      instance);
 }
 
 
@@ -268,7 +268,7 @@ void NPN_PopPopupsEnabledState(NPP instance)
 
 static NPError
 Private_New(NPMIMEType pluginType, NPP instance, uint16 mode,
-        int16 argc, char* argn[], char* argv[], NPSavedData* saved)
+            int16 argc, char* argn[], char* argv[], NPSavedData* saved)
 {
     NPError ret;
     PLUGINDEBUGSTR("New");
@@ -299,7 +299,7 @@ Private_NewStream(NPP instance G_GNUC_UNUSED, NPMIMEType type G_GNUC_UNUSED,
 {
     NPError err = NPERR_NO_ERROR;
     PLUGINDEBUGSTR("NewStream");
-/*    err = NPP_NewStream(instance, type, stream, seekable, stype);*/
+    /*    err = NPP_NewStream(instance, type, stream, seekable, stype);*/
     return err;
 }
 
@@ -314,7 +314,7 @@ Private_WriteReady(NPP instance, NPStream* stream)
 
 static int32
 Private_Write(NPP instance, NPStream* stream, int32 offset, int32 len,
-        void* buffer)
+              void* buffer)
 {
     unsigned int result;
     PLUGINDEBUGSTR("Write");
@@ -341,7 +341,7 @@ Private_DestroyStream(NPP instance, NPStream* stream, NPError reason)
 
 static void
 Private_URLNotify(NPP instance, const char* url,
-                NPReason reason, void* notifyData)
+                  NPReason reason, void* notifyData)
 
 {
     PLUGINDEBUGSTR("URLNotify");
@@ -351,8 +351,8 @@ Private_URLNotify(NPP instance, const char* url,
 static NPError
 Private_GetValue(void *instance, NPPVariable variable, void *result)
 {
-	NPError rv = NPP_GetValue(instance, variable, result);
-	return rv;
+    NPError rv = NPP_GetValue(instance, variable, result);
+    return rv;
 }
 
 static void
@@ -368,8 +368,8 @@ Private_GetJavaClass(void)
 {
     jref clazz = NPP_GetJavaClass();
     if (clazz) {
-    JRIEnv* env = NPN_GetJavaEnv();
-    return JRI_NewGlobalRef(env, clazz);
+        JRIEnv* env = NPN_GetJavaEnv();
+        return JRI_NewGlobalRef(env, clazz);
     }
     return NULL;
 }

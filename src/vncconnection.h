@@ -27,6 +27,7 @@
 #include <vncframebuffer.h>
 #include <vnccursor.h>
 #include <vncutil.h>
+#include <vncaudio.h>
 
 G_BEGIN_DECLS
 
@@ -44,109 +45,108 @@ typedef struct _VncConnectionClass VncConnectionClass;
 
 struct _VncConnection
 {
-	GObject parent;
+    GObject parent;
 
-	VncConnectionPrivate *priv;
+    VncConnectionPrivate *priv;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 struct _VncConnectionClass
 {
-	GObjectClass parent_class;
+    GObjectClass parent_class;
 
-	/* Signals */
-	void (*vnc_cursor_changed)(VncConnection *conn, VncCursor *cursor);
-	void (*vnc_pointer_mode_changed)(VncConnection *conn, gboolean absPointer);
-	void (*vnc_bell)(VncConnection *conn);
-	void (*vnc_server_cut_text)(VncConnection *conn, const GString *text);
-	void (*vnc_framebuffer_update)(VncConnection *conn, guint16 x, guint16 y, guint16 width, guint16 height);
-	void (*vnc_desktop_resize)(VncConnection *conn, guint16 width, guint16 height);
-	void (*vnc_pixel_format_changed)(VncConnection *conn, VncPixelFormat *format);
-	void (*vnc_auth_failure)(VncConnection *conn, const char *reason);
-	void (*vnc_auth_unsupported)(VncConnection *conn, unsigned int authType);
-	void (*vnc_auth_credential)(VncConnection *conn, GValueArray *creds);
-	void (*vnc_auth_choose_type)(VncConnection *conn, GValueArray *types);
-	void (*vnc_auth_choose_subtype)(VncConnection *conn, unsigned int type, GValueArray *subtypes);
-	void (*vnc_connected)(VncConnection *conn);
-	void (*vnc_initialized)(VncConnection *conn);
-	void (*vnc_disconnected)(VncConnection *conn);
+    /* Signals */
+    void (*vnc_cursor_changed)(VncConnection *conn, VncCursor *cursor);
+    void (*vnc_pointer_mode_changed)(VncConnection *conn, gboolean absPointer);
+    void (*vnc_bell)(VncConnection *conn);
+    void (*vnc_server_cut_text)(VncConnection *conn, const GString *text);
+    void (*vnc_framebuffer_update)(VncConnection *conn, guint16 x, guint16 y, guint16 width, guint16 height);
+    void (*vnc_desktop_resize)(VncConnection *conn, guint16 width, guint16 height);
+    void (*vnc_pixel_format_changed)(VncConnection *conn, VncPixelFormat *format);
+    void (*vnc_auth_failure)(VncConnection *conn, const char *reason);
+    void (*vnc_auth_unsupported)(VncConnection *conn, unsigned int authType);
+    void (*vnc_auth_credential)(VncConnection *conn, GValueArray *creds);
+    void (*vnc_auth_choose_type)(VncConnection *conn, GValueArray *types);
+    void (*vnc_auth_choose_subtype)(VncConnection *conn, unsigned int type, GValueArray *subtypes);
+    void (*vnc_connected)(VncConnection *conn);
+    void (*vnc_initialized)(VncConnection *conn);
+    void (*vnc_disconnected)(VncConnection *conn);
 
-	/*
-	 * If adding fields to this struct, remove corresponding
-	 * amount of padding to avoid changing overall struct size
-	 */
-	gpointer _vnc_reserved[VNC_PADDING_LARGE];
+    /*
+     * If adding fields to this struct, remove corresponding
+     * amount of padding to avoid changing overall struct size
+     */
+    gpointer _vnc_reserved[VNC_PADDING_LARGE];
 };
 
 
 typedef enum {
-	VNC_CONNECTION_ENCODING_RAW = 0,
-	VNC_CONNECTION_ENCODING_COPY_RECT = 1,
-	VNC_CONNECTION_ENCODING_RRE = 2,
-	VNC_CONNECTION_ENCODING_CORRE = 4,
-	VNC_CONNECTION_ENCODING_HEXTILE = 5,
-	VNC_CONNECTION_ENCODING_TIGHT = 7,
-	VNC_CONNECTION_ENCODING_ZRLE = 16,
+    VNC_CONNECTION_ENCODING_RAW = 0,
+    VNC_CONNECTION_ENCODING_COPY_RECT = 1,
+    VNC_CONNECTION_ENCODING_RRE = 2,
+    VNC_CONNECTION_ENCODING_CORRE = 4,
+    VNC_CONNECTION_ENCODING_HEXTILE = 5,
+    VNC_CONNECTION_ENCODING_TIGHT = 7,
+    VNC_CONNECTION_ENCODING_ZRLE = 16,
 
-	/* Tight JPEG quality levels */
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG0 = -32,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG1 = -31,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG2 = -30,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG3 = -29,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG4 = -28,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG5 = -27,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG6 = -26,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG7 = -25,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG8 = -24,
-	VNC_CONNECTION_ENCODING_TIGHT_JPEG9 = -23,
+    /* Tight JPEG quality levels */
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG0 = -32,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG1 = -31,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG2 = -30,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG3 = -29,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG4 = -28,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG5 = -27,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG6 = -26,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG7 = -25,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG8 = -24,
+    VNC_CONNECTION_ENCODING_TIGHT_JPEG9 = -23,
 
-	/* Pseudo encodings */
-	VNC_CONNECTION_ENCODING_DESKTOP_RESIZE = -223,
-        VNC_CONNECTION_ENCODING_WMVi = 0x574D5669,
+    /* Pseudo encodings */
+    VNC_CONNECTION_ENCODING_DESKTOP_RESIZE = -223,
+    VNC_CONNECTION_ENCODING_WMVi = 0x574D5669,
 
-	VNC_CONNECTION_ENCODING_CURSOR_POS = -232,
-	VNC_CONNECTION_ENCODING_RICH_CURSOR = -239,
-	VNC_CONNECTION_ENCODING_XCURSOR = -240,
+    VNC_CONNECTION_ENCODING_CURSOR_POS = -232,
+    VNC_CONNECTION_ENCODING_RICH_CURSOR = -239,
+    VNC_CONNECTION_ENCODING_XCURSOR = -240,
 
-	VNC_CONNECTION_ENCODING_POINTER_CHANGE = -257,
-	VNC_CONNECTION_ENCODING_EXT_KEY_EVENT = -258,
+    VNC_CONNECTION_ENCODING_POINTER_CHANGE = -257,
+    VNC_CONNECTION_ENCODING_EXT_KEY_EVENT = -258,
+    VNC_CONNECTION_ENCODING_AUDIO = -259,
 } VncConnectionEncoding;
 
 typedef enum {
-	VNC_CONNECTION_AUTH_INVALID = 0,
-	VNC_CONNECTION_AUTH_NONE = 1,
-	VNC_CONNECTION_AUTH_VNC = 2,
-	VNC_CONNECTION_AUTH_RA2 = 5,
-	VNC_CONNECTION_AUTH_RA2NE = 6,
-	VNC_CONNECTION_AUTH_TIGHT = 16,
-	VNC_CONNECTION_AUTH_ULTRA = 17,
-	VNC_CONNECTION_AUTH_TLS = 18,  /* Used by VINO */
-	VNC_CONNECTION_AUTH_VENCRYPT = 19, /* Used by VeNCrypt and QEMU */
- 	VNC_CONNECTION_AUTH_SASL = 20, /* SASL type used by VINO and QEMU */
-	VNC_CONNECTION_AUTH_ARD = 30, /* Apple remote desktop (screen sharing) */
-	VNC_CONNECTION_AUTH_MSLOGON = 0xfffffffa, /* Used by UltraVNC */
+    VNC_CONNECTION_AUTH_INVALID = 0,
+    VNC_CONNECTION_AUTH_NONE = 1,
+    VNC_CONNECTION_AUTH_VNC = 2,
+    VNC_CONNECTION_AUTH_RA2 = 5,
+    VNC_CONNECTION_AUTH_RA2NE = 6,
+    VNC_CONNECTION_AUTH_TIGHT = 16,
+    VNC_CONNECTION_AUTH_ULTRA = 17,
+    VNC_CONNECTION_AUTH_TLS = 18,  /* Used by VINO */
+    VNC_CONNECTION_AUTH_VENCRYPT = 19, /* Used by VeNCrypt and QEMU */
+    VNC_CONNECTION_AUTH_SASL = 20, /* SASL type used by VINO and QEMU */
+    VNC_CONNECTION_AUTH_ARD = 30, /* Apple remote desktop (screen sharing) */
+    VNC_CONNECTION_AUTH_MSLOGON = 0xfffffffa, /* Used by UltraVNC */
 } VncConnectionAuth;
 
 typedef enum {
-	VNC_CONNECTION_AUTH_VENCRYPT_PLAIN = 256,
-	VNC_CONNECTION_AUTH_VENCRYPT_TLSNONE = 257,
-	VNC_CONNECTION_AUTH_VENCRYPT_TLSVNC = 258,
-	VNC_CONNECTION_AUTH_VENCRYPT_TLSPLAIN = 259,
-	VNC_CONNECTION_AUTH_VENCRYPT_X509NONE = 260,
-	VNC_CONNECTION_AUTH_VENCRYPT_X509VNC = 261,
-	VNC_CONNECTION_AUTH_VENCRYPT_X509PLAIN = 262,
-	VNC_CONNECTION_AUTH_VENCRYPT_X509SASL = 263,
-	VNC_CONNECTION_AUTH_VENCRYPT_TLSSASL = 264,
+    VNC_CONNECTION_AUTH_VENCRYPT_PLAIN = 256,
+    VNC_CONNECTION_AUTH_VENCRYPT_TLSNONE = 257,
+    VNC_CONNECTION_AUTH_VENCRYPT_TLSVNC = 258,
+    VNC_CONNECTION_AUTH_VENCRYPT_TLSPLAIN = 259,
+    VNC_CONNECTION_AUTH_VENCRYPT_X509NONE = 260,
+    VNC_CONNECTION_AUTH_VENCRYPT_X509VNC = 261,
+    VNC_CONNECTION_AUTH_VENCRYPT_X509PLAIN = 262,
+    VNC_CONNECTION_AUTH_VENCRYPT_X509SASL = 263,
+    VNC_CONNECTION_AUTH_VENCRYPT_TLSSASL = 264,
 } VncConnectionAuthVencrypt;
 
-typedef enum
-{
-	VNC_CONNECTION_CREDENTIAL_PASSWORD,
-	VNC_CONNECTION_CREDENTIAL_USERNAME,
-	VNC_CONNECTION_CREDENTIAL_CLIENTNAME,
+typedef enum {
+    VNC_CONNECTION_CREDENTIAL_PASSWORD,
+    VNC_CONNECTION_CREDENTIAL_USERNAME,
+    VNC_CONNECTION_CREDENTIAL_CLIENTNAME,
 } VncConnectionCredential;
-
 
 GType vnc_connection_get_type(void) G_GNUC_CONST;
 
@@ -164,23 +164,23 @@ gboolean vnc_connection_set_credential(VncConnection *conn, int type, const gcha
 gboolean vnc_connection_is_initialized(VncConnection *conn);
 
 gboolean vnc_connection_client_cut_text(VncConnection *conn,
-					const void *data, size_t length);
+                                        const void *data, size_t length);
 
 gboolean vnc_connection_pointer_event(VncConnection *conn, guint8 button_mask,
-				      guint16 x, guint16 y);
+                                      guint16 x, guint16 y);
 
 gboolean vnc_connection_key_event(VncConnection *conn, gboolean down_flag,
-				  guint32 key, guint16 scancode);
+                                  guint32 key, guint16 scancode);
 
 gboolean vnc_connection_framebuffer_update_request(VncConnection *conn,
-						   gboolean incremental,
-						   guint16 x, guint16 y,
-						   guint16 width, guint16 height);
+                                                   gboolean incremental,
+                                                   guint16 x, guint16 y,
+                                                   guint16 width, guint16 height);
 
 gboolean vnc_connection_set_encodings(VncConnection *conn, int n_encoding, gint32 *encoding);
 
 gboolean vnc_connection_set_pixel_format(VncConnection *conn,
-					 const VncPixelFormat *fmt);
+                                         const VncPixelFormat *fmt);
 
 const VncPixelFormat *vnc_connection_get_pixel_format(VncConnection *conn);
 
@@ -190,7 +190,7 @@ gboolean vnc_connection_get_shared(VncConnection *conn);
 gboolean vnc_connection_has_error(VncConnection *conn);
 
 gboolean vnc_connection_set_framebuffer(VncConnection *conn,
-					VncFramebuffer *fb);
+                                        VncFramebuffer *fb);
 
 const char *vnc_connection_get_name(VncConnection *conn);
 int vnc_connection_get_width(VncConnection *conn);
@@ -201,13 +201,24 @@ VncCursor *vnc_connection_get_cursor(VncConnection *conn);
 gboolean vnc_connection_get_abs_pointer(VncConnection *conn);
 gboolean vnc_connection_get_ext_key_event(VncConnection *conn);
 
+gboolean vnc_connection_set_audio(VncConnection *conn,
+                                  VncAudio *audio);
+
+gboolean vnc_connection_set_audio_format(VncConnection *conn,
+                                         const VncAudioFormat *fmt);
+const VncAudioFormat *vnc_connection_get_audio_format(VncConnection *conn);
+
+gboolean vnc_connection_audio_enable(VncConnection *conn);
+gboolean vnc_connection_audio_disable(VncConnection *conn);
+
+
 G_END_DECLS
 
 #endif /* VNC_CONNECTION_H */
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

@@ -19,9 +19,11 @@
 %define with_vala 1
 %endif
 
+%define with_pulse 1
+
 Summary: A GTK2 widget for VNC clients
 Name: gtk-vnc
-Version: 0.4.4
+Version: 0.5.0
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
@@ -49,6 +51,9 @@ BuildRequires: gtk3-devel
 %endif
 %if %{with_vala}
 BuildRequires: vala-tools
+%endif
+%if %{with_pulse}
+BuildRequires: pulseaudio-libs-devel
 %endif
 
 %description
@@ -113,6 +118,29 @@ infrastructure required to build a VNC client without having to deal
 with the raw protocol itself.
 
 Libraries, includes, etc. to compile with the gvnc library
+
+%if %{with_pulse}
+%package -n gvncpulse
+Summary: A Pulse Audio bridge for VNC connections
+
+%description -n gvncpulse
+gvncpulse is a bridge to the Pulse Audio system for VNC.
+It allows VNC clients to play back audio on the local
+system
+
+%package -n gvncpulse-devel
+Summary: Libraries, includes, etc. to compile with the gvncpulse library
+Group: Development/Libraries
+Requires: gvncpulse = %{version}-%{release}
+Requires: pkgconfig
+
+%description -n gvncpulse-devel
+gvncpulse is a bridge to the Pulse Audio system for VNC.
+It allows VNC clients to play back audio on the local
+system
+
+Libraries, includes, etc. to compile with the gvnc library
+%endif
 
 %package -n gvnc-tools
 Summary: Command line VNC tools
@@ -257,6 +285,28 @@ rm -fr %{buildroot}
 %{_libdir}/pkgconfig/gvnc-1.0.pc
 %if %{with_gir}
 %{_datadir}/gir-1.0/GVnc-1.0.gir
+%endif
+
+%if %{with_pulse}
+%files -n gvncpulse -f %{name}.lang
+%defattr(-, root, root)
+%{_libdir}/libgvncpulse-1.0.so.*
+%if %{with_gir}
+%{_libdir}/girepository-1.0/GVncPulse-1.0.typelib
+%endif
+%if %{with_vala}
+%{_datadir}/vala/vapi/gvncpulse-1.0.vapi
+%endif
+
+%files -n gvncpulse-devel
+%defattr(-, root, root)
+%{_libdir}/libgvncpulse-1.0.so
+%dir %{_includedir}/gvncpulse-1.0/
+%{_includedir}/gvncpulse-1.0/*.h
+%{_libdir}/pkgconfig/gvncpulse-1.0.pc
+%if %{with_gir}
+%{_datadir}/gir-1.0/GVncPulse-1.0.gir
+%endif
 %endif
 
 %files -n gvnc-tools

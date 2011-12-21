@@ -36,6 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 @WITH_EXAMPLES_TRUE@bin_PROGRAMS = gvncviewer$(EXEEXT)
 @WITH_EXAMPLES_FALSE@noinst_PROGRAMS = gvncviewer$(EXEEXT)
+@HAVE_PULSEAUDIO_TRUE@am__append_1 = ../src/libgvncpulse-1.0.la
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -54,8 +55,10 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am_gvncviewer_OBJECTS = gvncviewer-gvncviewer.$(OBJEXT)
 gvncviewer_OBJECTS = $(am_gvncviewer_OBJECTS)
+am__DEPENDENCIES_1 =
 gvncviewer_DEPENDENCIES = ../src/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
-	../src/libgvnc-1.0.la
+	../src/libgvnc-1.0.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_1)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -208,6 +211,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
+PULSEAUDIO_CFLAGS = @PULSEAUDIO_CFLAGS@
+PULSEAUDIO_LIBS = @PULSEAUDIO_LIBS@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
 PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
@@ -293,13 +298,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 gvncviewer_SOURCES = gvncviewer.c
 gvncviewer_LDADD = ../src/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
-                   ../src/libgvnc-1.0.la \
-		   @GTK_CFLAGS@ \
-		   @GTK_LIBS@ \
-		   @VIEW_LIBS@
-
-gvncviewer_CFLAGS = @GTK_CFLAGS@ @WARNING_CFLAGS@ \
-		    @VIEW_CFLAGS@ -I$(top_srcdir)/src/
+	../src/libgvnc-1.0.la $(GTK_CFLAGS) $(GTK_LIBS) $(VIEW_LIBS) \
+	$(am__append_1)
+gvncviewer_CFLAGS = $(GTK_CFLAGS) $(WARNING_CFLAGS) \
+		    $(VIEW_CFLAGS) -I$(top_srcdir)/src/
 
 EXTRA_DIST = gvncviewer.py gvncviewer.js
 all: all-am

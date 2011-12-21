@@ -37,127 +37,133 @@ static struct coroutine leader;
 
 static void coroutine_system_init(void)
 {
-	if (!g_thread_supported()) {
-	        CO_DEBUG("INIT");
-		g_thread_init(NULL);
-	}
+    if (!g_thread_supported()) {
+        CO_DEBUG("INIT");
+        g_thread_init(NULL);
+    }
 
 
-	run_cond = g_cond_new();
-	run_lock = g_mutex_new();
-	CO_DEBUG("LOCK");
-	g_mutex_lock(run_lock);
+    run_cond = g_cond_new();
+    run_lock = g_mutex_new();
+    CO_DEBUG("LOCK");
+    g_mutex_lock(run_lock);
 
-	/* The thread that creates the first coroutine is the system coroutine
-	 * so let's fill out a structure for it */
-	leader.entry = NULL;
-	leader.release = NULL;
-	leader.stack_size = 0;
-	leader.exited = 0;
-	leader.thread = g_thread_self();
-	leader.runnable = TRUE; /* we're the one running right now */
-	leader.caller = NULL;
-	leader.data = NULL;
+    /* The thread that creates the first coroutine is the system coroutine
+     * so let's fill out a structure for it */
+    leader.entry = NULL;
+    leader.release = NULL;
+    leader.stack_size = 0;
+    leader.exited = 0;
+    leader.thread = g_thread_self();
+    leader.runnable = TRUE; /* we're the one running right now */
+    leader.caller = NULL;
+    leader.data = NULL;
 
-	current = &leader;
+    current = &leader;
 }
 
 static gpointer coroutine_thread(gpointer opaque)
 {
-	struct coroutine *co = opaque;
-	CO_DEBUG("LOCK");
-	g_mutex_lock(run_lock);
-	while (!co->runnable) {
-		CO_DEBUG("WAIT");
-		g_cond_wait(run_cond, run_lock);
-	}
+    struct coroutine *co = opaque;
+    CO_DEBUG("LOCK");
+    g_mutex_lock(run_lock);
+    while (!co->runnable) {
+        CO_DEBUG("WAIT");
+        g_cond_wait(run_cond, run_lock);
+    }
 
-	CO_DEBUG("RUNNABLE");
-	current = co;
-	co->data = co->entry(co->data);
-	co->exited = 1;
+    CO_DEBUG("RUNNABLE");
+    current = co;
+    co->data = co->entry(co->data);
+    co->exited = 1;
 
-	co->caller->runnable = TRUE;
-	CO_DEBUG("BROADCAST");
-	g_cond_broadcast(run_cond);
-	CO_DEBUG("UNLOCK");
-	g_mutex_unlock(run_lock);
+    co->caller->runnable = TRUE;
+    CO_DEBUG("BROADCAST");
+    g_cond_broadcast(run_cond);
+    CO_DEBUG("UNLOCK");
+    g_mutex_unlock(run_lock);
 
-	return NULL;
+    return NULL;
 }
 
 int coroutine_init(struct coroutine *co)
 {
-	if (run_cond == NULL)
-		coroutine_system_init();
+    if (run_cond == NULL)
+        coroutine_system_init();
 
-	CO_DEBUG("NEW");
-	co->thread = g_thread_create_full(coroutine_thread, co, co->stack_size,
-					  FALSE, TRUE,
-					  G_THREAD_PRIORITY_NORMAL,
-					  NULL);
-	if (co->thread == NULL)
-		return -1;
+    CO_DEBUG("NEW");
+    co->thread = g_thread_create_full(coroutine_thread, co, co->stack_size,
+                                      FALSE, TRUE,
+                                      G_THREAD_PRIORITY_NORMAL,
+                                      NULL);
+    if (co->thread == NULL)
+        return -1;
 
-	co->exited = 0;
-	co->runnable = FALSE;
-	co->caller = NULL;
+    co->exited = 0;
+    co->runnable = FALSE;
+    co->caller = NULL;
 
-	return 0;
+    return 0;
 }
 
 int coroutine_release(struct coroutine *co G_GNUC_UNUSED)
 {
-	return 0;
+    return 0;
 }
 
 void *coroutine_swap(struct coroutine *from, struct coroutine *to, void *arg)
 {
-	from->runnable = FALSE;
-	to->runnable = TRUE;
-	to->data = arg;
-	to->caller = from;
-	CO_DEBUG("BROADCAST");
-	g_cond_broadcast(run_cond);
-	CO_DEBUG("UNLOCK");
-	g_mutex_unlock(run_lock);
-	CO_DEBUG("LOCK");
-	g_mutex_lock(run_lock);
-	while (!from->runnable) {
-	        CO_DEBUG("WAIT");
-		g_cond_wait(run_cond, run_lock);
-	}
-	current = from;
+    from->runnable = FALSE;
+    to->runnable = TRUE;
+    to->data = arg;
+    to->caller = from;
+    CO_DEBUG("BROADCAST");
+    g_cond_broadcast(run_cond);
+    CO_DEBUG("UNLOCK");
+    g_mutex_unlock(run_lock);
+    CO_DEBUG("LOCK");
+    g_mutex_lock(run_lock);
+    while (!from->runnable) {
+        CO_DEBUG("WAIT");
+        g_cond_wait(run_cond, run_lock);
+    }
+    current = from;
 
-	CO_DEBUG("SWAPPED");
-	return from->data;
+    CO_DEBUG("SWAPPED");
+    return from->data;
 }
 
 struct coroutine *coroutine_self(void)
 {
-	return current;
+    return current;
 }
 
 void *coroutine_yieldto(struct coroutine *to, void *arg)
 {
-	if (to->caller) {
-		fprintf(stderr, "Co-routine is re-entering itself\n");
-		abort();
-	}
-	CO_DEBUG("SWAP");
-	return coroutine_swap(coroutine_self(), to, arg);
+    if (to->caller) {
+        fprintf(stderr, "Co-routine is re-entering itself\n");
+        abort();
+    }
+    CO_DEBUG("SWAP");
+    return coroutine_swap(coroutine_self(), to, arg);
 }
 
 void *coroutine_yield(void *arg)
 {
-	struct coroutine *to = coroutine_self()->caller;
-	if (!to) {
-		fprintf(stderr, "Co-routine is yielding to no one\n");
-		abort();
-	}
+    struct coroutine *to = coroutine_self()->caller;
+    if (!to) {
+        fprintf(stderr, "Co-routine is yielding to no one\n");
+        abort();
+    }
 
-	CO_DEBUG("SWAP");
-	coroutine_self()->caller = NULL;
-	return coroutine_swap(coroutine_self(), to, arg);
+    CO_DEBUG("SWAP");
+    coroutine_self()->caller = NULL;
+    return coroutine_swap(coroutine_self(), to, arg);
 }
-
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
+ * End:
+ */

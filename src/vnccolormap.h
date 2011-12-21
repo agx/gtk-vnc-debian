@@ -33,19 +33,19 @@ typedef struct _VncColorMap VncColorMap;
 typedef struct _VncColorMapEntry VncColorMapEntry;
 
 struct _VncColorMap {
-	guint16 offset;
-	guint16 size;
-	VncColorMapEntry *colors;
+    guint16 offset;
+    guint16 size;
+    VncColorMapEntry *colors;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 struct _VncColorMapEntry {
-	guint16 red;
-	guint16 green;
-	guint16 blue;
+    guint16 red;
+    guint16 green;
+    guint16 blue;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 
@@ -56,16 +56,16 @@ VncColorMap *vnc_color_map_copy(VncColorMap *map);
 void vnc_color_map_free(VncColorMap *map);
 
 gboolean vnc_color_map_set(VncColorMap *map,
-			   guint16 idx,
-			   guint16 red,
-			   guint16 green,
-			   guint16 blue);
+                           guint16 idx,
+                           guint16 red,
+                           guint16 green,
+                           guint16 blue);
 
 gboolean vnc_color_map_lookup(VncColorMap *map,
-			      guint16 idx,
-			      guint16 *red,
-			      guint16 *green,
-			      guint16 *blue);
+                              guint16 idx,
+                              guint16 *red,
+                              guint16 *green,
+                              guint16 *blue);
 
 
 G_END_DECLS
@@ -74,8 +74,8 @@ G_END_DECLS
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

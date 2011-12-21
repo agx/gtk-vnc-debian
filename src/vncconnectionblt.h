@@ -39,62 +39,62 @@
 /* We need to convert to a GdkPixbuf which is always 32-bit */
 #if DST == 32
 static void RICH_CURSOR_BLIT(VncConnection *conn, guint8 *pixbuf,
-			     guint8 *image, guint8 *mask, int pitch,
-			     guint16 width, guint16 height)
+                             guint8 *image, guint8 *mask, int pitch,
+                             guint16 width, guint16 height)
 {
-	VncConnectionPrivate *priv = conn->priv;
-	int x1, y1;
-	guint32 *dst = (guint32 *)pixbuf;
-	guint8 *src = image;
-	guint8 *alpha = mask;
-	int as, rs, gs, bs, n;
+    VncConnectionPrivate *priv = conn->priv;
+    int x1, y1;
+    guint32 *dst = (guint32 *)pixbuf;
+    guint8 *src = image;
+    guint8 *alpha = mask;
+    int as, rs, gs, bs, n;
 
-	/*
-	 * GdkPixbuf is always 32-bit RGB, so we can't use the precomputed
-	 * left / right shift data from conn->{r,g,b}{r,l}s. The latter
-	 * is set for the local display depth, which may be different
-	 * to GdkPixbuf's fixed 32-bit RGBA
-	 *
-	 * This function isn't called often, so just re-compute them now
-	 */
+    /*
+     * GdkPixbuf is always 32-bit RGB, so we can't use the precomputed
+     * left / right shift data from conn->{r,g,b}{r,l}s. The latter
+     * is set for the local display depth, which may be different
+     * to GdkPixbuf's fixed 32-bit RGBA
+     *
+     * This function isn't called often, so just re-compute them now
+     */
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-	as = 0;
-	rs = 8;
-	gs = 16;
-	bs = 24;
+    as = 0;
+    rs = 8;
+    gs = 16;
+    bs = 24;
 #else
-	as = 24;
-	rs = 16;
-	gs = 8;
-	bs = 0;
+    as = 24;
+    rs = 16;
+    gs = 8;
+    bs = 0;
 #endif
 
-	/* Then this adjusts for remote having less bpp than 32 */
-	for (n = 255 ; n > priv->fmt.red_max ; n>>= 1)
-		rs++;
-	for (n = 255 ; n > priv->fmt.green_max ; n>>= 1)
-		gs++;
-	for (n = 255 ; n > priv->fmt.blue_max ; n>>= 1)
-		bs++;
+    /* Then this adjusts for remote having less bpp than 32 */
+    for (n = 255 ; n > priv->fmt.red_max ; n>>= 1)
+        rs++;
+    for (n = 255 ; n > priv->fmt.green_max ; n>>= 1)
+        gs++;
+    for (n = 255 ; n > priv->fmt.blue_max ; n>>= 1)
+        bs++;
 
-	for (y1 = 0; y1 < height; y1++) {
-		src_pixel_t *sp = (src_pixel_t *)src;
-		guint8 *mp = alpha;
-		for (x1 = 0; x1 < width; x1++) {
-			*dst = (COMPONENT(red, *sp) << rs)
-				| (COMPONENT(green, *sp) << gs)
-				| (COMPONENT(blue, *sp) << bs);
+    for (y1 = 0; y1 < height; y1++) {
+        src_pixel_t *sp = (src_pixel_t *)src;
+        guint8 *mp = alpha;
+        for (x1 = 0; x1 < width; x1++) {
+            *dst = (COMPONENT(red, *sp) << rs)
+                | (COMPONENT(green, *sp) << gs)
+                | (COMPONENT(blue, *sp) << bs);
 
-			if ((mp[x1 / 8] >> (7 - (x1 % 8))) & 1)
-				*dst |= (0xFF << as);
+            if ((mp[x1 / 8] >> (7 - (x1 % 8))) & 1)
+                *dst |= (0xFF << as);
 
-			dst++;
-			sp++;
-		}
-		src += pitch;
-		alpha += ((width + 7) / 8);
-	}
+            dst++;
+            sp++;
+        }
+        src += pitch;
+        alpha += ((width + 7) / 8);
+    }
 }
 #endif
 
@@ -102,44 +102,44 @@ static void RICH_CURSOR_BLIT(VncConnection *conn, guint8 *pixbuf,
 #if SRC == DST
 
 static void TIGHT_COMPUTE_PREDICTED(VncConnection *conn, src_pixel_t *ppixel,
-				    src_pixel_t *lp, src_pixel_t *cp,
-				    src_pixel_t *llp)
+                                    src_pixel_t *lp, src_pixel_t *cp,
+                                    src_pixel_t *llp)
 {
-	VncConnectionPrivate *priv = conn->priv;
-	ssrc_pixel_t red, green, blue;
+    VncConnectionPrivate *priv = conn->priv;
+    ssrc_pixel_t red, green, blue;
 
-	red = COMPONENT(red, *lp) + COMPONENT(red, *cp) - COMPONENT(red, *llp);
-	red = MAX(red, 0);
-	red = MIN(red, priv->fmt.red_max);
+    red = COMPONENT(red, *lp) + COMPONENT(red, *cp) - COMPONENT(red, *llp);
+    red = MAX(red, 0);
+    red = MIN(red, priv->fmt.red_max);
 
-	green = COMPONENT(green, *lp) + COMPONENT(green, *cp) - COMPONENT(green, *llp);
-	green = MAX(green, 0);
-	green = MIN(green, priv->fmt.green_max);
+    green = COMPONENT(green, *lp) + COMPONENT(green, *cp) - COMPONENT(green, *llp);
+    green = MAX(green, 0);
+    green = MIN(green, priv->fmt.green_max);
 
-	blue = COMPONENT(blue, *lp) + COMPONENT(blue, *cp) - COMPONENT(blue, *llp);
-	blue = MAX(blue, 0);
-	blue = MIN(blue, priv->fmt.blue_max);
+    blue = COMPONENT(blue, *lp) + COMPONENT(blue, *cp) - COMPONENT(blue, *llp);
+    blue = MAX(blue, 0);
+    blue = MIN(blue, priv->fmt.blue_max);
 
-	*ppixel = SWAP_RFB(conn,
-		       (red << priv->fmt.red_shift) |
-		       (green << priv->fmt.green_shift) |
-		       (blue << priv->fmt.blue_shift));
+    *ppixel = SWAP_RFB(conn,
+                       (red << priv->fmt.red_shift) |
+                       (green << priv->fmt.green_shift) |
+                       (blue << priv->fmt.blue_shift));
 }
 
 static void TIGHT_SUM_PIXEL(VncConnection *conn,
-			    src_pixel_t *lhs, src_pixel_t *rhs)
+                            src_pixel_t *lhs, src_pixel_t *rhs)
 {
-	VncConnectionPrivate *priv = conn->priv;
-	src_pixel_t red, green, blue;
+    VncConnectionPrivate *priv = conn->priv;
+    src_pixel_t red, green, blue;
 
-	red = COMPONENT(red, *lhs) + COMPONENT(red, *rhs);
-	green = COMPONENT(green, *lhs) + COMPONENT(green, *rhs);
-	blue = COMPONENT(blue, *lhs) + COMPONENT(blue, *rhs);
+    red = COMPONENT(red, *lhs) + COMPONENT(red, *rhs);
+    green = COMPONENT(green, *lhs) + COMPONENT(green, *rhs);
+    blue = COMPONENT(blue, *lhs) + COMPONENT(blue, *rhs);
 
-	*lhs = SWAP_RFB(conn,
-		    ((red & priv->fmt.red_max) << priv->fmt.red_shift) |
-		    ((green & priv->fmt.green_max) << priv->fmt.green_shift) |
-		    ((blue & priv->fmt.blue_max) << priv->fmt.blue_shift));
+    *lhs = SWAP_RFB(conn,
+                    ((red & priv->fmt.red_max) << priv->fmt.red_shift) |
+                    ((green & priv->fmt.green_max) << priv->fmt.green_shift) |
+                    ((blue & priv->fmt.blue_max) << priv->fmt.blue_shift));
 }
 
 #endif
@@ -160,8 +160,8 @@ static void TIGHT_SUM_PIXEL(VncConnection *conn,
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */
