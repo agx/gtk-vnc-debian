@@ -32,18 +32,18 @@ G_BEGIN_DECLS
 typedef struct _VncPixelFormat VncPixelFormat;
 
 struct _VncPixelFormat {
-	guint8 bits_per_pixel;
-	guint8 depth;
-	guint16 byte_order;
-	guint8 true_color_flag;
-	guint16 red_max;
-	guint16 green_max;
-	guint16 blue_max;
-	guint8 red_shift;
-	guint8 green_shift;
-	guint8 blue_shift;
+    guint8 bits_per_pixel;
+    guint8 depth;
+    guint16 byte_order;
+    guint8 true_color_flag;
+    guint16 red_max;
+    guint16 green_max;
+    guint16 blue_max;
+    guint8 red_shift;
+    guint8 green_shift;
+    guint8 blue_shift;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 GType vnc_pixel_format_get_type(void);
@@ -58,8 +58,8 @@ G_END_DECLS
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

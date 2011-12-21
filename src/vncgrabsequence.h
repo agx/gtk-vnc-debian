@@ -32,10 +32,10 @@ G_BEGIN_DECLS
 typedef struct _VncGrabSequence VncGrabSequence;
 
 struct _VncGrabSequence {
-	guint nkeysyms;
-	guint *keysyms;
+    guint nkeysyms;
+    guint *keysyms;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 GType vnc_grab_sequence_get_type(void);
@@ -53,8 +53,8 @@ G_END_DECLS
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

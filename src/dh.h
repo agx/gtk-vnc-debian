@@ -1,7 +1,7 @@
 /*
  * GTK VNC Widget, Diffie Hellman
  *
- * Copyright (C) 2008  Red Hat, Inc
+ * Copyright (C) 2008  Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,3 +36,10 @@ void vnc_mpi_to_bytes(const gcry_mpi_t value, guchar* result, size_t size);
 gcry_mpi_t vnc_bytes_to_mpi(const guchar* value, size_t size);
 
 #endif
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
+ * End:
+ */

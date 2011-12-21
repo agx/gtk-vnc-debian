@@ -2,6 +2,7 @@ static const guint16 keymap_win322rfb[] = {
   [0x8] = 0xe,         /* 8 (VK_BACK) => 14 via 14 (KEY_BACKSPACE) */
   [0x9] = 0xf,         /* 9 (VK_TAB) => 15 via 15 (KEY_TAB) */
   [0xd] = 0x1c,        /* 13 (VK_RETURN) => 28 via 28 (KEY_ENTER) */
+  [0x10] = 0x2a,       /* 16 (VK_LSHIFT) => 42 via 42 (KEY_LEFTSHIFT) */
   [0x11] = 0x1d,       /* 17 (VK_CONTROL) => 29 via 29 (KEY_LEFTCTRL) */
   [0x12] = 0x38,       /* 18 (VK_MENU) => 56 via 56 (KEY_LEFTALT) */
   [0x13] = 0xc6,       /* 19 (VK_PAUSE) => 198 via 119 (KEY_PAUSE) */

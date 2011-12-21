@@ -1,6 +1,24 @@
     GTK VNC News
     ============
 
+Dec 21, 2011: Release 0.5.0
+===========================
+
+New features:
+
+ o QEMU audio extension support
+
+Bug fixes:
+
+ o Avoid deprecated GNUTLS functions
+ o Allow access to VncConnection object inside VncDisplay
+ o Don't override PKG_CONFIG_PATH when building GIR files
+ o Death to all TABs
+ o General code style/indentation cleanup
+ o Fix memory leak in keymap code
+ o Fix mapping of shift key in Windows
+
+
 Nov 10, 2011: Release 0.4.4
 ===========================
 

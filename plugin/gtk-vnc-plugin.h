@@ -2,7 +2,7 @@
   GTK-VNC-PLUGIN
 
   By Richard W.M. Jones <rjones@redhat.com>
-  Copyright (C) 2008 Red Hat Inc.
+  Copyright (C) 2008 Red Hat, Inc.
 
   Largely based on DiamondX (http://multimedia.cx/diamondx/), which itself
   is based on Mozilla sources.
@@ -45,18 +45,18 @@
 #define PLUGIN_DESCRIPTION  "VNC (remote desktop) viewer plugin"
 
 typedef struct {
-  uint16 mode;
-  NPWindow *window;
-  int32 x, y;
-  uint32 width, height;
+    uint16 mode;
+    NPWindow *window;
+    int32 x, y;
+    uint32 width, height;
 
-  NPP instance;
-  NPBool pluginsHidden;
+    NPP instance;
+    NPBool pluginsHidden;
 
-  GtkWidget *container;
-  GtkWidget *vnc;
+    GtkWidget *container;
+    GtkWidget *vnc;
 
-  char *host, *port;
+    char *host, *port;
 } PluginInstance;
 
 extern NPError GtkVNCXSetWindow (NPP instance, NPWindow* window);
@@ -67,16 +67,23 @@ extern int16 GtkVNCXHandleEvent (NPP instance, void* event);
 static inline void
 debug (const char *msg, ...)
 {
-  va_list args;
+    va_list args;
 
-  va_start (args, msg);
-  vfprintf (stderr, msg, args);
-  va_end (args);
-  fprintf (stderr, "\n");
-  fflush (stderr);
+    va_start (args, msg);
+    vfprintf (stderr, msg, args);
+    va_end (args);
+    fprintf (stderr, "\n");
+    fflush (stderr);
 }
 #else
-static inline void debug (const char *msg G_GNUC_UNUSED, ...) { }
+#define debug(msg, ...)
 #endif
 
 #endif /* GTK_VNC_PLUGIN_H */
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
+ * End:
+ */

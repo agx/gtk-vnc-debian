@@ -43,33 +43,33 @@ typedef struct _VncBaseFramebufferClass VncBaseFramebufferClass;
 
 struct _VncBaseFramebuffer
 {
-	GObject parent;
+    GObject parent;
 
-	VncBaseFramebufferPrivate *priv;
+    VncBaseFramebufferPrivate *priv;
 
-	/* Do not add fields to this struct */
+    /* Do not add fields to this struct */
 };
 
 struct _VncBaseFramebufferClass
 {
-	GObjectClass parent_class;
+    GObjectClass parent_class;
 
-	/*
-	 * If adding fields to this struct, remove corresponding
-	 * amount of padding to avoid changing overall struct size
-	 */
-	gpointer _vnc_reserved[VNC_PADDING];
+    /*
+     * If adding fields to this struct, remove corresponding
+     * amount of padding to avoid changing overall struct size
+     */
+    gpointer _vnc_reserved[VNC_PADDING];
 };
 
 
 GType vnc_base_framebuffer_get_type(void) G_GNUC_CONST;
 
 VncBaseFramebuffer *vnc_base_framebuffer_new(guint8 *buffer,
-					     guint16 width,
-					     guint16 height,
-					     int rowstride,
-					     const VncPixelFormat *localFormat,
-					     const VncPixelFormat *remoteFormat);
+                                             guint16 width,
+                                             guint16 height,
+                                             int rowstride,
+                                             const VncPixelFormat *localFormat,
+                                             const VncPixelFormat *remoteFormat);
 
 
 
@@ -79,8 +79,8 @@ G_END_DECLS
 
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

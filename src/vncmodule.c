@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#include <config.h>
+
 #include <pygobject.h>
 
 void gtkvnc_register_classes (PyObject *d);
@@ -34,11 +36,11 @@ DL_EXPORT(void) initgtkvnc(void)
 
     m = Py_InitModule ("gtkvnc", gtkvnc_functions);
     if (PyErr_Occurred())
-	Py_FatalError("can't init module");
+        Py_FatalError("can't init module");
 
     d = PyModule_GetDict (m);
     if (PyErr_Occurred())
-	Py_FatalError("can't get dict");
+        Py_FatalError("can't get dict");
 
     gtkvnc_add_constants(m, "VNC_DISPLAY_");
     gtkvnc_register_classes (d);
@@ -47,3 +49,10 @@ DL_EXPORT(void) initgtkvnc(void)
         Py_FatalError ("can't initialise module vnc");
     }
 }
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
+ * End:
+ */

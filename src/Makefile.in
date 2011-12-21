@@ -37,26 +37,30 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @USE_VERSION_DEFS_TRUE@am__append_1 = $(GVNC_VERSION_FILE) $(GTK_VNC_VERSION_FILE)
-@WITH_UCONTEXT_TRUE@am__append_2 = continuation.h continuation.c coroutine_ucontext.c
-@WITH_UCONTEXT_TRUE@am__append_3 = coroutine_gthread.c
-@WITH_UCONTEXT_FALSE@am__append_4 = coroutine_gthread.c
-@WITH_UCONTEXT_FALSE@am__append_5 = continuation.h continuation.c coroutine_ucontext.c
-@HAVE_GTK_2_TRUE@am__append_6 = \
+@HAVE_PULSEAUDIO_TRUE@am__append_2 = libgvncpulse-1.0.la
+@WITH_UCONTEXT_TRUE@am__append_3 = continuation.h continuation.c coroutine_ucontext.c
+@WITH_UCONTEXT_TRUE@am__append_4 = coroutine_gthread.c
+@WITH_UCONTEXT_FALSE@am__append_5 = coroutine_gthread.c
+@WITH_UCONTEXT_FALSE@am__append_6 = continuation.h continuation.c coroutine_ucontext.c
+@HAVE_GTK_2_TRUE@am__append_7 = \
 @HAVE_GTK_2_TRUE@			vncimageframebuffer.h vncimageframebuffer.c
 
-@HAVE_GTK_2_FALSE@am__append_7 = vncimageframebuffer.h vncimageframebuffer.c
-@HAVE_GTK_2_TRUE@am__append_8 = libgtk-vnc-1.0.la
-@HAVE_GTK_2_FALSE@am__append_9 = libgtk-vnc-2.0.la
-@WITH_PYTHON_TRUE@am__append_10 = vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_11 = vnc.defs vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_12 = vnc.override
-@WITH_PYTHON_FALSE@am__append_13 = vnc.override vncmodule.c
-@HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_14 = \
+@HAVE_GTK_2_FALSE@am__append_8 = vncimageframebuffer.h vncimageframebuffer.c
+@HAVE_GTK_2_TRUE@am__append_9 = libgtk-vnc-1.0.la
+@HAVE_GTK_2_FALSE@am__append_10 = libgtk-vnc-2.0.la
+@WITH_PYTHON_TRUE@am__append_11 = vncmodule.defs.c
+@WITH_PYTHON_TRUE@am__append_12 = vnc.defs vncmodule.defs.c
+@WITH_PYTHON_TRUE@am__append_13 = vnc.override
+@WITH_PYTHON_FALSE@am__append_14 = vnc.override vncmodule.c
+@HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_15 = \
 @HAVE_GTK_2_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c
 
-@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_15 = $(gir_DATA) $(typelibs_DATA)
+@HAVE_PULSEAUDIO_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_16 = GVncPulse-1.0.gir
+@HAVE_PULSEAUDIO_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_17 = GVncPulse-1.0.typelib
+@WITH_GOBJECT_INTROSPECTION_TRUE@am__append_18 = $(gir_DATA) $(typelibs_DATA)
 subdir = src
-DIST_COMMON = $(gtk_vnc_include_HEADERS) $(gvnc_include_HEADERS) \
+DIST_COMMON = $(am__gvncpulse_include_HEADERS_DIST) \
+	$(gtk_vnc_include_HEADERS) $(gvnc_include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/intltool.m4 \
@@ -94,10 +98,13 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" \
 	"$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibsdir)" \
 	"$(DESTDIR)$(gtk_vnc_includedir)" \
-	"$(DESTDIR)$(gvnc_includedir)"
+	"$(DESTDIR)$(gvnc_includedir)" \
+	"$(DESTDIR)$(gvncpulse_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(pyexec_LTLIBRARIES)
+am__DEPENDENCIES_1 =
 @WITH_PYTHON_TRUE@gtkvnc_la_DEPENDENCIES =  \
-@WITH_PYTHON_TRUE@	libgtk-vnc-$(GTK_VNC_API_VERSION).la
+@WITH_PYTHON_TRUE@	libgtk-vnc-$(GTK_VNC_API_VERSION).la \
+@WITH_PYTHON_TRUE@	$(am__DEPENDENCIES_1)
 am__gtkvnc_la_SOURCES_DIST = vncmodule.c
 @WITH_PYTHON_TRUE@am_gtkvnc_la_OBJECTS = gtkvnc_la-vncmodule.lo
 @WITH_PYTHON_TRUE@nodist_gtkvnc_la_OBJECTS =  \
@@ -111,9 +118,10 @@ gtkvnc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(gtkvnc_la_CFLAGS) \
 	$(CFLAGS) $(gtkvnc_la_LDFLAGS) $(LDFLAGS) -o $@
 @WITH_PYTHON_TRUE@am_gtkvnc_la_rpath = -rpath $(pyexecdir)
-am__DEPENDENCIES_1 = libgvnc-1.0.la
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	libgvnc-1.0.la
 @HAVE_GTK_2_TRUE@libgtk_vnc_1_0_la_DEPENDENCIES =  \
-@HAVE_GTK_2_TRUE@	$(am__DEPENDENCIES_1)
+@HAVE_GTK_2_TRUE@	$(am__DEPENDENCIES_2)
 am__libgtk_vnc_1_0_la_SOURCES_DIST = vnccairoframebuffer.h \
 	vnccairoframebuffer.c vncdisplay.h vncdisplay.c \
 	vncdisplayenums.h vncdisplayenums.c vncdisplaykeymap.h \
@@ -136,7 +144,7 @@ libgtk_vnc_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(libgtk_vnc_1_0_la_LDFLAGS) $(LDFLAGS) -o $@
 @HAVE_GTK_2_TRUE@am_libgtk_vnc_1_0_la_rpath = -rpath $(libdir)
 @HAVE_GTK_2_FALSE@libgtk_vnc_2_0_la_DEPENDENCIES =  \
-@HAVE_GTK_2_FALSE@	$(am__DEPENDENCIES_1)
+@HAVE_GTK_2_FALSE@	$(am__DEPENDENCIES_2)
 am__libgtk_vnc_2_0_la_SOURCES_DIST = vnccairoframebuffer.h \
 	vnccairoframebuffer.c vncdisplay.h vncdisplay.c \
 	vncdisplayenums.h vncdisplayenums.c vncdisplaykeymap.h \
@@ -158,9 +166,14 @@ libgtk_vnc_2_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) \
 	$(libgtk_vnc_2_0_la_LDFLAGS) $(LDFLAGS) -o $@
 @HAVE_GTK_2_FALSE@am_libgtk_vnc_2_0_la_rpath = -rpath $(libdir)
-libgvnc_1_0_la_DEPENDENCIES =
+libgvnc_1_0_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h d3des.h d3des.c dh.h \
-	dh.c vncpixelformat.h vncpixelformat.c vncframebuffer.h \
+	dh.c vncpixelformat.h vncpixelformat.c vncaudioformat.h \
+	vncaudioformat.c vncaudiosample.h vncaudiosample.c vncaudio.h \
+	vncaudio.c vncbaseaudio.h vncbaseaudio.c vncframebuffer.h \
 	vncframebuffer.c vncbaseframebufferblt.h vncbaseframebuffer.h \
 	vncbaseframebuffer.c vnccursor.h vnccursor.c vnccolormap.h \
 	vnccolormap.c vncconnection.h vncconnection.c \
@@ -173,6 +186,9 @@ am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h d3des.h d3des.c dh.h \
 @WITH_UCONTEXT_FALSE@	libgvnc_1_0_la-coroutine_gthread.lo
 am_libgvnc_1_0_la_OBJECTS = libgvnc_1_0_la-d3des.lo \
 	libgvnc_1_0_la-dh.lo libgvnc_1_0_la-vncpixelformat.lo \
+	libgvnc_1_0_la-vncaudioformat.lo \
+	libgvnc_1_0_la-vncaudiosample.lo libgvnc_1_0_la-vncaudio.lo \
+	libgvnc_1_0_la-vncbaseaudio.lo \
 	libgvnc_1_0_la-vncframebuffer.lo \
 	libgvnc_1_0_la-vncbaseframebuffer.lo \
 	libgvnc_1_0_la-vnccursor.lo libgvnc_1_0_la-vnccolormap.lo \
@@ -185,6 +201,18 @@ libgvnc_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libgvnc_1_0_la_CFLAGS) $(CFLAGS) $(libgvnc_1_0_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@HAVE_PULSEAUDIO_TRUE@libgvncpulse_1_0_la_DEPENDENCIES =  \
+@HAVE_PULSEAUDIO_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PULSEAUDIO_TRUE@	$(am__DEPENDENCIES_1) libgvnc-1.0.la
+am__libgvncpulse_1_0_la_SOURCES_DIST = vncaudiopulse.h vncaudiopulse.c
+@HAVE_PULSEAUDIO_TRUE@am_libgvncpulse_1_0_la_OBJECTS =  \
+@HAVE_PULSEAUDIO_TRUE@	libgvncpulse_1_0_la-vncaudiopulse.lo
+libgvncpulse_1_0_la_OBJECTS = $(am_libgvncpulse_1_0_la_OBJECTS)
+libgvncpulse_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(libgvncpulse_1_0_la_CFLAGS) $(CFLAGS) \
+	$(libgvncpulse_1_0_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_PULSEAUDIO_TRUE@am_libgvncpulse_1_0_la_rpath = -rpath $(libdir)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -213,13 +241,16 @@ am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(gtkvnc_la_SOURCES) $(nodist_gtkvnc_la_SOURCES) \
 	$(libgtk_vnc_1_0_la_SOURCES) $(libgtk_vnc_2_0_la_SOURCES) \
-	$(libgvnc_1_0_la_SOURCES)
+	$(libgvnc_1_0_la_SOURCES) $(libgvncpulse_1_0_la_SOURCES)
 DIST_SOURCES = $(am__gtkvnc_la_SOURCES_DIST) \
 	$(am__libgtk_vnc_1_0_la_SOURCES_DIST) \
 	$(am__libgtk_vnc_2_0_la_SOURCES_DIST) \
-	$(am__libgvnc_1_0_la_SOURCES_DIST)
+	$(am__libgvnc_1_0_la_SOURCES_DIST) \
+	$(am__libgvncpulse_1_0_la_SOURCES_DIST)
 DATA = $(gir_DATA) $(typelibs_DATA)
-HEADERS = $(gtk_vnc_include_HEADERS) $(gvnc_include_HEADERS)
+am__gvncpulse_include_HEADERS_DIST = gvncpulse.h vncaudiopulse.h
+HEADERS = $(gtk_vnc_include_HEADERS) $(gvnc_include_HEADERS) \
+	$(gvncpulse_include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -338,6 +369,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
+PULSEAUDIO_CFLAGS = @PULSEAUDIO_CFLAGS@
+PULSEAUDIO_LIBS = @PULSEAUDIO_LIBS@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
 PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
@@ -423,32 +456,36 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # Avoid need for perl(Text::CSV) by end users
-EXTRA_DIST = libgvnc_sym.version libgtk-vnc_sym.version vncmarshal.txt \
-	$(am__append_3) $(am__append_5) $(am__append_7) keymap-gen.pl \
-	keymaps.csv $(KEYMAPS) $(am__append_12) $(am__append_13)
-lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_8) $(am__append_9)
+EXTRA_DIST = libgvnc_sym.version libgvncpulse_sym.version \
+	libgtk-vnc_sym.version vncmarshal.txt $(am__append_4) \
+	$(am__append_6) $(am__append_8) keymap-gen.pl keymaps.csv \
+	$(KEYMAPS) $(am__append_13) $(am__append_14)
+lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_2) $(am__append_9) \
+	$(am__append_10)
 BUILT_SOURCES = $(am__append_1) $(KEYMAPS) $(MARSHAL_FILES) \
-	$(ENUM_FILES) $(am__append_10)
+	$(ENUM_FILES) $(am__append_11)
 @USE_VERSION_DEFS_FALSE@GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 @USE_VERSION_DEFS_TRUE@GVNC_VERSION_FILE = $(builddir)/libgvnc_sym.def
+@USE_VERSION_DEFS_FALSE@GVNCPULSE_VERSION_FILE = $(srcdir)/libgvncpulse_sym.version
+@USE_VERSION_DEFS_TRUE@GVNCPULSE_VERSION_FILE = $(builddir)/libgvncpulse_sym.def
 @USE_VERSION_DEFS_FALSE@GTK_VNC_VERSION_FILE = $(srcdir)/libgtk-vnc_sym.version
 @USE_VERSION_DEFS_TRUE@GTK_VNC_VERSION_FILE = $(builddir)/libgtk-vnc_sym.def
 libgvnc_1_0_la_LIBADD = \
-			@GOBJECT_LIBS@ \
-			@GIO_LIBS@ \
-			@GTHREAD_LIBS@ \
-			@GDK_PIXBUF_LIBS@ \
-			@GNUTLS_LIBS@ \
-			@SASL_LIBS@
+			$(GOBJECT_LIBS) \
+			$(GIO_LIBS) \
+			$(GTHREAD_LIBS) \
+			$(GDK_PIXBUF_LIBS) \
+			$(GNUTLS_LIBS) \
+			$(SASL_LIBS)
 
 libgvnc_1_0_la_CFLAGS = \
-			@GOBJECT_CFLAGS@ \
-			@GIO_CFLAGS@ \
-			@GTHREAD_CFLAGS@ \
-			@GDK_PIXBUF_CFLAGS@ \
-			@GNUTLS_CFLAGS@ \
-			@SASL_CFLAGS@ \
-			@WARNING_CFLAGS@ \
+			$(GOBJECT_CFLAGS) \
+			$(GIO_CFLAGS) \
+			$(GTHREAD_CFLAGS) \
+			$(GDK_PIXBUF_CFLAGS) \
+			$(GNUTLS_CFLAGS) \
+			$(SASL_CFLAGS) \
+			$(WARNING_CFLAGS) \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 			-DG_LOG_DOMAIN=\"gvnc\"
@@ -461,6 +498,10 @@ gvnc_includedir = $(includedir)/gvnc-1.0/
 gvnc_include_HEADERS = \
 			gvnc.h \
 			vncpixelformat.h \
+			vncaudioformat.h \
+			vncaudiosample.h \
+			vncaudio.h \
+			vncbaseaudio.h \
 			vncframebuffer.h \
 			vncbaseframebuffer.h \
 			vnccursor.h \
@@ -470,22 +511,49 @@ gvnc_include_HEADERS = \
 			vncutil.h
 
 libgvnc_1_0_la_SOURCES = coroutine.h d3des.h d3des.c dh.h dh.c \
-	vncpixelformat.h vncpixelformat.c vncframebuffer.h \
+	vncpixelformat.h vncpixelformat.c vncaudioformat.h \
+	vncaudioformat.c vncaudiosample.h vncaudiosample.c vncaudio.h \
+	vncaudio.c vncbaseaudio.h vncbaseaudio.c vncframebuffer.h \
 	vncframebuffer.c vncbaseframebufferblt.h vncbaseframebuffer.h \
 	vncbaseframebuffer.c vnccursor.h vnccursor.c vnccolormap.h \
 	vnccolormap.c vncconnection.h vncconnection.c \
 	vncconnectionblt.h vncconnectionenums.h vncconnectionenums.c \
-	vncmarshal.h vncmarshal.c vncutil.h vncutil.c $(am__append_2) \
-	$(am__append_4)
+	vncmarshal.h vncmarshal.c vncutil.h vncutil.c $(am__append_3) \
+	$(am__append_5)
+@HAVE_PULSEAUDIO_TRUE@gvncpulse_includedir = $(includedir)/gvncpulse-1.0/
+@HAVE_PULSEAUDIO_TRUE@gvncpulse_include_HEADERS = \
+@HAVE_PULSEAUDIO_TRUE@		       gvncpulse.h \
+@HAVE_PULSEAUDIO_TRUE@                       vncaudiopulse.h
+
+@HAVE_PULSEAUDIO_TRUE@libgvncpulse_1_0_la_SOURCES = \
+@HAVE_PULSEAUDIO_TRUE@                       vncaudiopulse.h vncaudiopulse.c
+
+@HAVE_PULSEAUDIO_TRUE@libgvncpulse_1_0_la_LIBADD = \
+@HAVE_PULSEAUDIO_TRUE@                       $(GOBJECT_LIBS) \
+@HAVE_PULSEAUDIO_TRUE@                       $(PULSEAUDIO_LIBS) \
+@HAVE_PULSEAUDIO_TRUE@                       libgvnc-1.0.la
+
+@HAVE_PULSEAUDIO_TRUE@libgvncpulse_1_0_la_CFLAGS = \
+@HAVE_PULSEAUDIO_TRUE@                       $(GOBJECT_CFLAGS) \
+@HAVE_PULSEAUDIO_TRUE@                       $(PULSEAUDIO_CFLAGS) \
+@HAVE_PULSEAUDIO_TRUE@                       $(WARNING_CFLAGS) \
+@HAVE_PULSEAUDIO_TRUE@                       -DSYSCONFDIR=\""$(sysconfdir)"\" \
+@HAVE_PULSEAUDIO_TRUE@                       -DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
+@HAVE_PULSEAUDIO_TRUE@                       -DG_LOG_DOMAIN=\"pulse-vnc\"
+
+@HAVE_PULSEAUDIO_TRUE@libgvncpulse_1_0_la_LDFLAGS = \
+@HAVE_PULSEAUDIO_TRUE@                       $(VERSION_SCRIPT_FLAGS)$(GVNCPULSE_VERSION_FILE) \
+@HAVE_PULSEAUDIO_TRUE@                       -version-info 0:1:0 $(NO_UNDEFINED_FLAGS)
+
 gtk_vnc_LIBADD = \
-			@GTK_LIBS@ \
-			@X11_LIBS@ \
+			$(GTK_LIBS) \
+			$(X11_LIBS) \
 			libgvnc-1.0.la
 
 gtk_vnc_CFLAGS = \
-			@GTK_CFLAGS@ \
-			@X11_CFLAGS@ \
-			@WARNING_CFLAGS@ \
+			$(GTK_CFLAGS) \
+			$(X11_CFLAGS) \
+			$(WARNING_CFLAGS) \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 			-DG_LOG_DOMAIN=\"gtk-vnc\"
@@ -501,7 +569,7 @@ gtk_vnc_include_HEADERS = \
 gtk_vnc_SOURCES = vnccairoframebuffer.h vnccairoframebuffer.c \
 	vncdisplay.h vncdisplay.c vncdisplayenums.h vncdisplayenums.c \
 	vncdisplaykeymap.h vncdisplaykeymap.c vncgrabsequence.h \
-	vncgrabsequence.c vncmarshal.h vncmarshal.c $(am__append_6)
+	vncgrabsequence.c vncmarshal.h vncmarshal.c $(am__append_7)
 gtk_vnc_LDFLAGS = \
 			$(VERSION_SCRIPT_FLAGS)$(GTK_VNC_VERSION_FILE) \
 			$(NO_UNDEFINED_FLAGS)
@@ -529,12 +597,12 @@ ENUM_FILES = \
 	vncdisplayenums.h vncdisplayenums.c \
 	vncconnectionenums.h vncconnectionenums.c
 
-CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
-	$(am__append_15)
+CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_12) \
+	$(am__append_18)
 @WITH_PYTHON_TRUE@pyexec_LTLIBRARIES = gtkvnc.la
-@WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la @PYGTK_LIBS@
-@WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = @GTK_CFLAGS@ @PYTHON_INCLUDES@ \
-@WITH_PYTHON_TRUE@		   @PYGTK_CFLAGS@ @WARNING_PYTHON_CFLAGS@
+@WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la $(PYGTK_LIBS)
+@WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = $(GTK_CFLAGS) $(PYTHON_INCLUDES) \
+@WITH_PYTHON_TRUE@		   $(PYGTK_CFLAGS) $(WARNING_PYTHON_CFLAGS)
 
 @WITH_PYTHON_TRUE@gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
 @WITH_PYTHON_TRUE@gtkvnc_la_SOURCES = vncmodule.c
@@ -543,6 +611,10 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
 @WITH_PYTHON_TRUE@DEFSDIR = $(shell pkg-config --variable=defsdir pygtk-2.0)
 @WITH_GOBJECT_INTROSPECTION_TRUE@GVNC_INTROSPECTION_SRCS = \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncpixelformat.h \
+@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncaudioformat.h $(srcdir)/vncaudioformat.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncaudiosample.h $(srcdir)/vncaudiosample.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncaudio.h $(srcdir)/vncaudio.c \
+@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncbaseaudio.h $(srcdir)/vncbaseaudio.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncframebuffer.h $(srcdir)/vncframebuffer.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncbaseframebuffer.h $(srcdir)/vncbaseframebuffer.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vnccolormap.h $(srcdir)/vnccolormap.c \
@@ -550,6 +622,9 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncconnection.h $(srcdir)/vncconnection.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(builddir)/vncconnectionenums.h $(builddir)/vncconnectionenums.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncutil.h $(srcdir)/vncutil.c
+
+@WITH_GOBJECT_INTROSPECTION_TRUE@GVNCPULSE_INTROSPECTION_SRCS = \
+@WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncaudiopulse.h $(srcdir)/vncaudiopulse.c
 
 @WITH_GOBJECT_INTROSPECTION_TRUE@GTK_VNC_INTROSPECTION_SRCS = $(srcdir)/vnccairoframebuffer.h \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vnccairoframebuffer.c \
@@ -559,13 +634,17 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_11) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.c \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.h \
 @WITH_GOBJECT_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.c \
-@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_14)
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_15)
 @G_IR_SCANNER_SYMBOL_PREFIX_FALSE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --strip-prefix=Vnc
 @G_IR_SCANNER_SYMBOL_PREFIX_TRUE@@WITH_GOBJECT_INTROSPECTION_TRUE@PREFIX_ARGS = --symbol-prefix=vnc --identifier-prefix=Vnc
 @WITH_GOBJECT_INTROSPECTION_TRUE@girdir = $(datadir)/gir-1.0
-@WITH_GOBJECT_INTROSPECTION_TRUE@gir_DATA = GVnc-1.0.gir GtkVnc-$(GTK_VNC_API_VERSION).gir
+@WITH_GOBJECT_INTROSPECTION_TRUE@gir_DATA = GVnc-1.0.gir \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	GtkVnc-$(GTK_VNC_API_VERSION).gir \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_16)
 @WITH_GOBJECT_INTROSPECTION_TRUE@typelibsdir = $(libdir)/girepository-1.0
-@WITH_GOBJECT_INTROSPECTION_TRUE@typelibs_DATA = GVnc-1.0.typelib GtkVnc-$(GTK_VNC_API_VERSION).typelib
+@WITH_GOBJECT_INTROSPECTION_TRUE@typelibs_DATA = GVnc-1.0.typelib \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	GtkVnc-$(GTK_VNC_API_VERSION).typelib \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(am__append_17)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -671,6 +750,8 @@ libgtk-vnc-2.0.la: $(libgtk_vnc_2_0_la_OBJECTS) $(libgtk_vnc_2_0_la_DEPENDENCIES
 	$(AM_V_CCLD)$(libgtk_vnc_2_0_la_LINK) $(am_libgtk_vnc_2_0_la_rpath) $(libgtk_vnc_2_0_la_OBJECTS) $(libgtk_vnc_2_0_la_LIBADD) $(LIBS)
 libgvnc-1.0.la: $(libgvnc_1_0_la_OBJECTS) $(libgvnc_1_0_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libgvnc_1_0_la_LINK) -rpath $(libdir) $(libgvnc_1_0_la_OBJECTS) $(libgvnc_1_0_la_LIBADD) $(LIBS)
+libgvncpulse-1.0.la: $(libgvncpulse_1_0_la_OBJECTS) $(libgvncpulse_1_0_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libgvncpulse_1_0_la_LINK) $(am_libgvncpulse_1_0_la_rpath) $(libgvncpulse_1_0_la_OBJECTS) $(libgvncpulse_1_0_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -699,6 +780,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-coroutine_ucontext.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-d3des.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-dh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncaudio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncaudioformat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncaudiosample.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncbaseaudio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncbaseframebuffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vnccolormap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncconnection.Plo@am__quote@
@@ -708,6 +793,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncmarshal.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncpixelformat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncutil.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvncpulse_1_0_la-vncaudiopulse.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -885,6 +971,38 @@ libgvnc_1_0_la-vncpixelformat.lo: vncpixelformat.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-vncpixelformat.lo `test -f 'vncpixelformat.c' || echo '$(srcdir)/'`vncpixelformat.c
 
+libgvnc_1_0_la-vncaudioformat.lo: vncaudioformat.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-vncaudioformat.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-vncaudioformat.Tpo -c -o libgvnc_1_0_la-vncaudioformat.lo `test -f 'vncaudioformat.c' || echo '$(srcdir)/'`vncaudioformat.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvnc_1_0_la-vncaudioformat.Tpo $(DEPDIR)/libgvnc_1_0_la-vncaudioformat.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncaudioformat.c' object='libgvnc_1_0_la-vncaudioformat.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-vncaudioformat.lo `test -f 'vncaudioformat.c' || echo '$(srcdir)/'`vncaudioformat.c
+
+libgvnc_1_0_la-vncaudiosample.lo: vncaudiosample.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-vncaudiosample.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-vncaudiosample.Tpo -c -o libgvnc_1_0_la-vncaudiosample.lo `test -f 'vncaudiosample.c' || echo '$(srcdir)/'`vncaudiosample.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvnc_1_0_la-vncaudiosample.Tpo $(DEPDIR)/libgvnc_1_0_la-vncaudiosample.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncaudiosample.c' object='libgvnc_1_0_la-vncaudiosample.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-vncaudiosample.lo `test -f 'vncaudiosample.c' || echo '$(srcdir)/'`vncaudiosample.c
+
+libgvnc_1_0_la-vncaudio.lo: vncaudio.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-vncaudio.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-vncaudio.Tpo -c -o libgvnc_1_0_la-vncaudio.lo `test -f 'vncaudio.c' || echo '$(srcdir)/'`vncaudio.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvnc_1_0_la-vncaudio.Tpo $(DEPDIR)/libgvnc_1_0_la-vncaudio.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncaudio.c' object='libgvnc_1_0_la-vncaudio.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-vncaudio.lo `test -f 'vncaudio.c' || echo '$(srcdir)/'`vncaudio.c
+
+libgvnc_1_0_la-vncbaseaudio.lo: vncbaseaudio.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-vncbaseaudio.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-vncbaseaudio.Tpo -c -o libgvnc_1_0_la-vncbaseaudio.lo `test -f 'vncbaseaudio.c' || echo '$(srcdir)/'`vncbaseaudio.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvnc_1_0_la-vncbaseaudio.Tpo $(DEPDIR)/libgvnc_1_0_la-vncbaseaudio.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncbaseaudio.c' object='libgvnc_1_0_la-vncbaseaudio.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-vncbaseaudio.lo `test -f 'vncbaseaudio.c' || echo '$(srcdir)/'`vncbaseaudio.c
+
 libgvnc_1_0_la-vncframebuffer.lo: vncframebuffer.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-vncframebuffer.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-vncframebuffer.Tpo -c -o libgvnc_1_0_la-vncframebuffer.lo `test -f 'vncframebuffer.c' || echo '$(srcdir)/'`vncframebuffer.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvnc_1_0_la-vncframebuffer.Tpo $(DEPDIR)/libgvnc_1_0_la-vncframebuffer.Plo
@@ -973,6 +1091,14 @@ libgvnc_1_0_la-coroutine_gthread.lo: coroutine_gthread.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-coroutine_gthread.lo `test -f 'coroutine_gthread.c' || echo '$(srcdir)/'`coroutine_gthread.c
 
+libgvncpulse_1_0_la-vncaudiopulse.lo: vncaudiopulse.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvncpulse_1_0_la_CFLAGS) $(CFLAGS) -MT libgvncpulse_1_0_la-vncaudiopulse.lo -MD -MP -MF $(DEPDIR)/libgvncpulse_1_0_la-vncaudiopulse.Tpo -c -o libgvncpulse_1_0_la-vncaudiopulse.lo `test -f 'vncaudiopulse.c' || echo '$(srcdir)/'`vncaudiopulse.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvncpulse_1_0_la-vncaudiopulse.Tpo $(DEPDIR)/libgvncpulse_1_0_la-vncaudiopulse.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vncaudiopulse.c' object='libgvncpulse_1_0_la-vncaudiopulse.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvncpulse_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvncpulse_1_0_la-vncaudiopulse.lo `test -f 'vncaudiopulse.c' || echo '$(srcdir)/'`vncaudiopulse.c
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1058,6 +1184,26 @@ uninstall-gvnc_includeHEADERS:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(gvnc_includedir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(gvnc_includedir)" && rm -f $$files
+install-gvncpulse_includeHEADERS: $(gvncpulse_include_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(gvncpulse_includedir)" || $(MKDIR_P) "$(DESTDIR)$(gvncpulse_includedir)"
+	@list='$(gvncpulse_include_HEADERS)'; test -n "$(gvncpulse_includedir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(gvncpulse_includedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(gvncpulse_includedir)" || exit $$?; \
+	done
+
+uninstall-gvncpulse_includeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(gvncpulse_include_HEADERS)'; test -n "$(gvncpulse_includedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(gvncpulse_includedir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(gvncpulse_includedir)" && rm -f $$files
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -1146,7 +1292,7 @@ check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" "$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibsdir)" "$(DESTDIR)$(gtk_vnc_includedir)" "$(DESTDIR)$(gvnc_includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" "$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibsdir)" "$(DESTDIR)$(gtk_vnc_includedir)" "$(DESTDIR)$(gvnc_includedir)" "$(DESTDIR)$(gvncpulse_includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -1202,7 +1348,8 @@ info: info-am
 info-am:
 
 install-data-am: install-girDATA install-gtk_vnc_includeHEADERS \
-	install-gvnc_includeHEADERS install-typelibsDATA
+	install-gvnc_includeHEADERS install-gvncpulse_includeHEADERS \
+	install-typelibsDATA
 
 install-dvi: install-dvi-am
 
@@ -1249,7 +1396,8 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-girDATA uninstall-gtk_vnc_includeHEADERS \
-	uninstall-gvnc_includeHEADERS uninstall-libLTLIBRARIES \
+	uninstall-gvnc_includeHEADERS \
+	uninstall-gvncpulse_includeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-pyexecLTLIBRARIES uninstall-typelibsDATA
 
 .MAKE: all check install install-am install-strip
@@ -1261,16 +1409,17 @@ uninstall-am: uninstall-girDATA uninstall-gtk_vnc_includeHEADERS \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-girDATA install-gtk_vnc_includeHEADERS \
-	install-gvnc_includeHEADERS install-html install-html-am \
-	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-pyexecLTLIBRARIES install-strip \
-	install-typelibsDATA installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-girDATA uninstall-gtk_vnc_includeHEADERS \
-	uninstall-gvnc_includeHEADERS uninstall-libLTLIBRARIES \
+	install-gvnc_includeHEADERS install-gvncpulse_includeHEADERS \
+	install-html install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-pyexecLTLIBRARIES \
+	install-strip install-typelibsDATA installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-girDATA \
+	uninstall-gtk_vnc_includeHEADERS uninstall-gvnc_includeHEADERS \
+	uninstall-gvncpulse_includeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-pyexecLTLIBRARIES uninstall-typelibsDATA
 
 
@@ -1381,7 +1530,7 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_PYTHON_TRUE@			  --override $(srcdir)/vnc.override vnc.defs > $@
 
 @WITH_GOBJECT_INTROSPECTION_TRUE@GVnc-1.0.gir: libgvnc-1.0.la $(G_IR_SCANNER) Makefile.am
-@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)PKG_CONFIG_PATH=$(top_builddir) $(G_IR_SCANNER) -v \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)$(G_IR_SCANNER) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --namespace GVnc \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --nsversion 1.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
@@ -1395,16 +1544,38 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--verbose \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gvnc-1.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--pkg=gobject-2.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg-export=gvnc-1.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                $(GVNC_INTROSPECTION_SRCS)
 
+@WITH_GOBJECT_INTROSPECTION_TRUE@GVncPulse-1.0.gir: GVnc-1.0.gir libgvncpulse-1.0.la $(G_IR_SCANNER) Makefile.am
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)$(G_IR_SCANNER) -v \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --namespace GVncPulse \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --nsversion 1.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--include-uninstalled $(builddir)/GVnc-1.0.gir \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		$(PREFIX_ARGS) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --library=$(builddir)/libgvncpulse-1.0.la \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(top_srcdir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(srcdir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(builddir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--c-include="gvncpulse.h" \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --output $@ \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(top_srcdir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(srcdir) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--verbose \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--pkg=gobject-2.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--pkg=libpulse-simple \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg-export=gvncpulse-1.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                $(GVNCPULSE_INTROSPECTION_SRCS)
+
 @WITH_GOBJECT_INTROSPECTION_TRUE@GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION).la $(G_IR_SCANNER) Makefile.am
-@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)PKG_CONFIG_PATH=$(top_builddir) $(G_IR_SCANNER) -v \
+@WITH_GOBJECT_INTROSPECTION_TRUE@	$(AM_V_GEN)$(G_IR_SCANNER) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --namespace GtkVnc \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --nsversion $(GTK_VNC_API_VERSION) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include GObject-2.0 \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--include Gtk-$(GTK_API_VERSION) \
-@WITH_GOBJECT_INTROSPECTION_TRUE@		--include GVnc-1.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--include-uninstalled $(builddir)/GVnc-1.0.gir \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		$(PREFIX_ARGS) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --library=$(builddir)/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                --add-include-path=$(top_srcdir) \
@@ -1415,7 +1586,9 @@ vncconnection.c:: vncmarshal.h vncconnectionenums.h
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(top_srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                -I$(srcdir) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@		--verbose \
-@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg=gtk-vnc-$(GTK_VNC_API_VERSION) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--pkg=gobject-2.0 \
+@WITH_GOBJECT_INTROSPECTION_TRUE@		--pkg=gtk+-$(GTK_API_VERSION) \
+@WITH_GOBJECT_INTROSPECTION_TRUE@                --pkg-export=gtk-vnc-$(GTK_VNC_API_VERSION) \
 @WITH_GOBJECT_INTROSPECTION_TRUE@                $(GTK_VNC_INTROSPECTION_SRCS)
 
 @WITH_GOBJECT_INTROSPECTION_TRUE@%.typelib: %.gir

@@ -8,6 +8,8 @@
  *
  */
 
+#include <config.h>
+
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
 #include "vncdisplaykeymap.h"
@@ -47,9 +49,9 @@
  * to vncserver
  */
 static struct {
-	GdkKeymapKey *keys;
-	gint n_keys;
-	guint keyval;
+    GdkKeymapKey *keys;
+    gint n_keys;
+    guint keyval;
 } untranslated_keys[] = {{NULL, 0, GDK_Tab}};
 
 static unsigned int ref_count_for_untranslated_keys = 0;
@@ -101,175 +103,175 @@ static unsigned int ref_count_for_untranslated_keys = 0;
 
 static gboolean check_for_xwin(GdkDisplay *dpy)
 {
-	char *vendor = ServerVendor(gdk_x11_display_get_xdisplay(dpy));
+    char *vendor = ServerVendor(gdk_x11_display_get_xdisplay(dpy));
 
-	if (strstr(vendor, "Cygwin/X"))
-		return TRUE;
+    if (strstr(vendor, "Cygwin/X"))
+        return TRUE;
 
-	return FALSE;
+    return FALSE;
 }
 
 static gboolean check_for_xquartz(GdkDisplay *dpy)
 {
-	int nextensions;
-	int i;
-	gboolean match = FALSE;
-	char **extensions = XListExtensions(gdk_x11_display_get_xdisplay(dpy),
-					    &nextensions);
-	for (i = 0 ; extensions != NULL && i < nextensions ; i++) {
-		if (strcmp(extensions[i], "Apple-WM") == 0 ||
-		    strcmp(extensions[i], "Apple-DRI") == 0)
-			match = TRUE;
-	}
-	if (extensions)
-		XFreeExtensionList(extensions);
+    int nextensions;
+    int i;
+    gboolean match = FALSE;
+    char **extensions = XListExtensions(gdk_x11_display_get_xdisplay(dpy),
+                                        &nextensions);
+    for (i = 0 ; extensions != NULL && i < nextensions ; i++) {
+        if (strcmp(extensions[i], "Apple-WM") == 0 ||
+            strcmp(extensions[i], "Apple-DRI") == 0)
+            match = TRUE;
+    }
+    if (extensions)
+        XFreeExtensionList(extensions);
 
-	return match;
+    return match;
 }
 #endif
 
-const guint16 const *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
+const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
 {
-	GdkDisplay *dpy = gdk_display_get_default();
+    GdkDisplay *dpy = gdk_display_get_default();
 
 #ifdef GDK_WINDOWING_X11
-	if (GDK_IS_X11_DISPLAY(dpy)) {
-		XkbDescPtr desc;
-		const gchar *keycodes = NULL;
+    if (GDK_IS_X11_DISPLAY(dpy)) {
+        XkbDescPtr desc;
+        const gchar *keycodes = NULL;
 
-		/* There is no easy way to determine what X11 server
-		 * and platform & keyboard driver is in use. Thus we
-		 * do best guess heuristics.
-		 *
-		 * This will need more work for people with other
-		 * X servers..... patches welcomed.
-		 */
+        /* There is no easy way to determine what X11 server
+         * and platform & keyboard driver is in use. Thus we
+         * do best guess heuristics.
+         *
+         * This will need more work for people with other
+         * X servers..... patches welcomed.
+         */
 
-		desc = XkbGetKeyboard(gdk_x11_display_get_xdisplay(dpy),
-				      XkbGBN_AllComponentsMask,
-				      XkbUseCoreKbd);
-		if (desc) {
-			if (desc->names) {
-				keycodes = gdk_x11_get_xatom_name(desc->names->keycodes);
-				if (!keycodes)
-					g_warning("could not lookup keycode name");
-			}
-			XkbFreeClientMap(desc, XkbGBN_AllComponentsMask, True);
-		}
+        desc = XkbGetKeyboard(gdk_x11_display_get_xdisplay(dpy),
+                              XkbGBN_AllComponentsMask,
+                              XkbUseCoreKbd);
+        if (desc) {
+            if (desc->names) {
+                keycodes = gdk_x11_get_xatom_name(desc->names->keycodes);
+                if (!keycodes)
+                    g_warning("could not lookup keycode name");
+            }
+            XkbFreeKeyboard(desc, XkbGBN_AllComponentsMask, True);
+        }
 
-		if (check_for_xwin(dpy)) {
-			VNC_DEBUG("Using xwin keycode mapping");
-			*maplen = G_N_ELEMENTS(keymap_xorgxwin2rfb);
-			return keymap_xorgxwin2rfb;
-		} else if (check_for_xquartz(dpy)) {
-			VNC_DEBUG("Using xquartz keycode mapping");
-			*maplen = G_N_ELEMENTS(keymap_xorgxquartz2rfb);
-			return keymap_xorgxquartz2rfb;
-		} else if (keycodes && STRPREFIX(keycodes, "evdev_")) {
-			VNC_DEBUG("Using evdev keycode mapping");
-			*maplen = G_N_ELEMENTS(keymap_xorgevdev2rfb);
-			return keymap_xorgevdev2rfb;
-		} else if (keycodes && STRPREFIX(keycodes, "xfree86_")) {
-			VNC_DEBUG("Using xfree86 keycode mapping");
-			*maplen = G_N_ELEMENTS(keymap_xorgkbd2rfb);
-			return keymap_xorgkbd2rfb;
-		} else {
-			g_warning("Unknown keycode mapping '%s'.\n"
-				  "Please report to gtk-vnc-list@gnome.org\n"
-				  "including the following information:\n"
-				  "\n"
-				  "  - Operating system\n"
-				  "  - GDK build\n"
-				  "  - X11 Server\n"
-				  "  - xprop -root\n"
-				  "  - xdpyinfo\n",
-				  keycodes);
-			return NULL;
-		}
-	}
+        if (check_for_xwin(dpy)) {
+            VNC_DEBUG("Using xwin keycode mapping");
+            *maplen = G_N_ELEMENTS(keymap_xorgxwin2rfb);
+            return keymap_xorgxwin2rfb;
+        } else if (check_for_xquartz(dpy)) {
+            VNC_DEBUG("Using xquartz keycode mapping");
+            *maplen = G_N_ELEMENTS(keymap_xorgxquartz2rfb);
+            return keymap_xorgxquartz2rfb;
+        } else if (keycodes && STRPREFIX(keycodes, "evdev_")) {
+            VNC_DEBUG("Using evdev keycode mapping");
+            *maplen = G_N_ELEMENTS(keymap_xorgevdev2rfb);
+            return keymap_xorgevdev2rfb;
+        } else if (keycodes && STRPREFIX(keycodes, "xfree86_")) {
+            VNC_DEBUG("Using xfree86 keycode mapping");
+            *maplen = G_N_ELEMENTS(keymap_xorgkbd2rfb);
+            return keymap_xorgkbd2rfb;
+        } else {
+            g_warning("Unknown keycode mapping '%s'.\n"
+                      "Please report to gtk-vnc-list@gnome.org\n"
+                      "including the following information:\n"
+                      "\n"
+                      "  - Operating system\n"
+                      "  - GDK build\n"
+                      "  - X11 Server\n"
+                      "  - xprop -root\n"
+                      "  - xdpyinfo\n",
+                      keycodes);
+            return NULL;
+        }
+    }
 #endif
 
 #ifdef GDK_WINDOWING_WIN32
-	if (GDK_IS_WIN32_DISPLAY(dpy)) {
-		VNC_DEBUG("Using Win32 virtual keycode mapping");
-		*maplen = sizeof(keymap_win322rfb);
-		return keymap_win322rfb;
-	}
+    if (GDK_IS_WIN32_DISPLAY(dpy)) {
+        VNC_DEBUG("Using Win32 virtual keycode mapping");
+        *maplen = sizeof(keymap_win322rfb);
+        return keymap_win322rfb;
+    }
 #endif
 
 #ifdef GDK_WINDOWING_QUARTZ
-	if (GDK_IS_QUARTZ_DISPLAY(dpy)) {
-		VNC_DEBUG("Using OS-X virtual keycode mapping");
-		*maplen = sizeof(keymap_osx2rfb);
-		return keymap_osx2rfb;
-	}
+    if (GDK_IS_QUARTZ_DISPLAY(dpy)) {
+        VNC_DEBUG("Using OS-X virtual keycode mapping");
+        *maplen = sizeof(keymap_osx2rfb);
+        return keymap_osx2rfb;
+    }
 #endif
 
-	g_warning("Unsupported GDK Windowing platform.\n"
-		  "Disabling extended keycode tables.\n"
-		  "Please report to gtk-vnc-list@gnome.org\n"
-		  "including the following information:\n"
-		  "\n"
-		  "  - Operating system\n"
-		  "  - GDK Windowing system build\n");
-	return NULL;
+    g_warning("Unsupported GDK Windowing platform.\n"
+              "Disabling extended keycode tables.\n"
+              "Please report to gtk-vnc-list@gnome.org\n"
+              "including the following information:\n"
+              "\n"
+              "  - Operating system\n"
+              "  - GDK Windowing system build\n");
+    return NULL;
 }
 
-guint16 vnc_display_keymap_gdk2rfb(const guint16 const *keycode_map,
-				   size_t keycode_maplen,
-				   guint16 keycode)
+guint16 vnc_display_keymap_gdk2rfb(const guint16 *keycode_map,
+                                   size_t keycode_maplen,
+                                   guint16 keycode)
 {
-	if (!keycode_map)
-		return 0;
-	if (keycode >= keycode_maplen)
-		return 0;
-	return keycode_map[keycode];
+    if (!keycode_map)
+        return 0;
+    if (keycode >= keycode_maplen)
+        return 0;
+    return keycode_map[keycode];
 }
 
 /* Set the keymap entries */
 void vnc_display_keyval_set_entries(void)
 {
-	size_t i;
-	if (ref_count_for_untranslated_keys == 0)
-		for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++)
-			gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
-							  untranslated_keys[i].keyval,
-							  &untranslated_keys[i].keys,
-							  &untranslated_keys[i].n_keys);
-	ref_count_for_untranslated_keys++;
+    size_t i;
+    if (ref_count_for_untranslated_keys == 0)
+        for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++)
+            gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
+                                              untranslated_keys[i].keyval,
+                                              &untranslated_keys[i].keys,
+                                              &untranslated_keys[i].n_keys);
+    ref_count_for_untranslated_keys++;
 }
 
 /* Free the keymap entries */
 void vnc_display_keyval_free_entries(void)
 {
-	size_t i;
+    size_t i;
 
-	if (ref_count_for_untranslated_keys == 0)
-		return;
+    if (ref_count_for_untranslated_keys == 0)
+        return;
 
-	ref_count_for_untranslated_keys--;
-	if (ref_count_for_untranslated_keys == 0)
-		for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++)
-			g_free(untranslated_keys[i].keys);
+    ref_count_for_untranslated_keys--;
+    if (ref_count_for_untranslated_keys == 0)
+        for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++)
+            g_free(untranslated_keys[i].keys);
 
 }
 
 /* Get the keyval from the keycode without the level. */
 guint vnc_display_keyval_from_keycode(guint keycode, guint keyval)
 {
-	size_t i;
-	for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++) {
-		if (keycode == untranslated_keys[i].keys[0].keycode) {
-			return untranslated_keys[i].keyval;
-		}
-	}
+    size_t i;
+    for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++) {
+        if (keycode == untranslated_keys[i].keys[0].keycode) {
+            return untranslated_keys[i].keyval;
+        }
+    }
 
-	return keyval;
+    return keyval;
 }
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

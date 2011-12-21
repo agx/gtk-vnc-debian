@@ -31,11 +31,11 @@ gint vnc_util_get_version(void);
 const gchar *vnc_util_get_version_string(void);
 gboolean vnc_util_check_version(gint major, gint minor, gint micro);
 
-#define VNC_DEBUG(fmt, ...)						\
-	do {								\
-		if (G_UNLIKELY(vnc_util_get_debug()))			\
-			g_debug(__FILE__ " " fmt, ## __VA_ARGS__);	\
-	} while (0)
+#define VNC_DEBUG(fmt, ...)                             \
+    do {                                                \
+        if (G_UNLIKELY(vnc_util_get_debug()))           \
+            g_debug(__FILE__ " " fmt, ## __VA_ARGS__);  \
+    } while (0)
 
 /* For normal VncXXXClass structs */
 #define VNC_PADDING 4
@@ -48,8 +48,8 @@ G_END_DECLS
 #endif /* VNC_UTIL_H */
 /*
  * Local variables:
- *  c-indent-level: 8
- *  c-basic-offset: 8
- *  tab-width: 8
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
  * End:
  */

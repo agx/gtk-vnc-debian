@@ -3,9 +3,9 @@
 
 GTK VNC is written & maintained by:
 
-   Anthony Liguori <anthony-at-codemonkey-dot-ws>
-   Daniel Berrange <dan-at-berrange-dot-com>
-   John Wendell  <jwendell-at-gnome-dot-org>
+   Anthony Liguori <anthony@codemonkey.ws>
+   Daniel Berrange <dan@berrange.com>
+   John Wendell  <jwendell@gnome.org>
 
 Patches received from:
 
@@ -47,6 +47,26 @@ Patches received from:
    Sjoerd Simons <sjoerd.simons@collabora.co.uk>
    Stefano Stabellini <stefano.stabellini@eu.citrix.com>
    Takeshi AIHANA <takeshi.aihana@gmail.com>
+   Steven Carr <Steven.Carr@scaa-usa.com>
+   Marc Andree Lureau <marcandre.lureau@gmail.com>
+   Carles Ferrando <carles.ferrando@gmail.com>
+   Seong-ho, Cho <darkcircle.0426@gmail.com>
+   George Stefanakis <george.stefanakis@gmail.com>
+   Algimantas Margevičius <gymka@mail.ru>
+   Håkon Enger <hakon.enger@gmail.com>
+   Kjartan Maraas <kmaraas@gnome.org>
+   Akom Chotiphantawanon <knight2000@gmail.com>
+   Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>
+   Lucian Adrian Grijincu <lucian.grijincu@gmail.com>
+   Marek Černocký <marek@manet.cz>
+   Shushi Kurose <md81bird@hitaki.net>
+   Muhammet Kara <muhammet.k@gmail.com>
+   Nils-Christoph Fiedler <ncfiedler@gnome.org>
+   Sébastien Granjoux <seb.sfo@free.fr>
+   Stanislav Petrek <stanislav.petrek@gmail.com>
+   Zeeshan Ali (Khattak) <zeeshanak@gnome.org>
+   Daniel Korostil <ted.korostiled@gmail.com>
+   Christophe Fergeau <cfergeau@redhat.com>
 
     ...send patches to get your name here...
 

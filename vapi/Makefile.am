@@ -8,10 +8,25 @@ vapi_DATA =					\
 	gvnc-1.0.vapi				\
 	$(NULL)
 
+if HAVE_PULSEAUDIO
+vapi_DATA += \
+	gvncpulse-1.0.vapi
+endif
+
 gvnc-1.0.vapi: $(top_builddir)/src/GVnc-1.0.gir
 	$(AM_V_GEN)$(VAPIGEN)			\
 		--library gvnc-1.0		\
 		$<
+
+if HAVE_PULSEAUDIO
+gvncpulse-1.0.vapi: $(top_builddir)/src/GVncPulse-1.0.gir gvnc-1.0.vapi
+	$(AM_V_GEN)$(VAPIGEN)			\
+		--vapidir=$(builddir)				\
+		--pkg gvnc-1.0					\
+		--library gvncpulse-1.0				\
+		--girdir=$(top_builddir)/src			\
+		$<
+endif
 
 gtk-vnc-$(GTK_VNC_API_VERSION).vapi: $(top_builddir)/src/GtkVnc-$(GTK_VNC_API_VERSION).gir gvnc-1.0.vapi
 	$(AM_V_GEN)$(VAPIGEN)					\

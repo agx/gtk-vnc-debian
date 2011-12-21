@@ -1,11 +1,16 @@
 SUBDIRS = src tools examples plugin po vapi
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
-pkgconfig_DATA = @PACKAGE@-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc
+pkgconfig_DATA = $(PACKAGE)-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc
 pkgconfigdir = $(libdir)/pkgconfig
+
+if HAVE_PULSEAUDIO
+pkgconfig_DATA += gvncpulse-1.0.pc
+endif
 
 EXTRA_DIST =				\
 	gvnc-1.0.pc.in			\
+	gvncpulse-1.0.pc.in		\
 	$(PACKAGE)-1.0.pc.in		\
 	$(PACKAGE)-2.0.pc.in		\
 	$(PACKAGE).spec.in		\

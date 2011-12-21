@@ -57,23 +57,23 @@
 
 
 /*
-The contents of this file are subject to the Mozilla Public License
+  The contents of this file are subject to the Mozilla Public License
 
-Version 1.1 (the "License"); you may not use this file except in compliance
-with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
+  Version 1.1 (the "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
 
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-the specific language governing rights and limitations under the License.
+  Software distributed under the License is distributed on an "AS IS" basis,
+  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+  the specific language governing rights and limitations under the License.
 
-The Original Code is stub code that defines the binary interface to a Mozilla
-plugin.
+  The Original Code is stub code that defines the binary interface to a Mozilla
+  plugin.
 
-The Initial Developer of the Original Code is Mozilla.
+  The Initial Developer of the Original Code is Mozilla.
 
-Portions created by Adobe Systems Incorporated are Copyright (C) 2007. All Rights Reserved.
+  Portions created by Adobe Systems Incorporated are Copyright (C) 2007. All Rights Reserved.
 
-Contributor(s): Adobe Systems Incorporated.
+  Contributor(s): Adobe Systems Incorporated.
 */
 
 
@@ -282,80 +282,80 @@ NPP_DestroyStream(NPP instance, NPStream *stream G_GNUC_UNUSED,
   if (instance == NULL)
     return NPERR_INVALID_INSTANCE_ERROR;
 
-    /***** Insert NPP_DestroyStream code here *****\
-    PluginInstance* This;
-    This = (PluginInstance*) instance->pdata;
-    \**********************************************/
+  /***** Insert NPP_DestroyStream code here *****\
+         PluginInstance* This;
+         This = (PluginInstance*) instance->pdata;
+         \**********************************************/
 
-    return NPERR_NO_ERROR;
+  return NPERR_NO_ERROR;
 }
 
 void
 NPP_StreamAsFile(NPP instance G_GNUC_UNUSED, NPStream *stream G_GNUC_UNUSED,
                  const char* fname G_GNUC_UNUSED)
 {
-    /*printf("NPP_StreamAsFile()\n");*/
-    /***** Insert NPP_StreamAsFile code here *****\
-    PluginInstance* This;
-    if (instance != NULL)
-        This = (PluginInstance*) instance->pdata;
-    \*********************************************/
+  /*printf("NPP_StreamAsFile()\n");*/
+  /***** Insert NPP_StreamAsFile code here *****\
+         PluginInstance* This;
+         if (instance != NULL)
+         This = (PluginInstance*) instance->pdata;
+         \*********************************************/
 }
 
 void
 NPP_URLNotify(NPP instance G_GNUC_UNUSED, const char* url G_GNUC_UNUSED,
               NPReason reason G_GNUC_UNUSED, void* notifyData G_GNUC_UNUSED)
 {
-    /*printf("NPP_URLNotify()\n");*/
-    /***** Insert NPP_URLNotify code here *****\
-    PluginInstance* This;
-    if (instance != NULL)
-        This = (PluginInstance*) instance->pdata;
-    \*********************************************/
+  /*printf("NPP_URLNotify()\n");*/
+  /***** Insert NPP_URLNotify code here *****\
+         PluginInstance* This;
+         if (instance != NULL)
+         This = (PluginInstance*) instance->pdata;
+         \*********************************************/
 }
 
 
 void
 NPP_Print(NPP instance, NPPrint* printInfo)
 {
-    /*printf("NPP_Print()\n");*/
-    if(printInfo == NULL)
-        return;
+  /*printf("NPP_Print()\n");*/
+  if(printInfo == NULL)
+    return;
 
-    if (instance != NULL) {
+  if (instance != NULL) {
     /***** Insert NPP_Print code here *****\
-        PluginInstance* This = (PluginInstance*) instance->pdata;
-    \**************************************/
+           PluginInstance* This = (PluginInstance*) instance->pdata;
+           \**************************************/
 
-        if (printInfo->mode == NP_FULL) {
-            /*
-             * PLUGIN DEVELOPERS:
-             *  If your plugin would like to take over
-             *  printing completely when it is in full-screen mode,
-             *  set printInfo->pluginPrinted to TRUE and print your
-             *  plugin as you see fit.  If your plugin wants Netscape
-             *  to handle printing in this case, set
-             *  printInfo->pluginPrinted to FALSE (the default) and
-             *  do nothing.  If you do want to handle printing
-             *  yourself, printOne is true if the print button
-             *  (as opposed to the print menu) was clicked.
-             *  On the Macintosh, platformPrint is a THPrint; on
-             *  Windows, platformPrint is a structure
-             *  (defined in npapi.h) containing the printer name, port,
-             *  etc.
-             */
+    if (printInfo->mode == NP_FULL) {
+      /*
+       * PLUGIN DEVELOPERS:
+       *  If your plugin would like to take over
+       *  printing completely when it is in full-screen mode,
+       *  set printInfo->pluginPrinted to TRUE and print your
+       *  plugin as you see fit.  If your plugin wants Netscape
+       *  to handle printing in this case, set
+       *  printInfo->pluginPrinted to FALSE (the default) and
+       *  do nothing.  If you do want to handle printing
+       *  yourself, printOne is true if the print button
+       *  (as opposed to the print menu) was clicked.
+       *  On the Macintosh, platformPrint is a THPrint; on
+       *  Windows, platformPrint is a structure
+       *  (defined in npapi.h) containing the printer name, port,
+       *  etc.
+       */
 
-    /***** Insert NPP_Print code here *****\
-            void* platformPrint =
-                printInfo->print.fullPrint.platformPrint;
-            NPBool printOne =
-                printInfo->print.fullPrint.printOne;
-    \**************************************/
+      /***** Insert NPP_Print code here *****\
+             void* platformPrint =
+             printInfo->print.fullPrint.platformPrint;
+             NPBool printOne =
+             printInfo->print.fullPrint.printOne;
+             \**************************************/
 
-            /* Do the default*/
-            printInfo->print.fullPrint.pluginPrinted = FALSE;
-        }
-        else {  /* If not fullscreen, we must be embedded */
+      /* Do the default*/
+      printInfo->print.fullPrint.pluginPrinted = FALSE;
+    }
+    else {  /* If not fullscreen, we must be embedded */
             /*
              * PLUGIN DEVELOPERS:
              *  If your plugin is embedded, or is full-screen
@@ -368,14 +368,14 @@ NPP_Print(NPP instance, NPPrint* printInfo)
              *  device context.
              */
 
-    /***** Insert NPP_Print code here *****\
-            NPWindow* printWindow =
-                &(printInfo->print.embedPrint.window);
-            void* platformPrint =
-                printInfo->print.embedPrint.platformPrint;
-    \**************************************/
-        }
+      /***** Insert NPP_Print code here *****\
+             NPWindow* printWindow =
+             &(printInfo->print.embedPrint.window);
+             void* platformPrint =
+             printInfo->print.embedPrint.platformPrint;
+             \**************************************/
     }
+  }
 }
 
 int16 NPP_HandleEvent(NPP instance, void* event)

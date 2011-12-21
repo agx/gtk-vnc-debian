@@ -24,12 +24,19 @@
 
 #include <glib.h>
 
-const guint16 const *vnc_display_keymap_gdk2rfb_table(size_t *maplen);
+const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen);
 guint16 vnc_display_keymap_gdk2rfb(const guint16 *keycode_map,
-				   size_t keycode_maplen,
-				   guint16 keycode);
+                                   size_t keycode_maplen,
+                                   guint16 keycode);
 void vnc_display_keyval_set_entries(void);
 void vnc_display_keyval_free_entries(void);
 guint vnc_display_keyval_from_keycode(guint keycode, guint keyval);
 
 #endif /* VNC_DISPLAY_KEYMAP_H */
+/*
+ * Local variables:
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ *  indent-tabs-mode: nil
+ * End:
+ */

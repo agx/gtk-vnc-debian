@@ -71,8 +71,11 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
+am__DEPENDENCIES_1 =
 @ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_DEPENDENCIES =  \
-@ENABLE_PLUGIN_TRUE@	../src/libgtk-vnc-1.0.la
+@ENABLE_PLUGIN_TRUE@	../src/libgtk-vnc-1.0.la \
+@ENABLE_PLUGIN_TRUE@	$(am__DEPENDENCIES_1) \
+@ENABLE_PLUGIN_TRUE@	$(am__DEPENDENCIES_1)
 am__gtk_vnc_plugin_la_SOURCES_DIST = gtk-vnc-plugin.c gtk-vnc-plugin.h \
 	npshell.c npunix.c
 @ENABLE_PLUGIN_TRUE@am_gtk_vnc_plugin_la_OBJECTS =  \
@@ -234,6 +237,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
+PULSEAUDIO_CFLAGS = @PULSEAUDIO_CFLAGS@
+PULSEAUDIO_LIBS = @PULSEAUDIO_LIBS@
 PYGTK_CFLAGS = @PYGTK_CFLAGS@
 PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
@@ -323,15 +328,15 @@ top_srcdir = @top_srcdir@
 @ENABLE_PLUGIN_TRUE@	gtk-vnc-plugin.c gtk-vnc-plugin.h npshell.c npunix.c
 
 @ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_LIBADD = \
-@ENABLE_PLUGIN_TRUE@	../src/libgtk-vnc-1.0.la @GTK_LIBS@ \
-@ENABLE_PLUGIN_TRUE@	@FIREFOX_PLUGIN_LIBS@
+@ENABLE_PLUGIN_TRUE@	../src/libgtk-vnc-1.0.la $(GTK_LIBS) \
+@ENABLE_PLUGIN_TRUE@	$(FIREFOX_PLUGIN_LIBS)
 
 @ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_LDFLAGS = \
 @ENABLE_PLUGIN_TRUE@	-module -avoid-version
 
 @ENABLE_PLUGIN_TRUE@gtk_vnc_plugin_la_CFLAGS = \
-@ENABLE_PLUGIN_TRUE@	-I$(top_srcdir)/src @GTK_CFLAGS@ \
-@ENABLE_PLUGIN_TRUE@	@FIREFOX_PLUGIN_CFLAGS@ @WARNING_CFLAGS@
+@ENABLE_PLUGIN_TRUE@	-I$(top_srcdir)/src $(GTK_CFLAGS) \
+@ENABLE_PLUGIN_TRUE@	$(FIREFOX_PLUGIN_CFLAGS) $(WARNING_CFLAGS)
 
 @ENABLE_PLUGIN_TRUE@EXTRA_DIST = README
 @ENABLE_PLUGIN_TRUE@CLEANFILES = gtk-vnc-plugin.so
