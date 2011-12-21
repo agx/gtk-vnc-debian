@@ -11,7 +11,7 @@ Closes: #631033
  4 files changed, 20 insertions(+), 19 deletions(-)
 
 diff --git a/plugin/gtk-vnc-plugin.c b/plugin/gtk-vnc-plugin.c
-index c5e5b53..8722ee5 100644
+index 1147a95..0aaf7c4 100644
 --- a/plugin/gtk-vnc-plugin.c
 +++ b/plugin/gtk-vnc-plugin.c
 @@ -275,7 +275,7 @@ GtkVNCDestroyWindow (NPP instance)
@@ -22,25 +22,25 @@ index c5e5b53..8722ee5 100644
 +int16_t
  GtkVNCXHandleEvent(NPP instance, void *event)
  {
-   XGraphicsExposeEvent exposeEvent;
+     XGraphicsExposeEvent exposeEvent;
 diff --git a/plugin/gtk-vnc-plugin.h b/plugin/gtk-vnc-plugin.h
-index e2113f6..9141853 100644
+index 4bf403e..0978fdb 100644
 --- a/plugin/gtk-vnc-plugin.h
 +++ b/plugin/gtk-vnc-plugin.h
 @@ -45,10 +45,10 @@
  #define PLUGIN_DESCRIPTION  "VNC (remote desktop) viewer plugin"
  
  typedef struct {
--  uint16 mode;
-+  uint16_t mode;
-   NPWindow *window;
--  int32 x, y;
--  uint32 width, height;
-+  int32_t x, y;
-+  uint32_t width, height;
+-    uint16 mode;
++    uint16_t mode;
+     NPWindow *window;
+-    int32 x, y;
+-    uint32 width, height;
++    int32_t x, y;
++    uint32_t width, height;
  
-   NPP instance;
-   NPBool pluginsHidden;
+     NPP instance;
+     NPBool pluginsHidden;
 @@ -61,7 +61,7 @@ typedef struct {
  
  extern NPError GtkVNCXSetWindow (NPP instance, NPWindow* window);
@@ -51,10 +51,10 @@ index e2113f6..9141853 100644
  #ifdef ENABLE_DEBUG
  static inline void
 diff --git a/plugin/npshell.c b/plugin/npshell.c
-index e1194aa..abdc338 100644
+index df01b2e..ca4e78b 100644
 --- a/plugin/npshell.c
 +++ b/plugin/npshell.c
-@@ -79,6 +79,7 @@ Contributor(s): Adobe Systems Incorporated.
+@@ -79,6 +79,7 @@
  
  #include <stdio.h>
  #include <string.h>
@@ -121,7 +121,7 @@ index e1194aa..abdc338 100644
  {
    /*printf("NPP_Write()\n");*/
 @@ -377,7 +378,7 @@ NPP_Print(NPP instance, NPPrint* printInfo)
-     }
+   }
  }
  
 -int16 NPP_HandleEvent(NPP instance, void* event)
@@ -130,11 +130,11 @@ index e1194aa..abdc338 100644
    /*printf("NPP_HandleEvent()\n");*/
  
 diff --git a/plugin/npunix.c b/plugin/npunix.c
-index a9bdd88..703d020 100644
+index 05eff4e..83ac628 100644
 --- a/plugin/npunix.c
 +++ b/plugin/npunix.c
 @@ -305,7 +305,7 @@ NPN_NewStream(NPP instance, NPMIMEType type, const char *window,
-                     type, window, stream_ptr);
+                                  type, window, stream_ptr);
  }
  
 -int32
@@ -167,7 +167,7 @@ index a9bdd88..703d020 100644
 -static int32
 +static int32_t
  Private_Write(NPP instance, NPStream* stream, int32_t offset, int32_t len,
-         void* buffer)
+               void* buffer)
  {
 @@ -519,7 +519,7 @@ Private_GetJavaClass(void)
  }
@@ -178,4 +178,3 @@ index a9bdd88..703d020 100644
  Private_HandleEvent(NPP instance, void* event)
  {
      return NPP_HandleEvent(instance, event);
--- 

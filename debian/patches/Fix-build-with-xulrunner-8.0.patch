@@ -8,10 +8,10 @@ Subject: Fix build with xulrunner-8.0
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/plugin/npshell.c b/plugin/npshell.c
-index abdc338..b017fe7 100644
+index ca4e78b..d8f826c 100644
 --- a/plugin/npshell.c
 +++ b/plugin/npshell.c
-@@ -91,10 +91,10 @@ Contributor(s): Adobe Systems Incorporated.
+@@ -91,10 +91,10 @@
   *
   ***********************************************************************/
  
@@ -25,7 +25,7 @@ index abdc338..b017fe7 100644
  
  NPError
 diff --git a/plugin/npunix.c b/plugin/npunix.c
-index 703d020..a7c6e68 100644
+index 83ac628..54d8a41 100644
 --- a/plugin/npunix.c
 +++ b/plugin/npunix.c
 @@ -537,7 +537,7 @@ Private_HandleEvent(NPP instance, void* event)
@@ -37,4 +37,3 @@ index 703d020..a7c6e68 100644
  NP_GetMIMEDescription(void)
  {
      return NPP_GetMIMEDescription();
--- 
