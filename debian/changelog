@@ -1,3 +1,12 @@
+gtk-vnc (0.5.0-1) unstable; urgency=low
+
+  * [853db65] New upstream version 0.5.0 with QEMU audio extension support
+  * [6b72676] Update patches.
+  * [3552666] Remove GNUmakefile links since it breaks the out of tree build.
+  * [3e500f8] Update symbol files
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 22 Dec 2011 20:07:18 +0100
+
 gtk-vnc (0.4.4-1) unstable; urgency=low
 
   * [eb795c1] New upstream version 0.4.4
