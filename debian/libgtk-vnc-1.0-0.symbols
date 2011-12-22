@@ -7,6 +7,7 @@ libgtk-vnc-1.0.so.0 libgtk-vnc-1.0-0 #MINVER#
  vnc_display_credential_get_type@Base 0.3.10
  vnc_display_depth_color_get_type@Base 0.3.10
  vnc_display_force_grab@Base 0.3.10
+ vnc_display_get_connection@Base 0.5.0
  vnc_display_get_depth@Base 0.3.10
  vnc_display_get_force_size@Base 0.3.10
  vnc_display_get_height@Base 0.3.10

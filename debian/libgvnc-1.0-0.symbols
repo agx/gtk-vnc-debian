@@ -1,4 +1,18 @@
 libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
+ vnc_audio_format_copy@Base 0.5.0
+ vnc_audio_format_free@Base 0.5.0
+ vnc_audio_format_get_type@Base 0.5.0
+ vnc_audio_format_new@Base 0.5.0
+ vnc_audio_get_type@Base 0.5.0
+ vnc_audio_playback_data@Base 0.5.0
+ vnc_audio_playback_start@Base 0.5.0
+ vnc_audio_playback_stop@Base 0.5.0
+ vnc_audio_sample_copy@Base 0.5.0
+ vnc_audio_sample_free@Base 0.5.0
+ vnc_audio_sample_get_type@Base 0.5.0
+ vnc_audio_sample_new@Base 0.5.0
+ vnc_base_audio_get_type@Base 0.5.0
+ vnc_base_audio_new@Base 0.5.0
  vnc_base_framebuffer_get_type@Base 0.4.1
  vnc_base_framebuffer_new@Base 0.4.1
  vnc_color_map_copy@Base 0.4.1
@@ -6,6 +20,8 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_color_map_get_type@Base 0.4.1
  vnc_color_map_new@Base 0.4.1
  vnc_color_map_set@Base 0.4.1
+ vnc_connection_audio_disable@Base 0.5.0
+ vnc_connection_audio_enable@Base 0.5.0
  vnc_connection_auth_get_type@Base 0.4.1
  vnc_connection_auth_vencrypt_get_type@Base 0.4.1
  vnc_connection_client_cut_text@Base 0.4.1
@@ -13,6 +29,7 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_connection_encoding_get_type@Base 0.4.1
  vnc_connection_framebuffer_update_request@Base 0.4.1
  vnc_connection_get_abs_pointer@Base 0.4.1
+ vnc_connection_get_audio_format@Base 0.5.0
  vnc_connection_get_cursor@Base 0.4.1
  vnc_connection_get_ext_key_event@Base 0.4.1
  vnc_connection_get_height@Base 0.4.1
@@ -29,6 +46,8 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_connection_open_fd@Base 0.4.1
  vnc_connection_open_host@Base 0.4.1
  vnc_connection_pointer_event@Base 0.4.1
+ vnc_connection_set_audio@Base 0.5.0
+ vnc_connection_set_audio_format@Base 0.5.0
  vnc_connection_set_auth_subtype@Base 0.4.1
  vnc_connection_set_auth_type@Base 0.4.1
  vnc_connection_set_credential@Base 0.4.1
