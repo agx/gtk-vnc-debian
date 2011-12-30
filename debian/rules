@@ -35,6 +35,7 @@ override_dh_install:
 
 	dh_install -plibgtk-vnc-1.0-0 \
                    -plibgtk-vnc-1.0-dev \
+                   -pmozilla-gtk-vnc \
                    -ppython-gtk-vnc \
                   --sourcedir=debian/gtk2
 
