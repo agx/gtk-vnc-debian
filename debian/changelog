@@ -1,3 +1,14 @@
+gtk-vnc (0.5.0-2) unstable; urgency=low
+
+  [ Guido Günther ]
+  * [fba1254] Strip the mozilla plugin
+  * [1f23510] Ship libgvncpulse (Closes: #653705)
+
+  [ Flavio Stanchina ]
+  * [ead3c53] Fix missing plugin installation (Closes: #653658)
+
+ -- Guido Günther <agx@sigxcpu.org>  Sun, 01 Jan 2012 14:22:47 +0100
+
 gtk-vnc (0.5.0-1) unstable; urgency=low
 
   * [853db65] New upstream version 0.5.0 with QEMU audio extension support
