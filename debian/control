@@ -25,7 +25,9 @@ Build-Depends:
  gobject-introspection,
  libtool,
 # for vala bindings
-  valac-0.14
+  valac-0.14,
+# audio extension
+  libpulse-dev
 Build-Conflicts: libffi4-dev
 X-Python-Version: >= 2.5
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git

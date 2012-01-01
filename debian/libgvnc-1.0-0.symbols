@@ -85,3 +85,7 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_util_get_version@Base 0.4.2
  vnc_util_get_version_string@Base 0.4.2
  vnc_util_set_debug@Base 0.4.1
+libgvncpulse-1.0.so.0 libgvnc-1.0-0 #MINVER#
+ vnc_audio_pulse_get_type@Base 0.5.0
+ vnc_audio_pulse_new@Base 0.5.0
+
