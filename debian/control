@@ -28,7 +28,7 @@ Build-Depends:
   valac-0.14,
 # audio extension
   libpulse-dev
-Build-Conflicts: libffi4-dev
+Build-Conflicts: libffi4-dev, valac-0.12
 X-Python-Version: >= 2.5
 Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
 Vcs-Browser: http://git.debian.org/?p=pkg-libvirt/gtk-vnc.git
