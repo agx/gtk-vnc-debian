@@ -1,3 +1,12 @@
+gtk-vnc (0.5.0-3) unstable; urgency=low
+
+  * [0d2d0ae] Build-Conflict on valac-0.12.
+    Thanks to Daniel Kahn Gillmor for the testing (Closes: #654849)
+  * [b12be0b] Allow Unix domain sockets in gvncviewer.
+    Thanks to Daniel Kahn Gillmor for the patch (Closes: #655460)
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 28 Jan 2012 20:16:42 +0100
+
 gtk-vnc (0.5.0-2) unstable; urgency=low
 
   [ Guido Günther ]
