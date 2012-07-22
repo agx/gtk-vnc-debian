@@ -22,7 +22,8 @@ override_dh_auto_install:
 
 override_dh_auto_clean:
 	rm -rf debian/gtk2 debian/gtk3 build
-	dh_auto_clean
+	dh_auto_clean -B build/gtk2
+	dh_auto_clean -B build/gtk3
 
 override_dh_install:
 	dh_install -plibgvnc-1.0-0 \
