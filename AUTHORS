@@ -9,6 +9,7 @@ GTK VNC is written & maintained by:
 
 Patches received from:
 
+   Alexandre Rostovtsev <tetromino@gentoo.org>
    Andre Klapper <a9016009@gmx.de>
    António Lima <amrlima@gmail.com>
    A S Alam <aalam@users.sf.net>
@@ -18,6 +19,7 @@ Patches received from:
    Claude Paroz <claude@2xlibre.net>
    Daniel Nylander <po@danielnylander.se>
    Emilio Pozuelo Monfort <pochu27@gmail.com>
+   Fabiano Fidêncio <fabiano@fidencio.org>
    Fran Diéguez <fran.dieguez@glug.es>
    Gabor Kelemen <kelemeng@gnome.hu>
    Gil Forcada <gforcada@gnome.org>
@@ -67,6 +69,10 @@ Patches received from:
    Zeeshan Ali (Khattak) <zeeshanak@gnome.org>
    Daniel Korostil <ted.korostiled@gmail.com>
    Christophe Fergeau <cfergeau@redhat.com>
+   Sasi Bhushan Boddepalli <sasi@swecha.net>
+   Andika Triwidada <andika@gmail.com>
+   Alban Browaeys <prahal@yahoo.com>
+   Rūdolfs Mazurs <rudolfsm@src.gnome.org>
 
     ...send patches to get your name here...
 

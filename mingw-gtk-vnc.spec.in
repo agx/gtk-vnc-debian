@@ -1,0 +1,221 @@
+%{?mingw_package_header}
+
+Name: mingw-gtk-vnc
+Version: @VERSION@
+Release: 1%{?dist}%{?extra_release}
+Summary: MinGW Windows port of VNC client GTK widget
+
+License: LGPLv2+
+Group: Development/Libraries
+Source: http://ftp.gnome.org/pub/GNOME/sources/gtk-vnc/0.5/gtk-vnc-%{version}.tar.gz
+URL: http://live.gnome.org/gtk-vnc
+
+BuildArch: noarch
+
+BuildRequires: mingw32-filesystem >= 95
+BuildRequires: mingw64-filesystem >= 95
+BuildRequires: mingw32-gcc
+BuildRequires: mingw64-gcc
+BuildRequires: mingw32-binutils
+BuildRequires: mingw64-binutils
+
+BuildRequires: mingw32-cairo
+BuildRequires: mingw64-cairo
+BuildRequires: mingw32-gettext
+BuildRequires: mingw64-gettext
+BuildRequires: mingw32-win-iconv
+BuildRequires: mingw64-win-iconv
+BuildRequires: mingw32-gnutls
+BuildRequires: mingw64-gnutls
+BuildRequires: mingw32-gtk2
+BuildRequires: mingw64-gtk2
+BuildRequires: mingw32-gtk3
+BuildRequires: mingw64-gtk3
+
+BuildRequires: pkgconfig
+BuildRequires: intltool
+
+# Mingw32
+%package -n mingw32-gtk-vnc
+Summary:        MinGW Windows zlib compression library for the win32 target
+Requires:       pkgconfig
+
+%package -n mingw32-gvnc
+Summary: MinGW Windows port of VNC GObject
+
+%package -n mingw32-gvnc-tools
+Summary: Command line VNC tools
+Group: Applications/Internet
+
+%package -n mingw32-gtk-vnc2
+Summary: A GTK3 widget for VNC clients
+Group: Development/Libraries
+Requires: pkgconfig
+
+%description
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
+allowing it to be completely asynchronous while remaining single threaded.
+
+%description -n mingw32-gtk-vnc
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
+allowing it to be completely asynchronous while remaining single threaded.
+
+%description -n mingw32-gvnc
+gvnc is a GObject for managing a VNC connection. It provides all the
+infrastructure required to build a VNC client without having to deal
+with the raw protocol itself.
+
+%description -n mingw32-gvnc-tools
+Provides useful command line utilities for interacting with
+VNC servers. Includes the gvnccapture program for capturing
+screenshots of a VNC desktop
+
+%description -n mingw32-gtk-vnc2
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
+allowing it to be completely asynchronous while remaining single threaded.
+
+# Mingw64
+%package -n mingw64-gtk-vnc
+Summary:        MinGW Windows zlib compression library for the win64 target
+Requires:       pkgconfig
+
+%package -n mingw64-gvnc
+Summary: MinGW Windows port of VNC GObject
+
+%package -n mingw64-gvnc-tools
+Summary: Command line VNC tools
+Group: Applications/Internet
+
+%package -n mingw64-gtk-vnc2
+Summary: A GTK3 widget for VNC clients
+Group: Development/Libraries
+Requires: pkgconfig
+
+%description
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
+allowing it to be completely asynchronous while remaining single threaded.
+
+%description -n mingw64-gtk-vnc
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
+allowing it to be completely asynchronous while remaining single threaded.
+
+%description -n mingw64-gvnc
+gvnc is a GObject for managing a VNC connection. It provides all the
+infrastructure required to build a VNC client without having to deal
+with the raw protocol itself.
+
+%description -n mingw64-gvnc-tools
+Provides useful command line utilities for interacting with
+VNC servers. Includes the gvnccapture program for capturing
+screenshots of a VNC desktop
+
+%description -n mingw64-gtk-vnc2
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
+allowing it to be completely asynchronous while remaining single threaded.
+
+%{?mingw_debug_package}
+
+
+%prep
+%setup -q -n gtk-vnc-%{version} -c
+touch gtk-vnc-%{version}/GNUmakefile
+cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
+
+
+%build
+cd gtk-vnc-%{version}
+%mingw_configure --without-python --with-examples --without-sasl --with-gtk=2.0
+rm build_win{32,64}/GNUmakefile
+%mingw_make %{?_smp_mflags} V=1
+cd ..
+
+cd gtk-vnc2-%{version}
+%mingw_configure --without-python --without-examples --without-sasl --with-gtk=3.0
+rm build_win{32,64}/GNUmakefile
+%mingw_make %{?_smp_mflags} V=1
+cd ..
+
+
+%install
+cd gtk-vnc-%{version}
+%mingw_make_install DESTDIR=$RPM_BUILD_ROOT
+cd ..
+cd gtk-vnc2-%{version}
+%mingw_make_install DESTDIR=$RPM_BUILD_ROOT
+cd ..
+
+# Remove static libraries but DON'T remove *.dll.a files.
+rm -f $RPM_BUILD_ROOT%{mingw32_libdir}/libgtk-vnc-1.0.a
+rm -f $RPM_BUILD_ROOT%{mingw32_libdir}/libgtk-vnc-2.0.a
+rm -f $RPM_BUILD_ROOT%{mingw32_libdir}/libgvnc-1.0.a
+rm -f $RPM_BUILD_ROOT%{mingw32_mandir}/man1/gvnccapture.1*
+rm -f $RPM_BUILD_ROOT%{mingw64_libdir}/libgtk-vnc-1.0.a
+rm -f $RPM_BUILD_ROOT%{mingw64_libdir}/libgtk-vnc-2.0.a
+rm -f $RPM_BUILD_ROOT%{mingw64_libdir}/libgvnc-1.0.a
+rm -f $RPM_BUILD_ROOT%{mingw64_mandir}/man1/gvnccapture.1*
+
+# Drop all .la files
+find $RPM_BUILD_ROOT -name "*.la" -delete
+
+%find_lang gtk-vnc
+
+
+# Mingw32
+%files -n mingw32-gtk-vnc -f gtk-vnc.lang
+%{mingw32_bindir}/gvncviewer.exe
+%{mingw32_bindir}/libgtk-vnc-1.0-0.dll
+%{mingw32_libdir}/libgtk-vnc-1.0.dll.a
+%{mingw32_libdir}/pkgconfig/gtk-vnc-1.0.pc
+%{mingw32_includedir}/gtk-vnc-1.0
+
+%files -n mingw32-gvnc
+%doc gtk-vnc-%{version}/AUTHORS
+%doc gtk-vnc-%{version}/ChangeLog
+%doc gtk-vnc-%{version}/ChangeLog-old
+%doc gtk-vnc-%{version}/NEWS
+%doc gtk-vnc-%{version}/README
+%doc gtk-vnc-%{version}/COPYING.LIB
+%{mingw32_bindir}/libgvnc-1.0-0.dll
+%{mingw32_libdir}/libgvnc-1.0.dll.a
+%{mingw32_libdir}/pkgconfig/gvnc-1.0.pc
+%{mingw32_includedir}/gvnc-1.0
+
+%files -n mingw32-gtk-vnc2
+%{mingw32_bindir}/libgtk-vnc-2.0-0.dll
+%{mingw32_libdir}/libgtk-vnc-2.0.dll.a
+%{mingw32_libdir}/pkgconfig/gtk-vnc-2.0.pc
+%{mingw32_includedir}/gtk-vnc-2.0
+
+%files -n mingw32-gvnc-tools
+%{mingw32_bindir}/gvnccapture.exe
+
+# Mingw64
+%files -n mingw64-gtk-vnc -f gtk-vnc.lang
+%{mingw64_bindir}/gvncviewer.exe
+%{mingw64_bindir}/libgtk-vnc-1.0-0.dll
+%{mingw64_libdir}/libgtk-vnc-1.0.dll.a
+%{mingw64_libdir}/pkgconfig/gtk-vnc-1.0.pc
+%{mingw64_includedir}/gtk-vnc-1.0
+
+%files -n mingw64-gvnc
+%doc gtk-vnc-%{version}/AUTHORS
+%doc gtk-vnc-%{version}/ChangeLog
+%doc gtk-vnc-%{version}/ChangeLog-old
+%doc gtk-vnc-%{version}/NEWS
+%doc gtk-vnc-%{version}/README
+%doc gtk-vnc-%{version}/COPYING.LIB
+%{mingw64_bindir}/libgvnc-1.0-0.dll
+%{mingw64_libdir}/libgvnc-1.0.dll.a
+%{mingw64_libdir}/pkgconfig/gvnc-1.0.pc
+%{mingw64_includedir}/gvnc-1.0
+
+%files -n mingw64-gtk-vnc2
+%{mingw64_bindir}/libgtk-vnc-2.0-0.dll
+%{mingw64_libdir}/libgtk-vnc-2.0.dll.a
+%{mingw64_libdir}/pkgconfig/gtk-vnc-2.0.pc
+%{mingw64_includedir}/gtk-vnc-2.0
+
+%files -n mingw64-gvnc-tools
+%{mingw64_bindir}/gvnccapture.exe
+
+%changelog

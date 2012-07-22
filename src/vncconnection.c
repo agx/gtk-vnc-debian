@@ -44,7 +44,7 @@
 #include <gnutls/x509.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
 #include <sasl/sasl.h>
 #endif
 
@@ -56,11 +56,56 @@
 
 #include "dh.h"
 
+#if GLIB_CHECK_VERSION(2, 31, 0)
+#define g_mutex_new() g_new0(GMutex, 1)
+#define g_mutex_free(m) g_free(m)
+#endif
+
 struct wait_queue
 {
     gboolean waiting;
     struct coroutine *context;
 };
+
+typedef enum {
+    VNC_CONNECTION_SERVER_MESSAGE_FRAMEBUFFER_UPDATE = 0,
+    VNC_CONNECTION_SERVER_MESSAGE_SET_COLOR_MAP_ENTRIES = 1,
+    VNC_CONNECTION_SERVER_MESSAGE_BELL = 2,
+    VNC_CONNECTION_SERVER_MESSAGE_SERVER_CUT_TEXT = 3,
+    VNC_CONNECTION_SERVER_MESSAGE_QEMU = 255,
+} VncConnectionServerMessage;
+
+typedef enum {
+    VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO = 1,
+} VncConnectionServerMessageQEMU;
+
+typedef enum {
+    VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO_STOP = 0,
+    VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO_START = 1,
+    VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO_DATA = 2,
+} VncConnectionServerMessageQEMUAudio;
+
+
+typedef enum {
+    VNC_CONNECTION_CLIENT_MESSAGE_SET_PIXEL_FORMAT = 0,
+    VNC_CONNECTION_CLIENT_MESSAGE_SET_ENCODINGS = 2,
+    VNC_CONNECTION_CLIENT_MESSAGE_FRAMEBUFFER_UPDATE_REQUEST = 3,
+    VNC_CONNECTION_CLIENT_MESSAGE_KEY = 4,
+    VNC_CONNECTION_CLIENT_MESSAGE_POINTER = 5,
+    VNC_CONNECTION_CLIENT_MESSAGE_CUT_TEXT = 6,
+    VNC_CONNECTION_CLIENT_MESSAGE_QEMU = 255,
+} VncConnectionClientMessage;
+
+typedef enum {
+    VNC_CONNECTION_CLIENT_MESSAGE_QEMU_KEY = 0,
+    VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO = 1,
+} VncConnectionClientMessageQEMU;
+
+typedef enum {
+    VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO_ENABLE = 0,
+    VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO_DISABLE = 1,
+    VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO_SET_FORMAT = 2,
+} VncConnectionClientMessageQEMUAudio;
 
 
 typedef void vnc_connection_rich_cursor_blt_func(VncConnection *conn, guint8 *, guint8 *,
@@ -101,6 +146,7 @@ struct _VncConnectionPrivate
     struct coroutine coroutine;
     guint open_id;
     GSocket *sock;
+    GSocketAddress *addr;
     int fd;
     char *host;
     char *port;
@@ -127,7 +173,7 @@ struct _VncConnectionPrivate
     gboolean want_cred_password;
     gboolean want_cred_x509;
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
     sasl_conn_t *saslconn;      /* SASL context */
     const char *saslDecoded;
     unsigned int saslDecodedLength;
@@ -522,6 +568,9 @@ static gboolean do_vnc_connection_emit_main_context(gpointer opaque)
                       signals[data->signum],
                       0);
         break;
+
+    default:
+        g_warn_if_reached();
     }
 
     coroutine_yieldto(data->caller, NULL);
@@ -672,7 +721,7 @@ static int vnc_connection_read_wire(VncConnection *conn, void *data, size_t len)
 }
 
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
 /*
  * Read at least 1 more byte of data out of the SASL decrypted
  * data buffer, into the internal read buffer
@@ -685,17 +734,22 @@ static int vnc_connection_read_sasl(VncConnection *conn)
     //VNC_DEBUG("Read SASL %p size %d offset %d", priv->saslDecoded,
     //           priv->saslDecodedLength, priv->saslDecodedOffset);
     if (priv->saslDecoded == NULL) {
-        char encoded[8192];
-        int encodedLen = sizeof(encoded);
+        char *encoded;
+        int encodedLen;
         int err, ret;
+
+        encodedLen = 8192;
+        encoded = g_new0(char, encodedLen);
 
         ret = vnc_connection_read_wire(conn, encoded, encodedLen);
         if (ret < 0) {
+            g_free(encoded);
             return ret;
         }
 
         err = sasl_decode(priv->saslconn, encoded, ret,
                           &priv->saslDecoded, &priv->saslDecodedLength);
+        g_free(encoded);
         if (err != SASL_OK) {
             VNC_DEBUG("Failed to decode SASL data %s",
                       sasl_errstring(err, NULL, NULL));
@@ -740,7 +794,7 @@ static int vnc_connection_read_plain(VncConnection *conn)
  */
 static int vnc_connection_read_buf(VncConnection *conn)
 {
-#if HAVE_SASL
+#ifdef HAVE_SASL
     VncConnectionPrivate *priv = conn->priv;
 
     //VNC_DEBUG("Start read %d", priv->has_error);
@@ -859,7 +913,7 @@ static void vnc_connection_flush_wire(VncConnection *conn,
 }
 
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
 /*
  * Encode all buffered data, write all encrypted data out
  * to the wire
@@ -908,7 +962,7 @@ static void vnc_connection_flush(VncConnection *conn)
     VncConnectionPrivate *priv = conn->priv;
 
     //VNC_DEBUG("Start flush write %d", priv->has_error);
-#if HAVE_SASL
+#ifdef HAVE_SASL
     if (priv->saslconn)
         vnc_connection_flush_sasl(conn);
     else
@@ -1470,7 +1524,7 @@ gboolean vnc_connection_set_pixel_format(VncConnection *conn,
     VncConnectionPrivate *priv = conn->priv;
     guint8 pad[3] = {0};
 
-    vnc_connection_buffered_write_u8(conn, 0);
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_SET_PIXEL_FORMAT);
     vnc_connection_buffered_write(conn, pad, 3);
 
     vnc_connection_buffered_write_u8(conn, fmt->bits_per_pixel);
@@ -1514,9 +1568,9 @@ static void vnc_connection_send_audio_format(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
 
-    vnc_connection_buffered_write_u8(conn,  255);
-    vnc_connection_buffered_write_u8(conn,  1); /* VNC_CONNECTION_QEMU_AUDIO */
-    vnc_connection_buffered_write_u16(conn, 2); /* VNC_CONNECTION_QEMU_AUDIO_SET_FORMAT */
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU);
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO);
+    vnc_connection_buffered_write_u16(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO_SET_FORMAT);
 
     vnc_connection_buffered_write_u8(conn,  priv->audio_format.format);
     vnc_connection_buffered_write_u8(conn,  priv->audio_format.nchannels);
@@ -1553,9 +1607,9 @@ gboolean vnc_connection_audio_enable(VncConnection *conn)
 
     if (priv->has_audio)
         {
-            vnc_connection_buffered_write_u8(conn,  255); /* QEMU message */
-            vnc_connection_buffered_write_u8(conn,  1);   /* VNC_CONNECTION_QEMU_AUDIO */
-            vnc_connection_buffered_write_u16(conn, 0);   /* VNC_CONNECTION_QEMU_AUDIO_ENABLE */
+            vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU);
+            vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO);
+            vnc_connection_buffered_write_u16(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO_ENABLE);
             vnc_connection_buffered_flush(conn);
             priv->audio_enable_pending=FALSE;
         }
@@ -1571,9 +1625,9 @@ gboolean vnc_connection_audio_disable(VncConnection *conn)
 
     if (priv->has_audio)
         {
-            vnc_connection_buffered_write_u8(conn,  255); /* QEMU message */
-            vnc_connection_buffered_write_u8(conn,  1);   /* VNC_CONNECTION_QEMU_AUDIO */
-            vnc_connection_buffered_write_u16(conn, 1);  /* VNC_CONNECTION_QEMU_AUDIO_ENABLE */
+            vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU);
+            vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO);
+            vnc_connection_buffered_write_u16(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_AUDIO_DISABLE);
             vnc_connection_buffered_flush(conn);
             priv->audio_disable_pending=FALSE;
         }
@@ -1613,7 +1667,7 @@ gboolean vnc_connection_set_encodings(VncConnection *conn, int n_encoding, gint3
 
     priv->has_ext_key_event = FALSE;
     priv->has_audio = FALSE;
-    vnc_connection_buffered_write_u8(conn, 2);
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_SET_ENCODINGS);
     vnc_connection_buffered_write(conn, pad, 1);
     vnc_connection_buffered_write_u16(conn, n_encoding - skip_zrle);
     for (i = 0; i < n_encoding; i++) {
@@ -1642,7 +1696,7 @@ gboolean vnc_connection_framebuffer_update_request(VncConnection *conn,
     priv->lastUpdateRequest.width = width;
     priv->lastUpdateRequest.height = height;
 
-    vnc_connection_buffered_write_u8(conn, 3);
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_FRAMEBUFFER_UPDATE_REQUEST);
     vnc_connection_buffered_write_u8(conn, incremental ? 1 : 0);
     vnc_connection_buffered_write_u16(conn, x);
     vnc_connection_buffered_write_u16(conn, y);
@@ -1670,7 +1724,7 @@ vnc_connection_resend_framebuffer_update_request(VncConnection *conn)
               priv->lastUpdateRequest.height,
               (int)priv->lastUpdateRequest.incremental);
 
-    vnc_connection_write_u8(conn, 3);
+    vnc_connection_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_FRAMEBUFFER_UPDATE_REQUEST);
     vnc_connection_write_u8(conn, priv->lastUpdateRequest.incremental ? 1 : 0);
     vnc_connection_write_u16(conn, priv->lastUpdateRequest.x);
     vnc_connection_write_u16(conn, priv->lastUpdateRequest.y);
@@ -1690,13 +1744,13 @@ gboolean vnc_connection_key_event(VncConnection *conn, gboolean down_flag,
 
     VNC_DEBUG("Key event %d %d %d Extended: %d", key, scancode, down_flag, priv->has_ext_key_event);
     if (priv->has_ext_key_event) {
-        vnc_connection_buffered_write_u8(conn, 255);
-        vnc_connection_buffered_write_u8(conn, 0);
+        vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU);
+        vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_QEMU_KEY);
         vnc_connection_buffered_write_u16(conn, down_flag ? 1 : 0);
         vnc_connection_buffered_write_u32(conn, key);
         vnc_connection_buffered_write_u32(conn, scancode);
     } else {
-        vnc_connection_buffered_write_u8(conn, 4);
+        vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_KEY);
         vnc_connection_buffered_write_u8(conn, down_flag ? 1 : 0);
         vnc_connection_buffered_write(conn, pad, 2);
         vnc_connection_buffered_write_u32(conn, key);
@@ -1709,7 +1763,7 @@ gboolean vnc_connection_key_event(VncConnection *conn, gboolean down_flag,
 gboolean vnc_connection_pointer_event(VncConnection *conn, guint8 button_mask,
                                       guint16 x, guint16 y)
 {
-    vnc_connection_buffered_write_u8(conn, 5);
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_POINTER);
     vnc_connection_buffered_write_u8(conn, button_mask);
     vnc_connection_buffered_write_u16(conn, x);
     vnc_connection_buffered_write_u16(conn, y);
@@ -1722,7 +1776,7 @@ gboolean vnc_connection_client_cut_text(VncConnection *conn,
 {
     guint8 pad[3] = {0};
 
-    vnc_connection_buffered_write_u8(conn, 6);
+    vnc_connection_buffered_write_u8(conn, VNC_CONNECTION_CLIENT_MESSAGE_CUT_TEXT);
     vnc_connection_buffered_write(conn, pad, 3);
     vnc_connection_buffered_write_u32(conn, length);
     vnc_connection_buffered_write(conn, data, length);
@@ -2037,8 +2091,10 @@ static void vnc_connection_zrle_update_tile_blit(VncConnection *conn,
                                                  guint16 width, guint16 height)
 {
     VncConnectionPrivate *priv = conn->priv;
-    guint8 blit_data[4 * 64 * 64];
+    guint8 *blit_data;
     int i, bpp;
+
+    blit_data = g_new0(guint8, 4*64*64);
 
     bpp = vnc_connection_pixel_size(conn);
 
@@ -2046,6 +2102,8 @@ static void vnc_connection_zrle_update_tile_blit(VncConnection *conn,
         vnc_connection_read_cpixel(conn, blit_data + (i * bpp));
 
     vnc_framebuffer_blt(priv->fb, blit_data, width * bpp, x, y, width, height);
+
+    g_free(blit_data);
 }
 
 static guint8 vnc_connection_read_zrle_pi(VncConnection *conn, int palette_size)
@@ -2623,6 +2681,8 @@ static void vnc_connection_pointer_type_change(VncConnection *conn, gboolean abs
     VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
 
+    VNC_DEBUG("Pointer mode %s", absPointer ? "absolute" : "relative");
+
     if (priv->absPointer == absPointer)
         return;
     priv->absPointer = absPointer;
@@ -2745,6 +2805,7 @@ static void vnc_connection_ext_key_event(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
 
+    VNC_DEBUG("Keyboard mode extended");
     priv->has_ext_key_event = TRUE;
 }
 
@@ -2838,6 +2899,7 @@ static gboolean vnc_connection_framebuffer_update(VncConnection *conn, gint32 et
         vnc_connection_resend_framebuffer_update_request(conn);
         break;
     case VNC_CONNECTION_ENCODING_AUDIO:
+        VNC_DEBUG("Audio encoding support");
         priv->has_audio=TRUE;
 
         if (priv->audio_disable_pending)
@@ -2881,7 +2943,11 @@ struct audio_action_data
 {
     VncConnection *conn;
     struct coroutine *caller;
-    int action;
+    enum {
+        VNC_AUDIO_PLAYBACK_STOP = 0,
+        VNC_AUDIO_PLAYBACK_START = 1,
+        VNC_AUDIO_PLAYBACK_DATA = 2,
+    } action;
 };
 
 static gboolean do_vnc_connection_audio_action(gpointer opaque)
@@ -2892,15 +2958,17 @@ static gboolean do_vnc_connection_audio_action(gpointer opaque)
     VNC_DEBUG("Audio action main context %d", data->action);
 
     switch (data->action) {
-    case 0:
+    case VNC_AUDIO_PLAYBACK_STOP:
         vnc_audio_playback_stop(priv->audio);
         break;
-    case 1:
+    case VNC_AUDIO_PLAYBACK_START:
         vnc_audio_playback_start(priv->audio, &priv->audio_format);
         break;
-    case 2:
+    case VNC_AUDIO_PLAYBACK_DATA:
         vnc_audio_playback_data(priv->audio, priv->audio_sample);
         break;
+    default:
+        g_warn_if_reached();
     }
 
     coroutine_yieldto(data->caller, NULL);
@@ -2956,7 +3024,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
     }
 
     switch (msg) {
-    case 0: { /* FramebufferUpdate */
+    case VNC_CONNECTION_SERVER_MESSAGE_FRAMEBUFFER_UPDATE: {
         guint8 pad[1];
         guint16 n_rects;
         int i;
@@ -2977,7 +3045,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
                 break;
         }
     }        break;
-    case 1: { /* SetColorMapEntries */
+    case VNC_CONNECTION_SERVER_MESSAGE_SET_COLOR_MAP_ENTRIES: {
         guint16 first_color;
         guint16 n_colors;
         guint8 pad[1];
@@ -3007,10 +3075,10 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
         vnc_framebuffer_set_color_map(priv->fb, map);
         vnc_color_map_free(map);
     }        break;
-    case 2: /* Bell */
+    case VNC_CONNECTION_SERVER_MESSAGE_BELL:
         vnc_connection_bell(conn);
         break;
-    case 3: { /* ServerCutText */
+    case VNC_CONNECTION_SERVER_MESSAGE_SERVER_CUT_TEXT: {
         guint8 pad[3];
         guint32 n_text;
         char *data;
@@ -3036,7 +3104,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
         vnc_connection_server_cut_text(conn, data, n_text);
         g_free(data);
     }        break;
-    case 255: { /* QEMU Messages */
+    case VNC_CONNECTION_SERVER_MESSAGE_QEMU: {
         guint8  n_type;
 
         n_type = vnc_connection_read_u8(conn);
@@ -3045,13 +3113,13 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
             break;
 
         switch (n_type) {
-        case 1: { /* QEMU audio */
+        case VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO: {
             guint16 n_subtype;
             guint32 n_length;
 
             n_subtype = vnc_connection_read_u16(conn);
             switch (n_subtype) {
-            case 2:
+            case VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO_DATA:
                 n_length = vnc_connection_read_u32(conn);
                 if (n_length > (1024*1024)) {
                     VNC_DEBUG("Received audio message that is too large %u", n_length);
@@ -3073,7 +3141,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
                             priv->audio_sample->capacity,
                             priv->audio_sample->length,
                             n_length);
-                    vnc_connection_audio_action(conn, 2);
+                    vnc_connection_audio_action(conn, VNC_AUDIO_PLAYBACK_DATA);
                     vnc_audio_sample_free(priv->audio_sample);
                     priv->audio_sample = NULL;
                 }
@@ -3089,21 +3157,21 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
                                     n_length);
                 priv->audio_sample->length += n_length;
                 break;
-            case 1:
+            case VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO_START:
                 if (priv->audio)
-                    vnc_connection_audio_action(conn, 1);
+                    vnc_connection_audio_action(conn, VNC_AUDIO_PLAYBACK_START);
                 else
                     priv->has_error = TRUE;
                 break;
-            case 0:
+            case VNC_CONNECTION_SERVER_MESSAGE_QEMU_AUDIO_STOP:
                 if (priv->audio) {
                     if (priv->audio_sample) {
                         g_source_remove(priv->audio_timer);
-                        vnc_connection_audio_action(conn, 2);
+                        vnc_connection_audio_action(conn, VNC_AUDIO_PLAYBACK_DATA);
                         vnc_audio_sample_free(priv->audio_sample);
                         priv->audio_sample = NULL;
                     }
-                    vnc_connection_audio_action(conn, 0);
+                    vnc_connection_audio_action(conn, VNC_AUDIO_PLAYBACK_STOP);
                 } else {
                     priv->has_error = TRUE;
                 }
@@ -3489,7 +3557,7 @@ static gboolean vnc_connection_perform_auth_ard(VncConnection *conn)
 }
 
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
 /*
  * NB, keep in sync with similar method in qemud/remote.c
  */
@@ -3564,6 +3632,9 @@ vnc_connection_gather_sasl_credentials(VncConnection *conn,
             interact[ninteract].len = strlen(priv->cred_password);
             //VNC_DEBUG("Gather Password %s", priv->cred_password);
             break;
+
+        default:
+            g_warn_if_reached();
         }
     }
 
@@ -3607,7 +3678,6 @@ vnc_connection_gather_sasl_credentials(VncConnection *conn,
  */
 
 #define SASL_MAX_MECHLIST_LEN 300
-#define SASL_MAX_MECHNAME_LEN 100
 #define SASL_MAX_DATA_LEN (1024 * 1024)
 
 /* Perform the SASL authentication process
@@ -4181,7 +4251,7 @@ static gboolean vnc_connection_perform_auth_tls(VncConnection *conn)
         return TRUE;
     case VNC_CONNECTION_AUTH_VNC:
         return vnc_connection_perform_auth_vnc(conn);
-#if HAVE_SASL
+#ifdef HAVE_SASL
     case VNC_CONNECTION_AUTH_SASL:
         return vnc_connection_perform_auth_sasl(conn);
 #endif
@@ -4247,7 +4317,7 @@ static gboolean vnc_connection_perform_auth_vencrypt(VncConnection *conn)
     if (!vnc_connection_gather_credentials(conn))
         return FALSE;
 
-#if !DEBUG
+#ifndef DEBUG
     if (priv->auth_subtype == VNC_CONNECTION_AUTH_VENCRYPT_PLAIN) {
         VNC_DEBUG("Cowardly refusing to transmit plain text password");
         return FALSE;
@@ -4292,7 +4362,7 @@ static gboolean vnc_connection_perform_auth_vencrypt(VncConnection *conn)
         VNC_DEBUG("Handing off to VNC auth");
         return vnc_connection_perform_auth_vnc(conn);
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
         /* SASL layered over TLS */
     case VNC_CONNECTION_AUTH_VENCRYPT_TLSSASL:
     case VNC_CONNECTION_AUTH_VENCRYPT_X509SASL:
@@ -4383,7 +4453,7 @@ static gboolean vnc_connection_perform_auth(VncConnection *conn)
     case VNC_CONNECTION_AUTH_VENCRYPT:
         return vnc_connection_perform_auth_vencrypt(conn);
 
-#if HAVE_SASL
+#ifdef HAVE_SASL
     case VNC_CONNECTION_AUTH_SASL:
         return vnc_connection_perform_auth_sasl(conn);
 #endif
@@ -4657,7 +4727,7 @@ static void vnc_connection_close(VncConnection *conn)
         gnutls_bye(priv->tls_session, GNUTLS_SHUT_RDWR);
         priv->tls_session = NULL;
     }
-#if HAVE_SASL
+#ifdef HAVE_SASL
     if (priv->saslconn) {
         sasl_dispose (&priv->saslconn);
         priv->saslconn = NULL;
@@ -4668,6 +4738,10 @@ static void vnc_connection_close(VncConnection *conn)
     if (priv->sock) {
         g_object_unref(priv->sock);
         priv->sock = NULL;
+    }
+    if (priv->addr) {
+        g_object_unref(priv->addr);
+        priv->addr = NULL;
     }
     if (priv->fd != -1)
         priv->fd = -1;
@@ -4779,6 +4853,8 @@ gboolean vnc_connection_is_open(VncConnection *conn)
     if (priv->sock != NULL)
         return TRUE;
     if (priv->host)
+        return TRUE;
+    if (priv->addr)
         return TRUE;
     return FALSE;
 }
@@ -4946,6 +5022,24 @@ static GSocket *vnc_connection_connect_socket(GSocketAddress *sockaddr,
     return sock;
 }
 
+static gboolean vnc_connection_open_addr_internal(VncConnection *conn)
+{
+    VncConnectionPrivate *priv = conn->priv;
+    GError *conn_error = NULL;
+    GSocket *sock = NULL;
+
+    VNC_DEBUG("Connecting with addr %p", priv->addr);
+
+    sock = vnc_connection_connect_socket(priv->addr, &conn_error);
+    g_clear_error(&conn_error);
+    if (sock) {
+        priv->sock = sock;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
 static gboolean vnc_connection_open_host_internal(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
@@ -5012,6 +5106,9 @@ static void *vnc_connection_coroutine(void *opaque)
     if (priv->fd != -1) {
         if (!vnc_connection_open_fd_internal(conn))
             goto cleanup;
+    } else if (priv->addr != NULL) {
+        if (!vnc_connection_open_addr_internal(conn))
+            goto cleanup;
     } else {
         if (!vnc_connection_open_host_internal(conn))
             goto cleanup;
@@ -5062,6 +5159,12 @@ static gboolean do_vnc_connection_open(gpointer data)
 
 gboolean vnc_connection_open_fd(VncConnection *conn, int fd)
 {
+    return vnc_connection_open_fd_with_hostname(conn, fd, NULL);
+}
+
+
+gboolean vnc_connection_open_fd_with_hostname(VncConnection *conn, int fd, const char *hostname)
+{
     VncConnectionPrivate *priv = conn->priv;
 
     VNC_DEBUG("Open fd=%d", fd);
@@ -5070,14 +5173,16 @@ gboolean vnc_connection_open_fd(VncConnection *conn, int fd)
         return FALSE;
 
     priv->fd = fd;
-    priv->host = NULL;
-    priv->port = NULL;
+    priv->addr = NULL;
+    priv->host = g_strdup(hostname ? hostname : "localhost");
+    priv->port = g_strdup("");
 
     g_object_ref(G_OBJECT(conn)); /* Unref'd when co-routine exits */
     priv->open_id = g_idle_add(do_vnc_connection_open, conn);
 
     return TRUE;
 }
+
 
 gboolean vnc_connection_open_host(VncConnection *conn, const char *host, const char *port)
 {
@@ -5089,8 +5194,35 @@ gboolean vnc_connection_open_host(VncConnection *conn, const char *host, const c
         return FALSE;
 
     priv->fd = -1;
+    priv->addr = NULL;
     priv->host = g_strdup(host);
     priv->port = g_strdup(port);
+
+    g_object_ref(G_OBJECT(conn)); /* Unref'd when co-routine exits */
+    priv->open_id = g_idle_add(do_vnc_connection_open, conn);
+
+    return TRUE;
+}
+
+gboolean vnc_connection_open_addr(VncConnection *conn, GSocketAddress *addr, const char *hostname)
+{
+    VncConnectionPrivate *priv = conn->priv;
+
+    VNC_DEBUG("Open addr=%p", addr);
+
+    if (vnc_connection_is_open(conn))
+        return FALSE;
+
+    priv->fd = -1;
+    priv->addr = g_object_ref(addr);
+
+    priv->host = g_strdup(hostname ? hostname : "localhost");
+    if (G_IS_INET_SOCKET_ADDRESS(addr)) {
+        guint16 port = g_inet_socket_address_get_port(G_INET_SOCKET_ADDRESS(addr));
+        priv->port = g_strdup_printf("%d", (int)port);
+    } else {
+        priv->port = g_strdup("");
+    }
 
     g_object_ref(G_OBJECT(conn)); /* Unref'd when co-routine exits */
     priv->open_id = g_idle_add(do_vnc_connection_open, conn);

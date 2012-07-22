@@ -87,6 +87,8 @@ GType vnc_display_get_type(void);
 GtkWidget *vnc_display_new(void);
 
 gboolean vnc_display_open_fd(VncDisplay *obj, int fd);
+gboolean vnc_display_open_fd_with_hostname(VncDisplay *obj, int fd, const char *hostname);
+gboolean vnc_display_open_addr(VncDisplay *obj, GSocketAddress *addr, const char *hostname);
 gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *port);
 gboolean vnc_display_is_open(VncDisplay *obj);
 void vnc_display_close(VncDisplay *obj);

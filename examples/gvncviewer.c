@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib.h>
+#if HAVE_GIOUNIX
+#include <gio/gunixsocketaddress.h>
+#endif
 
 #if WITH_LIBVIEW
 #include <libview/autoDrawer.h>
@@ -565,8 +568,6 @@ int main(int argc, char **argv)
     gchar *name;
     GOptionContext *context;
     GError *error = NULL;
-    char port[1024], hostname[1024];
-    char *display;
     GtkWidget *window;
     GtkWidget *layout;
     GtkWidget *menubar;
@@ -687,18 +688,39 @@ int main(int argc, char **argv)
     gtk_container_add(GTK_CONTAINER(window), layout);
     gtk_widget_realize(vnc);
 
-    snprintf(hostname, sizeof(hostname), "%s", args[0]);
-    display = strchr(hostname, ':');
+#if HAVE_GIOUNIX
+    if (strchr(args[0], '/')) {
+        GSocketAddress *addr = g_unix_socket_address_new_with_type
+            (args[0], strlen(args[0]),
+             G_UNIX_SOCKET_ADDRESS_PATH);
 
-    if (display) {
-        *display = 0;
-        snprintf(port, sizeof(port), "%d", 5900 + atoi(display + 1));
-    } else
-        snprintf(port, sizeof(port), "%d", 5900);
+        vnc_display_open_addr(VNC_DISPLAY(vnc), addr, NULL);
 
-    if (!*hostname)
-        snprintf(hostname, sizeof(hostname), "%s", "127.0.0.1");
-    vnc_display_open_host(VNC_DISPLAY(vnc), hostname, port);
+        g_object_unref(addr);
+    } else {
+#endif
+        gchar *tmp;
+        gchar *hostname;
+        gchar *port;
+
+        if (g_str_equal(args[0], ""))
+            hostname = g_strdup("127.0.0.1");
+        else
+            hostname = g_strdup(args[0]);
+
+        tmp = strchr(hostname, ':');
+        if (tmp) {
+            *tmp = '\0';
+            port = g_strdup_printf("%d", 5900 + atoi(tmp + 1));
+        } else {
+            port = g_strdup("5900");
+        }
+        vnc_display_open_host(VNC_DISPLAY(vnc), hostname, port);
+        g_free(hostname);
+        g_free(port);
+#if HAVE_GIOUNIX
+    }
+#endif
     vnc_display_set_keyboard_grab(VNC_DISPLAY(vnc), TRUE);
     vnc_display_set_pointer_grab(VNC_DISPLAY(vnc), TRUE);
 

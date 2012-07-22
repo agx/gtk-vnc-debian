@@ -23,6 +23,7 @@
 #define VNC_CONNECTION_H
 
 #include <glib.h>
+#include <gio/gio.h>
 
 #include <vncframebuffer.h>
 #include <vnccursor.h>
@@ -153,7 +154,9 @@ GType vnc_connection_get_type(void) G_GNUC_CONST;
 VncConnection *vnc_connection_new(void);
 
 gboolean vnc_connection_open_fd(VncConnection *conn, int fd);
+gboolean vnc_connection_open_fd_with_hostname(VncConnection *conn, int fd, const char *hostname);
 gboolean vnc_connection_open_host(VncConnection *conn, const char *host, const char *port);
+gboolean vnc_connection_open_addr(VncConnection *conn, GSocketAddress *addr, const char *hostname);
 gboolean vnc_connection_is_open(VncConnection *conn);
 void vnc_connection_shutdown(VncConnection *conn);
 

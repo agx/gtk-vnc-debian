@@ -40,6 +40,15 @@ GType vnc_grab_sequence_get_type(void)
 }
 
 
+/**
+ * vnc_grab_sequence_new:
+ * @nkeysyms: length of @keysyms
+ * @keysyms: (array length=nkeysyms): the keysym values
+ *
+ * Creates a new grab sequence from a list of keysym values
+ *
+ * Returns: (transfer full): a new grab sequence object
+ */
 VncGrabSequence *vnc_grab_sequence_new(guint nkeysyms, guint *keysyms)
 {
     VncGrabSequence *sequence;
@@ -53,6 +62,14 @@ VncGrabSequence *vnc_grab_sequence_new(guint nkeysyms, guint *keysyms)
 }
 
 
+/**
+ * vnc_grab_sequence_new_from_string:
+ * @str: string of keysym names
+ *
+ * Creates a new grab sequence from a list of keysym names
+ *
+ * Returns: (transfer full): a new grab sequence object
+ */
 VncGrabSequence *vnc_grab_sequence_new_from_string(const gchar *str)
 {
     gchar **keysymstr;
@@ -98,6 +115,14 @@ void vnc_grab_sequence_free(VncGrabSequence *sequence)
 }
 
 
+/**
+ * vnc_grab_sequence_as_string:
+ * @sequence: (transfer none): the grab sequence
+ *
+ * Convert the grab sequence to a string of keysym names
+ *
+ * Returns: (transfer full): the grab sequence as a string
+ */
 gchar *vnc_grab_sequence_as_string(VncGrabSequence *sequence)
 {
     GString *str = g_string_new("");
