@@ -3,4 +3,3 @@ Look-for-generated-enums-in-srcdir.patch
 Use-C99-int-types-instead-of-NSPR-ones.patch
 Fix-build-with-xulrunner-8.0.patch
 Remove-GNUmakefile-links.patch
-Allow-Unix-domain-sockets-in-gvncviewer.patch

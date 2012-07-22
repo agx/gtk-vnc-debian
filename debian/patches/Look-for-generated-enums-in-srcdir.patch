@@ -9,10 +9,10 @@ since this where they're being generated.
  2 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/Makefile.am b/src/Makefile.am
-index df93cef..f9521a9 100644
+index 102a2e9..04050ce 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -331,7 +331,7 @@ GVNC_INTROSPECTION_SRCS = \
+@@ -350,7 +350,7 @@ GVNC_INTROSPECTION_SRCS = \
  			$(srcdir)/vnccolormap.h $(srcdir)/vnccolormap.c \
  			$(srcdir)/vnccursor.h $(srcdir)/vnccursor.c \
  			$(srcdir)/vncconnection.h $(srcdir)/vncconnection.c \
@@ -21,7 +21,7 @@ index df93cef..f9521a9 100644
  			$(srcdir)/vncutil.h $(srcdir)/vncutil.c
  
  GVNCPULSE_INTROSPECTION_SRCS = \
-@@ -341,7 +341,7 @@ GTK_VNC_INTROSPECTION_SRCS = \
+@@ -360,7 +360,7 @@ GTK_VNC_INTROSPECTION_SRCS = \
  			$(srcdir)/vnccairoframebuffer.h $(srcdir)/vnccairoframebuffer.c \
  			$(srcdir)/vncdisplay.h $(srcdir)/vncdisplay.c \
  			$(srcdir)/vncgrabsequence.h $(srcdir)/vncgrabsequence.c \
@@ -31,10 +31,10 @@ index df93cef..f9521a9 100644
  if HAVE_GTK_2
  GTK_VNC_INTROSPECTION_SRCS += \
 diff --git a/src/Makefile.in b/src/Makefile.in
-index bc91503..c34287b 100644
+index e2d9857..7b271ed 100644
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -620,7 +620,7 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_12) \
+@@ -675,7 +675,7 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_12) \
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vnccolormap.h $(srcdir)/vnccolormap.c \
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vnccursor.h $(srcdir)/vnccursor.c \
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncconnection.h $(srcdir)/vncconnection.c \
@@ -43,7 +43,7 @@ index bc91503..c34287b 100644
  @WITH_GOBJECT_INTROSPECTION_TRUE@			$(srcdir)/vncutil.h $(srcdir)/vncutil.c
  
  @WITH_GOBJECT_INTROSPECTION_TRUE@GVNCPULSE_INTROSPECTION_SRCS = \
-@@ -632,8 +632,8 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_12) \
+@@ -687,8 +687,8 @@ CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES) $(am__append_12) \
  @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncdisplay.c \
  @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.h \
  @WITH_GOBJECT_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.c \
