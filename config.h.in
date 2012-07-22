@@ -3,6 +3,13 @@
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 
+/* Enable compile-time and run-time bounds-checking, and some warnings,
+        without upsetting newer glibc. */
+     #if defined __OPTIMIZE__ && __OPTIMIZE__
+     # define _FORTIFY_SOURCE 2
+     #endif
+    
+
 /* GETTEXT package name */
 #undef GETTEXT_PACKAGE
 
@@ -18,6 +25,9 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
+/* Whether GIO UNIX is available */
+#undef HAVE_GIOUNIX
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -32,9 +42,6 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define if we have and want pulseaudio. */
-#undef HAVE_PULSEAUDIO
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H

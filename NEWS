@@ -1,6 +1,32 @@
     GTK VNC News
     ============
 
+July 12, 2012: Release 0.5.1
+============================
+
+New features:
+
+ o New API for connecting to a GSocketAddress * object
+ o New API to allow specification of a hostname with
+   a pre-opened file descriptor
+ o Support for UNIX domain sockets in gvncviewer demo
+ o More translations
+
+Bug fixes:
+
+ o Fix building with newer glibc-headers and -O0
+ o Fix GIR building by linking against libgvnc
+   from builddir
+ o Fix deprecation warnings when building against
+   glib >= 2.32
+ o Switch to using mingw64 toolchain for Win32 builds
+ o Fix introspection of key grab APIs
+ o Ensure debugging works with GLib >= 2.32
+ o Allow explicit control over pulseaudio building
+ o Add check for Perl  Text::CSV when building from GIT
+ o Fix POD syntax in gvnccapture man page
+ o Reduce excessive stack usage in vncconnection.c
+
 Dec 21, 2011: Release 0.5.0
 ===========================
 

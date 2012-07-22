@@ -1,3 +1,179 @@
+2012-07-12  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix check for Text::CSV in configure.ac
+
+2012-07-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Updates for 0.5.1 release
+
+	Add support for connecting to GSocketAddress instances
+	To improve UNIX domain socket support, add the ability to open
+	a GSocketAddress instance. Pass the 'hostname' with the addr
+	for the purposes of SASL/TLS hostname verification. Also add
+	another method for opening a FD which accepts a hostname, again
+	for SASL/TLS hostname verification when using a tunnelled
+	socket
+
+2012-07-02  Daniel P. Berrange  <berrange@redhat.com>
+
+	Remove use of hardcoded constants
+	Currently code which sends/receives client/server messages uses
+	hardcoded constants for message types. Replace these with a bunch
+	of enums for clarity
+
+	Fix mistaken use of g_object_unref instead of gdk_cursor_unref
+
+2012-06-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Rūdolfs Mazurs to AUTHORS
+
+2012-06-27  Rūdolfs Mazurs  <rudolfsm@src.gnome.org>
+
+	Added Latvian translation
+
+2012-06-21  Christophe Fergeau  <cfergeau@redhat.com>
+
+	build: allow building with newer glibc-headers and -O0
+	Commit log and autoconf snippet written by Eric Blake for libvirt.
+
+	glibc 2.15 (on Fedora 17) coupled with explicit disabling of
+	optimization during development dies a painful death:
+
+	In file included from /usr/include/limits.h:27:0,
+	                 from /usr/lib/gcc/x86_64-redhat-linux/4.7.0/include/limits.h:169,.
+	                 from /usr/lib/gcc/x86_64-redhat-linux/4.7.0/include/syslimits.h:7,
+	                 from /usr/lib/gcc/x86_64-redhat-linux/4.7.0/include/limits.h:34,
+	                 from util/bitmap.c:26:
+	/usr/include/features.h:314:4: error: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Werror=cpp]
+	cc1: all warnings being treated as errors
+
+	Work around this by only conditionally defining _FORTIFY_SOURCE,
+	in the case where glibc can actually use it.  The trick is using
+	AH_VERBATIM instead of AC_DEFINE.
+
+	* m4/gtk-vnc-warnings.m4 (LIBOSINFO_COMPILE_WARNINGS): Squelch
+	_FORTIFY_SOURCE when needed to avoid glibc #warnings.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=678014
+
+2012-06-21  Alban Browaeys  <prahal@yahoo.com>
+
+	gir: link against builddir libgvnc (pulse and gtkvnc)
+	Linking against builddir gnv fixes GVncPulse generation.
+	Done also against GtkVnc for completness.
+
+2012-06-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add compat macro for g_mutex_new|free with glib >= 2.31
+
+	Fix triplet for mingw64 64-bit builds in autobuild.sh
+
+2012-06-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Andika Triwidada to AUTHORS
+
+2012-06-15  Andika Triwidada  <andika@gmail.com>
+
+	Added Indonesian translation
+
+2012-05-04  Daniel P. Berrange  <berrange@redhat.com>
+
+	Avoid some deprecation warnings from GTK3 about device grabs
+	Temporary workaround to avoid deprecation warnings from GTK3
+	about device grabs. Currently this just emulates existing
+	behaviour of grabbing all devices, but in the future should
+	be fine tuned to only grab specific devices
+
+	Fix constness wrt g_getenv
+
+	Switch to use mingw64 toolchain for cross-compiles
+
+2012-04-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix introspection of key grab APIs
+
+	Update specfile for RHEL-7
+
+2012-04-26  Daniel P. Berrange  <berrange@redhat.com>
+
+	Replace getenv/setenv with g_getenv/g_setenv for Win32 portability
+
+2012-04-25  Daniel P. Berrange  <berrange@redhat.com>
+
+	Ensure debugging works on GLib >= 2.32
+
+	Use g_object_unref instead of gdk_pixbuf_unref
+
+2012-04-06  Alexandre Rostovtsev  <tetromino@gentoo.org>
+
+	configure: make pulseaudio detection non-automagic
+	This is to allow building gtk-vnc on a system with pulseaudio and then
+	deploying on a system without pulseaudio.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=673570
+
+2012-04-05  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Fabiano Fidêncio to AUTHORS
+
+2012-03-29  Fabiano Fidêncio  <fabiano@fidencio.org>
+
+	Add check for Perl::Text::CSV if building from GIT
+
+2012-03-19  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Sasi Bhushan Boddepalli <sasi@swecha.net> to AUTHORS
+
+2012-03-16  Sasi Bhushan Boddepalli  <sasi@swecha.net>
+
+	Updated Telugu Translations
+
+2012-03-16  Sasi Bhushan  <sasi@swecha.net>
+
+	Added new language Telugu translation
+
+2012-03-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Alexandre Rostovtsev to AUTHORS
+
+2012-03-13  Alexandre Rostovtsev  <tetromino@gentoo.org>
+
+	tools/gvnccapture: unbreak pod syntax
+	For pod, the presence or absence of leading whitespace is significant.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=667943
+
+2012-03-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Ensure syntax-check files are included in dist
+
+	Change the way header files are handled by automake
+	Switch over to using the official _HEADERS target against the
+	library, instead of doing it manually. This helps automake
+	with VPATH builds
+
+2012-02-17  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add GVNCPULSE_VERSION_FILE to BUILT_SOURCES
+
+	Remove duplicated AC_SUBST var in configure.ac
+
+2012-02-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix autobuild flags
+
+	Replace #if HAVE_SASL with #ifdef HAVE_SASL
+
+	Import GNULIBs GCC warning module
+	Replace hand-written warning checks with GNULIB module
+
+	Misc code fixes to vncconnectionc.
+	 - Add default cases for switch statements
+	 - Replace #if with #ifdef for DEBUG check
+	 - Reduce excessive stack usage
+
+	Update to use modern function decl style
+
 2011-12-21  Daniel P. Berrange  <berrange@redhat.com>
 
 	Update for 0.5.0 release

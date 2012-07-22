@@ -8,7 +8,7 @@ if USE_VERSION_DEFS
 GVNC_VERSION_FILE = $(builddir)/libgvnc_sym.def
 GVNCPULSE_VERSION_FILE = $(builddir)/libgvncpulse_sym.def
 GTK_VNC_VERSION_FILE = $(builddir)/libgtk-vnc_sym.def
-BUILT_SOURCES += $(GVNC_VERSION_FILE) $(GTK_VNC_VERSION_FILE)
+BUILT_SOURCES += $(GVNC_VERSION_FILE) $(GTK_VNC_VERSION_FILE) $(GVNCPULSE_VERSION_FILE)
 else
 GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 GVNCPULSE_VERSION_FILE = $(srcdir)/libgvncpulse_sym.version
@@ -45,16 +45,16 @@ libgvnc_1_0_la_CFLAGS = \
 			$(GDK_PIXBUF_CFLAGS) \
 			$(GNUTLS_CFLAGS) \
 			$(SASL_CFLAGS) \
-			$(WARNING_CFLAGS) \
+			$(WARN_CFLAGS) \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-			-DG_LOG_DOMAIN=\"gvnc\"
+			-DG_LOG_DOMAIN=\"gtk-vnc\"
 libgvnc_1_0_la_LDFLAGS = \
 			$(VERSION_SCRIPT_FLAGS)$(GVNC_VERSION_FILE) \
 			-version-info 0:1:0 $(NO_UNDEFINED_FLAGS)
 
-gvnc_includedir = $(includedir)/gvnc-1.0/
-gvnc_include_HEADERS = \
+libgvnc_1_0_ladir = $(includedir)/gvnc-1.0
+libgvnc_1_0_la_HEADERS = \
 			gvnc.h \
 			vncpixelformat.h \
 			vncaudioformat.h \
@@ -66,8 +66,11 @@ gvnc_include_HEADERS = \
 			vnccursor.h \
 			vnccolormap.h \
 			vncconnection.h \
+			vncutil.h \
+			$(NULL)
+nodist_libgvnc_1_0_la_HEADERS = \
 			vncconnectionenums.h \
-			vncutil.h
+			$(NULL)
 
 libgvnc_1_0_la_SOURCES = \
 			coroutine.h \
@@ -85,9 +88,11 @@ libgvnc_1_0_la_SOURCES = \
 			vnccolormap.h vnccolormap.c \
 			vncconnection.h vncconnection.c \
 			vncconnectionblt.h \
-			vncconnectionenums.h vncconnectionenums.c \
 			vncmarshal.h vncmarshal.c \
 			vncutil.h vncutil.c
+nodist_libgvnc_1_0_la_SOURCES = \
+			vncconnectionenums.h vncconnectionenums.c \
+			$(NULL)
 
 if HAVE_PULSEAUDIO
 lib_LTLIBRARIES += libgvncpulse-1.0.la
@@ -106,10 +111,10 @@ libgvncpulse_1_0_la_LIBADD = \
 libgvncpulse_1_0_la_CFLAGS = \
                        $(GOBJECT_CFLAGS) \
                        $(PULSEAUDIO_CFLAGS) \
-                       $(WARNING_CFLAGS) \
+                       $(WARN_CFLAGS) \
                        -DSYSCONFDIR=\""$(sysconfdir)"\" \
                        -DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-                       -DG_LOG_DOMAIN=\"pulse-vnc\"
+                       -DG_LOG_DOMAIN=\"gtk-vnc\"
 libgvncpulse_1_0_la_LDFLAGS = \
                        $(VERSION_SCRIPT_FLAGS)$(GVNCPULSE_VERSION_FILE) \
                        -version-info 0:1:0 $(NO_UNDEFINED_FLAGS)
@@ -130,26 +135,32 @@ gtk_vnc_LIBADD = \
 gtk_vnc_CFLAGS = \
 			$(GTK_CFLAGS) \
 			$(X11_CFLAGS) \
-			$(WARNING_CFLAGS) \
+			$(WARN_CFLAGS) \
 			-DSYSCONFDIR=\""$(sysconfdir)"\" \
 			-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 			-DG_LOG_DOMAIN=\"gtk-vnc\"
 
-gtk_vnc_includedir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
-gtk_vnc_include_HEADERS = \
+gtk_vnc_HDRS = \
 			gtk-vnc.h \
 			vncdisplay.h \
-			vncdisplayenums.h \
 			vncgrabsequence.h \
-			vncimageframebuffer.h
+			vncimageframebuffer.h \
+			$(NULL)
+
+nodist_gtk_vnc_HDRS = \
+			vncdisplayenums.h \
+			$(NULL)
 
 gtk_vnc_SOURCES = \
 			vnccairoframebuffer.h vnccairoframebuffer.c \
 			vncdisplay.h vncdisplay.c \
-			vncdisplayenums.h vncdisplayenums.c \
 			vncdisplaykeymap.h vncdisplaykeymap.c \
 			vncgrabsequence.h vncgrabsequence.c \
 			vncmarshal.h vncmarshal.c
+			$(NULL)
+nodist_gtk_vnc_SOURCES = \
+			vncdisplayenums.h vncdisplayenums.c \
+			$(NULL)
 
 if HAVE_GTK_2
 gtk_vnc_SOURCES += \
@@ -164,16 +175,24 @@ gtk_vnc_LDFLAGS = \
 
 if HAVE_GTK_2
 lib_LTLIBRARIES += libgtk-vnc-1.0.la
+libgtk_vnc_1_0_ladir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
 libgtk_vnc_1_0_la_LIBADD = $(gtk_vnc_LIBADD)
 libgtk_vnc_1_0_la_CFLAGS = $(gtk_vnc_CFLAGS)
 libgtk_vnc_1_0_la_LDFLAGS = $(gtk_vnc_LDFLAGS) -version-info 0:1:0
 libgtk_vnc_1_0_la_SOURCES = $(gtk_vnc_SOURCES)
+libgtk_vnc_1_0_la_HEADERS = $(gtk_vnc_HDRS)
+nodist_libgtk_vnc_1_0_la_SOURCES = $(nodist_gtk_vnc_SOURCES)
+nodist_libgtk_vnc_1_0_la_HEADERS = $(nodist_gtk_vnc_HDRS)
 else
 lib_LTLIBRARIES += libgtk-vnc-2.0.la
+libgtk_vnc_2_0_ladir = $(includedir)/gtk-vnc-$(GTK_VNC_API_VERSION)/
 libgtk_vnc_2_0_la_LIBADD = $(gtk_vnc_LIBADD)
 libgtk_vnc_2_0_la_CFLAGS = $(gtk_vnc_CFLAGS)
 libgtk_vnc_2_0_la_LDFLAGS = $(gtk_vnc_LDFLAGS) -version-info 0:2:0
 libgtk_vnc_2_0_la_SOURCES = $(gtk_vnc_SOURCES)
+libgtk_vnc_2_0_la_HEADERS = $(gtk_vnc_HDRS)
+nodist_libgtk_vnc_2_0_la_SOURCES = $(nodist_gtk_vnc_SOURCES)
+nodist_libgtk_vnc_2_0_la_HEADERS = $(nodist_gtk_vnc_HDRS)
 endif
 
 EXTRA_DIST += keymap-gen.pl keymaps.csv
@@ -293,7 +312,7 @@ pyexec_LTLIBRARIES = gtkvnc.la
 
 gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la $(PYGTK_LIBS)
 gtkvnc_la_CFLAGS = $(GTK_CFLAGS) $(PYTHON_INCLUDES) \
-		   $(PYGTK_CFLAGS) $(WARNING_PYTHON_CFLAGS)
+		   $(PYGTK_CFLAGS) $(WARN_PYTHON_CFLAGS)
 gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
 gtkvnc_la_SOURCES = vncmodule.c
 nodist_gtkvnc_la_SOURCES = vncmodule.defs.c
@@ -380,6 +399,7 @@ GVncPulse-1.0.gir: GVnc-1.0.gir libgvncpulse-1.0.la $(G_IR_SCANNER) Makefile.am
 		--include GObject-2.0 \
 		--include-uninstalled $(builddir)/GVnc-1.0.gir \
 		$(PREFIX_ARGS) \
+                --library=$(builddir)/libgvnc-1.0.la \
                 --library=$(builddir)/libgvncpulse-1.0.la \
                 --add-include-path=$(top_srcdir) \
                 --add-include-path=$(srcdir) \
@@ -402,6 +422,7 @@ GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION
 		--include Gtk-$(GTK_API_VERSION) \
 		--include-uninstalled $(builddir)/GVnc-1.0.gir \
 		$(PREFIX_ARGS) \
+                --library=$(builddir)/libgvnc-1.0.la \
                 --library=$(builddir)/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
                 --add-include-path=$(top_srcdir) \
                 --add-include-path=$(srcdir) \

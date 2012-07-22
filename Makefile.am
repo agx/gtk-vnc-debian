@@ -15,11 +15,15 @@ EXTRA_DIST =				\
 	$(PACKAGE)-2.0.pc.in		\
 	$(PACKAGE).spec.in		\
 	$(PACKAGE).spec			\
-	mingw32-$(PACKAGE).spec.in	\
+	mingw-$(PACKAGE).spec.in	\
 	intltool-extract.in		\
 	intltool-merge.in		\
 	intltool-update.in		\
-	ChangeLog-old
+	cfg.mk				\
+	GNUmakefile			\
+	maint.mk			\
+	ChangeLog-old			\
+	$(NULL)
 
 DISTCLEANFILES =			\
 	intltool-extract		\

@@ -143,8 +143,9 @@ static inline void gdk_drawable_get_size(GdkWindow *w, gint *ww, gint *wh)
 #define GtkObject GtkWidget
 #define GtkObjectClass GtkWidgetClass
 #define GTK_OBJECT_CLASS(c) GTK_WIDGET_CLASS(c)
-
+#define gdk_cursor_unref(c) g_object_unref(c)
 #endif
+
 
 static guint signals[LAST_SIGNAL] = { 0, 0, 0, 0,
                                       0, 0, 0, 0,
@@ -395,13 +396,117 @@ static gboolean expose_event(GtkWidget *widget, GdkEventExpose *expose)
 }
 #endif
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
+static void do_keyboard_grab_all(GdkWindow *window)
+{
+    gdk_keyboard_grab(window,
+                      FALSE,
+                      GDK_CURRENT_TIME);
+}
+static void do_keyboard_ungrab_all(GdkWindow *window G_GNUC_UNUSED)
+{
+    gdk_keyboard_ungrab(GDK_CURRENT_TIME);
+}
+static void do_pointer_grab_all(GdkWindow *window,
+                                GdkCursor *cursor)
+{
+    gdk_pointer_grab(window,
+                     FALSE, /* All events to come to our window directly */
+                     GDK_POINTER_MOTION_MASK |
+                     GDK_BUTTON_PRESS_MASK |
+                     GDK_BUTTON_RELEASE_MASK |
+                     GDK_BUTTON_MOTION_MASK |
+                     GDK_SCROLL_MASK,
+                     NULL, /* Allow cursor to move over entire desktop */
+                     cursor,
+                     GDK_CURRENT_TIME);
+}
+static void do_pointer_ungrab_all(GdkWindow *window G_GNUC_UNUSED)
+{
+    gdk_pointer_ungrab(GDK_CURRENT_TIME);
+}
+#else
+static void do_keyboard_grab_all(GdkWindow *window)
+{
+    GdkDeviceManager *mgr = gdk_display_get_device_manager(gdk_window_get_display(window));
+    GList *devices = gdk_device_manager_list_devices(mgr, GDK_DEVICE_TYPE_MASTER);
+    GList *tmp = devices;
+    while (tmp) {
+        GdkDevice *dev = tmp->data;
+        if (gdk_device_get_source(dev) == GDK_SOURCE_KEYBOARD)
+            gdk_device_grab(dev,
+                            window,
+                            GDK_OWNERSHIP_NONE,
+                            FALSE,
+                            GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK,
+                            NULL,
+                            GDK_CURRENT_TIME);
+        tmp = tmp->next;
+    }
+    g_list_free(devices);
+}
+
+static void do_keyboard_ungrab_all(GdkWindow *window)
+{
+    GdkDeviceManager *mgr = gdk_display_get_device_manager(gdk_window_get_display(window));
+    GList *devices = gdk_device_manager_list_devices(mgr, GDK_DEVICE_TYPE_MASTER);
+    GList *tmp = devices;
+    while (tmp) {
+        GdkDevice *dev = tmp->data;
+        if (gdk_device_get_source(dev) == GDK_SOURCE_KEYBOARD)
+            gdk_device_ungrab(dev,
+                              GDK_CURRENT_TIME);
+        tmp = tmp->next;
+    }
+    g_list_free(devices);
+}
+
+static void do_pointer_grab_all(GdkWindow *window,
+                                GdkCursor *cursor)
+{
+    GdkDeviceManager *mgr = gdk_display_get_device_manager(gdk_window_get_display(window));
+    GList *devices = gdk_device_manager_list_devices(mgr, GDK_DEVICE_TYPE_MASTER);
+    GList *tmp = devices;
+    while (tmp) {
+        GdkDevice *dev = tmp->data;
+        if (gdk_device_get_source(dev) == GDK_SOURCE_MOUSE)
+            gdk_device_grab(dev,
+                            window,
+                            GDK_OWNERSHIP_NONE,
+                            FALSE, /* All events to come to our window directly */
+                            GDK_POINTER_MOTION_MASK |
+                            GDK_BUTTON_PRESS_MASK |
+                            GDK_BUTTON_RELEASE_MASK |
+                            GDK_BUTTON_MOTION_MASK |
+                            GDK_SCROLL_MASK,
+                            cursor,
+                            GDK_CURRENT_TIME);
+        tmp = tmp->next;
+    }
+    g_list_free(devices);
+}
+
+static void do_pointer_ungrab_all(GdkWindow *window)
+{
+    GdkDeviceManager *mgr = gdk_display_get_device_manager(gdk_window_get_display(window));
+    GList *devices = gdk_device_manager_list_devices(mgr, GDK_DEVICE_TYPE_MASTER);
+    GList *tmp = devices;
+    while (tmp) {
+        GdkDevice *dev = tmp->data;
+        if (gdk_device_get_source(dev) == GDK_SOURCE_MOUSE)
+            gdk_device_ungrab(dev,
+                              GDK_CURRENT_TIME);
+        tmp = tmp->next;
+    }
+    g_list_free(devices);
+}
+#endif
+
 static void do_keyboard_grab(VncDisplay *obj, gboolean quiet)
 {
     VncDisplayPrivate *priv = obj->priv;
 
-    gdk_keyboard_grab(gtk_widget_get_window(GTK_WIDGET(obj)),
-                      FALSE,
-                      GDK_CURRENT_TIME);
+    do_keyboard_grab_all(gtk_widget_get_window(GTK_WIDGET(obj)));
     priv->in_keyboard_grab = TRUE;
     if (!quiet)
         g_signal_emit(obj, signals[VNC_KEYBOARD_GRAB], 0);
@@ -412,7 +517,7 @@ static void do_keyboard_ungrab(VncDisplay *obj, gboolean quiet)
 {
     VncDisplayPrivate *priv = obj->priv;
 
-    gdk_keyboard_ungrab(GDK_CURRENT_TIME);
+    do_keyboard_ungrab_all(gtk_widget_get_window(GTK_WIDGET(obj)));
     priv->in_keyboard_grab = FALSE;
     if (!quiet)
         g_signal_emit(obj, signals[VNC_KEYBOARD_UNGRAB], 0);
@@ -448,16 +553,8 @@ static void do_pointer_grab(VncDisplay *obj, gboolean quiet)
      * what window the pointer is actally over, so use 'FALSE' for
      * 'owner_events' parameter
      */
-    gdk_pointer_grab(gtk_widget_get_window(GTK_WIDGET(obj)),
-                     FALSE, /* All events to come to our window directly */
-                     GDK_POINTER_MOTION_MASK |
-                     GDK_BUTTON_PRESS_MASK |
-                     GDK_BUTTON_RELEASE_MASK |
-                     GDK_BUTTON_MOTION_MASK |
-                     GDK_SCROLL_MASK,
-                     NULL, /* Allow cursor to move over entire desktop */
-                     priv->remote_cursor ? priv->remote_cursor : priv->null_cursor,
-                     GDK_CURRENT_TIME);
+    do_pointer_grab_all(gtk_widget_get_window(GTK_WIDGET(obj)),
+                        priv->remote_cursor ? priv->remote_cursor : priv->null_cursor);
     priv->in_pointer_grab = TRUE;
     if (!quiet)
         g_signal_emit(obj, signals[VNC_POINTER_GRAB], 0);
@@ -471,7 +568,7 @@ static void do_pointer_ungrab(VncDisplay *obj, gboolean quiet)
     if (!priv->grab_keyboard)
         do_keyboard_ungrab(obj, quiet);
 
-    gdk_pointer_ungrab(GDK_CURRENT_TIME);
+    do_pointer_ungrab_all(gtk_widget_get_window(GTK_WIDGET(obj)));
     priv->in_pointer_grab = FALSE;
 
     if (priv->absolute)
@@ -629,7 +726,6 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
 
     /* Next adjust the real client pointer */
     if (!priv->absolute) {
-        GdkDisplay *display = gtk_widget_get_display(widget);
         GdkScreen *screen = gtk_widget_get_screen(widget);
         int x = (int)motion->x_root;
         int y = (int)motion->y_root;
@@ -647,7 +743,13 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
         if (y >= (gdk_screen_get_height(screen) - 1)) y -= 200;
 
         if (x != (int)motion->x_root || y != (int)motion->y_root) {
+#if GTK_CHECK_VERSION(3, 0, 0)
+            GdkDevice *dev = gdk_event_get_device((GdkEvent*)motion);
+            gdk_device_warp(dev, screen, x, y);
+#else
+            GdkDisplay *display = gtk_widget_get_display(widget);
             gdk_display_warp_pointer(display, screen, x, y);
+#endif
             priv->last_x = -1;
             priv->last_y = -1;
             return FALSE;
@@ -1423,6 +1525,45 @@ gboolean vnc_display_open_fd(VncDisplay *obj, int fd)
     return TRUE;
 }
 
+
+gboolean vnc_display_open_fd_with_hostname(VncDisplay *obj, int fd, const char *hostname)
+{
+    VncDisplayPrivate *priv = obj->priv;
+
+    if (vnc_connection_is_open(priv->conn))
+        return FALSE;
+
+    if (!vnc_connection_set_shared(priv->conn, priv->shared_flag))
+        return FALSE;
+
+    if (!vnc_connection_open_fd_with_hostname(priv->conn, fd, hostname))
+        return FALSE;
+
+    g_object_ref(G_OBJECT(obj));
+
+    return TRUE;
+}
+
+
+gboolean vnc_display_open_addr(VncDisplay *obj, GSocketAddress *addr, const char *hostname)
+{
+    VncDisplayPrivate *priv = obj->priv;
+
+    if (vnc_connection_is_open(priv->conn))
+        return FALSE;
+
+    if (!vnc_connection_set_shared(priv->conn, priv->shared_flag))
+        return FALSE;
+
+    if (!vnc_connection_open_addr(priv->conn, addr, hostname))
+        return FALSE;
+
+    g_object_ref(G_OBJECT(obj));
+
+    return TRUE;
+}
+
+
 gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *port)
 {
     VncDisplayPrivate *priv = obj->priv;
@@ -2061,6 +2202,14 @@ void vnc_display_set_pointer_grab(VncDisplay *obj, gboolean enable)
         do_pointer_ungrab(obj, FALSE);
 }
 
+
+/**
+ * vnc_display_set_grab_keys:
+ * @obj: (transfer none): the vnc display object
+ * @seq: (transfer none): the new grab sequence
+ *
+ * Set the key grab sequence
+ */
 void vnc_display_set_grab_keys(VncDisplay *obj, VncGrabSequence *seq)
 {
     if (obj->priv->vncgrabseq) {
@@ -2072,8 +2221,22 @@ void vnc_display_set_grab_keys(VncDisplay *obj, VncGrabSequence *seq)
     else
         obj->priv->vncgrabseq = vnc_grab_sequence_new_from_string("Control_L+Alt_L");
     obj->priv->vncactiveseq = g_new0(gboolean, obj->priv->vncgrabseq->nkeysyms);
+    if (G_UNLIKELY(vnc_util_get_debug())) {
+        gchar *str = vnc_grab_sequence_as_string(obj->priv->vncgrabseq);
+        VNC_DEBUG("Grab sequence is now %s", str);
+        g_free(str);
+    }
 }
 
+
+/**
+ * vnc_display_get_grab_keys:
+ * @obj: the vnc display object
+ *
+ * Get the current grab key sequence
+ *
+ * Returns: (transfer none): the current grab keys
+ */
 VncGrabSequence *vnc_display_get_grab_keys(VncDisplay *obj)
 {
     return obj->priv->vncgrabseq;
@@ -2124,7 +2287,7 @@ static void vnc_display_convert_data(GdkPixbuf *pixbuf,
  * Take a screenshot of the display.
  *
  * Returns: (transfer full): a #GdkPixbuf with the screenshot image buffer
- **/
+ */
 GdkPixbuf *vnc_display_get_pixbuf(VncDisplay *obj)
 {
     VncDisplayPrivate *priv = obj->priv;

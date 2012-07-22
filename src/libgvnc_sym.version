@@ -51,7 +51,9 @@
 
 	vnc_connection_get_type;
 	vnc_connection_new;
+	vnc_connection_open_addr;
 	vnc_connection_open_fd;
+	vnc_connection_open_fd_with_hostname;
 	vnc_connection_open_host;
 	vnc_connection_is_open;
 	vnc_connection_shutdown;

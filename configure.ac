@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.5.0],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.5.1],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -171,9 +171,6 @@ AC_SUBST([NO_UNDEFINED_FLAGS])
 AC_SUBST([VERSION_SCRIPT_FLAGS])
 AM_CONDITIONAL([USE_VERSION_DEFS], [test "$USE_VERSION_DEFS" = "1"])
 
-dnl check ld support --version-script
-AC_SUBST(VERSION_SCRIPT_FLAGS)
-
 PKG_CHECK_MODULES(GOBJECT, gobject-2.0 >= $GOBJECT_REQUIRED)
 AC_SUBST(GOBJECT_CFLAGS)
 AC_SUBST(GOBJECT_LIBS)
@@ -181,6 +178,14 @@ AC_SUBST(GOBJECT_LIBS)
 PKG_CHECK_MODULES(GIO, gio-2.0 >= $GIO_REQUIRED)
 AC_SUBST(GIO_CFLAGS)
 AC_SUBST(GIO_LIBS)
+
+PKG_CHECK_MODULES(GIOUNIX, gio-unix-2.0 >= $GIO_REQUIRED, [have_giounix=yes], [have_giounix=no])
+AC_SUBST(GIOUNIX_CFLAGS)
+AC_SUBST(GIOUNIX_LIBS)
+if test $have_giounix = "yes" ; then
+  AC_DEFINE_UNQUOTED([HAVE_GIOUNIX],[1], [Whether GIO UNIX is available])
+fi
+
 
 PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= $GDK_PIXBUF_REQUIRED)
 AC_SUBST(GDK_PIXBUF_CFLAGS)
@@ -216,11 +221,23 @@ AC_SUBST(VIEW_CFLAGS)
 AC_SUBST(VIEW_LIBS)
 
 
-PKG_CHECK_MODULES(PULSEAUDIO, libpulse-simple, WANT_PULSEAUDIO="yes", AC_MSG_NOTICE([Not building against libpulse]))
-if test "x$WANT_PULSEAUDIO" = xyes; then
-    AC_DEFINE_UNQUOTED([HAVE_PULSEAUDIO], 1,[Define if we have and want pulseaudio.])
+AC_ARG_WITH(pulseaudio,
+  [AS_HELP_STRING([--with-pulseaudio],
+    [use PulseAudio for audio playback @<:@default=check@:>@])],
+  [],
+  [with_pulseaudio=check])
+
+HAVE_PULSEAUDIO=no
+if test "x$with_pulseaudio" != "xno"; then
+  PULSEAUDIO_MODULES=libpulse-simple
+  if test "x$with_pulseaudio" == "xyes"; then
+    PKG_CHECK_MODULES(PULSEAUDIO, $PULSEAUDIO_MODULES, [HAVE_PULSEAUDIO=yes])
+  else
+    PKG_CHECK_MODULES(PULSEAUDIO, $PULSEAUDIO_MODULES, [HAVE_PULSEAUDIO=yes],
+      [AC_MSG_NOTICE([libpulse-simple not found, disabling PulseAudio support])])
+  fi
 fi
-AM_CONDITIONAL([HAVE_PULSEAUDIO], [test "x$WANT_PULSEAUDIO" = "xyes"])
+AM_CONDITIONAL([HAVE_PULSEAUDIO], [test "x$HAVE_PULSEAUDIO" = "xyes"])
 AC_SUBST(PULSEAUDIO_CFLAGS)
 AC_SUBST(PULSEAUDIO_LIBS)
 
@@ -447,6 +464,17 @@ if test "x$enable_introspection" = "xyes" ; then
 fi
 AM_CONDITIONAL([WITH_VALA], [test "x$enable_vala" = "xyes"])
 
+AC_MSG_CHECKING([for Text::CSV Perl module])
+perl -MText::CSV -e "" >/dev/null 2>&1
+if test $? -ne 0 ; then
+  AC_MSG_RESULT([not found])
+  if test ! -e "$srcdir/src/vncdisplaykeymap_osx2rfb.c"; then
+    AC_MSG_ERROR([Text::CSV Perl module is required to compile this package])
+  fi
+else
+  AC_MSG_RESULT([found])
+fi
+
 AC_CONFIG_FILES(
   Makefile
   src/Makefile
@@ -460,7 +488,7 @@ AC_CONFIG_FILES(
   gtk-vnc-1.0.pc
   gtk-vnc-2.0.pc
   gtk-vnc.spec
-  mingw32-gtk-vnc.spec
+  mingw-gtk-vnc.spec
   )
 
 AC_OUTPUT
@@ -477,5 +505,6 @@ Configure summary:
 	Install example programs ...:  ${WITH_EXAMPLES}
 	Browser plugin .............:  ${enable_plugin}
 	SASL support................:  ${enable_sasl}
+	PulseAudio support..........:  ${HAVE_PULSEAUDIO}
 	GTK+ version................:  ${GTK_API_VERSION}
 "
