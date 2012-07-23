@@ -1,3 +1,18 @@
+gtk-vnc (0.5.1-1) unstable; urgency=low
+
+  * [e2591bf] Imported Upstream version 0.5.1
+  * [a0f6408] Drop patch
+    - Allow-Unix-domain-sockets-in-gvncviewer.patch - fixed upstream
+  * [c031b94] Bump Standards-Version to 3.9.3
+  * [61e5796] Set build directories for dh_auto_clean
+  * [7fde78d] Drop patch
+    - Look-for-generated-enums-in-srcdir.patch
+  * [fada5be] Add dh_auto_test override
+  * [d7567f1] Update symbols
+  * [6189676] Enable dpkg-buildflags
+
+ -- Laurent Léonard <laurent@open-minds.org>  Tue, 24 Jul 2012 00:49:55 +0200
+
 gtk-vnc (0.5.0-3) unstable; urgency=low
 
   * [0d2d0ae] Build-Conflict on valac-0.12.
