@@ -28,7 +28,9 @@ libgtk-vnc-2.0.so.0 libgtk-vnc-2.0-0 #MINVER#
  vnc_display_is_pointer_absolute@Base 0.3.10
  vnc_display_key_event_get_type@Base 0.3.10
  vnc_display_new@Base 0.3.10
+ vnc_display_open_addr@Base 0.5.1
  vnc_display_open_fd@Base 0.3.10
+ vnc_display_open_fd_with_hostname@Base 0.5.1
  vnc_display_open_host@Base 0.3.10
  vnc_display_request_update@Base 0.3.10
  vnc_display_send_keys@Base 0.3.10

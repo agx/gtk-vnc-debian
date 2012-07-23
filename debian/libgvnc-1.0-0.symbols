@@ -43,7 +43,9 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_connection_is_open@Base 0.4.1
  vnc_connection_key_event@Base 0.4.1
  vnc_connection_new@Base 0.4.1
+ vnc_connection_open_addr@Base 0.5.1
  vnc_connection_open_fd@Base 0.4.1
+ vnc_connection_open_fd_with_hostname@Base 0.5.1
  vnc_connection_open_host@Base 0.4.1
  vnc_connection_pointer_event@Base 0.4.1
  vnc_connection_set_audio@Base 0.5.0
