@@ -7,10 +7,12 @@ override_dh_auto_configure:
 	dh_auto_configure -B build/gtk2 -- --with-gtk=2.0 \
                                            --with-python \
                                            --enable-plugin=yes \
-                                           --disable-introspection
+                                           --disable-introspection \
+                                           $(shell dpkg-buildflags --export=configure)
 	dh_auto_configure -B build/gtk3 -- --with-gtk=3.0 \
                                            --with-examples \
-                                           --enable-introspection
+                                           --enable-introspection \
+                                           $(shell dpkg-buildflags --export=configure)
 
 override_dh_auto_build:
 	dh_auto_build -D build/gtk2
