@@ -25,6 +25,10 @@ override_dh_auto_clean:
 	dh_auto_clean -B build/gtk2
 	dh_auto_clean -B build/gtk3
 
+override_dh_auto_test:
+	dh_auto_test -B build/gtk2
+	dh_auto_test -B build/gtk3
+
 override_dh_install:
 	dh_install -plibgvnc-1.0-0 \
                    -plibgvnc-1.0-dev \
