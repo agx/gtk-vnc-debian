@@ -1,3 +1,10 @@
+gtk-vnc (0.5.1-2) unstable; urgency=low
+
+  * [40547ee] Add proper Breasks/Replaces to libgvnc-1.0-0-dbg. Thanks to
+    Andreas Beckmann for the detailed report and fix (Closes: #694461)
+
+ -- Guido Günther <agx@sigxcpu.org>  Mon, 26 Nov 2012 21:44:25 +0100
+
 gtk-vnc (0.5.1-1) unstable; urgency=low
 
   * [e2591bf] Imported Upstream version 0.5.1
