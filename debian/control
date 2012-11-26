@@ -54,7 +54,8 @@ Architecture: any
 Section: debug
 Depends: ${shlibs:Depends}, ${misc:Depends},
  libgvnc-1.0-0 (=${binary:Version})
-Replaces: libgtk-vnc-1.0-dbg (<= 0.4.3-1)
+Breaks:   libgtk-vnc-1.0-0-dbg (<< 0.4.3-2)
+Replaces: libgtk-vnc-1.0-0-dbg (<< 0.4.3-2)
 Priority: extra
 Description: VNC gobject wrapper (debugging symbols)
  It is built using coroutines, allowing it to be completely asynchronous while
