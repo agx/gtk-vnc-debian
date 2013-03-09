@@ -1,3 +1,15 @@
+gtk-vnc (0.5.2-1) unstable; urgency=low
+
+  * [63d4584] Imported Upstream version 0.5.2
+  * [6fbea51] Drop patches
+    - Fix-build-with-xulrunner-8.0.patch - fixed upstream
+    - Use-C99-int-types-instead-of-NSPR-ones.patch - fixed upstream
+    - fix-build-with-xulrunner-1.9.1.patch - fixed upstream
+  * [32e7e95] Remove mozilla-gtk-vnc
+  * [aeff29d] Update symbols
+
+ -- Laurent Léonard <laurent@open-minds.org>  Sun, 10 Mar 2013 00:26:54 +0100
+
 gtk-vnc (0.5.1-2) unstable; urgency=low
 
   * [40547ee] Add proper Breasks/Replaces to libgvnc-1.0-0-dbg. Thanks to
