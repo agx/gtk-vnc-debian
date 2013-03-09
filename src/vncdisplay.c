@@ -1220,8 +1220,24 @@ static void on_auth_cred(VncConnection *conn G_GNUC_UNUSED,
                          gpointer opaque)
 {
     VncDisplay *obj = VNC_DISPLAY(opaque);
+    GValueArray *newCreds = g_value_array_new(0);
+    gsize i;
 
-    g_signal_emit(G_OBJECT(obj), signals[VNC_AUTH_CREDENTIAL], 0, creds);
+    for (i = 0 ; i < creds->n_values ; i++) {
+        GValue *cred = g_value_array_get_nth(creds, i);
+        GValue newCred;
+        memset(&newCred, 0, sizeof(newCred));
+        g_value_init(&newCred, VNC_TYPE_DISPLAY_CREDENTIAL);
+        /* Take advantage that VncDisplayCredential &
+         * VncConnectionCredential share same enum values
+         */
+        g_value_set_enum(&newCred, g_value_get_enum(cred));
+        newCreds = g_value_array_append(newCreds, &newCred);
+    }
+
+    g_signal_emit(G_OBJECT(obj), signals[VNC_AUTH_CREDENTIAL], 0, newCreds);
+
+    g_value_array_free(newCreds);
 }
 
 static void on_auth_choose_type(VncConnection *conn,
@@ -1615,6 +1631,16 @@ VncConnection * vnc_display_get_connection(VncDisplay *obj)
 }
 
 
+/**
+ * vnc_display_send_keys:
+ *
+ * @obj: The #VncDisplay
+ * @keyvals: (array length=nkeyvals): Keyval array
+ * @nkeyvals: Length of keyvals
+ *
+ * Send keyval click events to the display.
+ *
+ */
 void vnc_display_send_keys(VncDisplay *obj, const guint *keyvals, int nkeyvals)
 {
     vnc_display_send_keys_ex(obj, keyvals,

@@ -150,12 +150,14 @@ do_vnc_get_credential(const gchar *prompt, gboolean doecho)
     fflush(stdout);
 
     /* Turn echoing off and fail if we can't. */
-    if (!doecho && tcgetattr (fileno (stdin), &old) != 0)
-        return NULL;
-    new = old;
-    new.c_lflag &= ~ECHO;
-    if (!doecho && tcsetattr(fileno(stdin), TCSAFLUSH, &new) != 0)
-        return NULL;
+    if (!doecho) {
+        if (tcgetattr (fileno (stdin), &old) != 0)
+            return NULL;
+        new = old;
+        new.c_lflag &= ~ECHO;
+        if (tcsetattr(fileno(stdin), TCSAFLUSH, &new) != 0)
+            return NULL;
+    }
 
     /* Read the password. */
     if ((res = fgets(buf, n, stdin)) != NULL) {

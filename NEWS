@@ -1,6 +1,34 @@
     GTK VNC News
     ============
 
+Feb 22, 2013: Release 0.5.2
+===========================
+
+Removed features:
+
+ o Browser plugin is deleted, since it was unmaintained.
+   Recommend that people use a pure HTML5 impl like noVNC
+   to avoid security problems inherant in native plugins.
+
+Bug fixes:
+
+ o Misc fixes to RPM specfiles
+ o Update translations
+ o Fix big-endian support in cairo framebuffer
+ o Avoid out of bounds accessing arrays
+ o Fix win32 quote key mapping
+ o Fix NULL dereference in logging code
+ o Fix OOM check in python bindings
+ o Avoid array overrun in colourmap mode
+ o Fix buffer space check when sending data
+ o Add introspection annotation for vnc_display_send_keys
+ o Fix pulseaudio enablement in demo
+ o Avoid crash with unsupported audio formats
+ o Turn off deprecation warnings
+ o Convert VncConnectionCredential to VncDisplayCredential
+ o Add API to allow access to keysyms from introspected bindings
+
+
 July 12, 2012: Release 0.5.1
 ============================
 

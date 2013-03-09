@@ -45,7 +45,6 @@ AC_DEFUN([GTK_VNC_COMPILE_WARNINGS],[
     dontwarn="$dontwarn -Wstrict-prototypes"
     # Generated vncmarshal.c file :-(
     dontwarn="$dontwarn -Wunused-macros"
-
     # Get all possible GCC warnings
     gl_MANYWARN_ALL_GCC([maybewarn])
 
@@ -104,6 +103,11 @@ AC_DEFUN([GTK_VNC_COMPILE_WARNINGS],[
     # least 75 functions triggering warnings.
     gl_WARN_ADD([-Wno-suggest-attribute=pure])
     gl_WARN_ADD([-Wno-suggest-attribute=const])
+
+    # GLib deprecated some APIs with no ABI compatible
+    # replacement. As such we can't change & must ignore
+    # the warnings
+    gl_WARN_ADD([-Wno-deprecated-declarations])
 
     if test "$set_werror" = "yes"
     then

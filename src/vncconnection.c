@@ -683,11 +683,12 @@ static int vnc_connection_read_wire(VncConnection *conn, void *data, size_t len)
                                NULL, &error);
         if (ret < 0) {
             if (error) {
+                VNC_DEBUG("Read error %s", error->message);
                 if (error->code == G_IO_ERROR_WOULD_BLOCK)
                     blocking = TRUE;
                 g_error_free(error);
             } else {
-                VNC_DEBUG("Read error %s", error->message);
+                VNC_DEBUG("Read error unknown");
             }
             ret = -1;
         }
@@ -988,7 +989,8 @@ static void vnc_connection_write(VncConnection *conn, const void *data, size_t l
             vnc_connection_flush(conn);
         }
 
-        tmp = MIN(sizeof(priv->write_buffer), len - offset);
+        tmp = MIN(sizeof(priv->write_buffer) - priv->write_offset,
+                  len - offset);
 
         memcpy(priv->write_buffer+priv->write_offset, ptr + offset, tmp);
 
@@ -3311,6 +3313,7 @@ static gboolean vnc_connection_perform_auth_vnc(VncConnection *conn)
     VncConnectionPrivate *priv = conn->priv;
     guint8 challenge[16];
     guint8 key[8];
+    gsize keylen;
 
     VNC_DEBUG("Do Challenge");
     priv->want_cred_password = TRUE;
@@ -3324,8 +3327,11 @@ static gboolean vnc_connection_perform_auth_vnc(VncConnection *conn)
 
     vnc_connection_read(conn, challenge, 16);
 
-    memset(key, 0, 8);
-    strncpy((char*)key, (char*)priv->cred_password, 8);
+    memset(key, 0, sizeof(key));
+    keylen = strlen(priv->cred_password);
+    if (keylen > sizeof(key))
+        keylen = sizeof(key);
+    memcpy(key, priv->cred_password, keylen);
 
     deskey(key, EN0);
     des(challenge, challenge);
@@ -4844,9 +4850,6 @@ void vnc_connection_shutdown(VncConnection *conn)
 gboolean vnc_connection_is_open(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
-
-    if (!conn)
-        return FALSE;
 
     if (priv->fd != -1)
         return TRUE;

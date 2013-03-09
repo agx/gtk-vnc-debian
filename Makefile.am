@@ -1,4 +1,4 @@
-SUBDIRS = src tools examples plugin po vapi
+SUBDIRS = src tools examples po vapi
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
 pkgconfig_DATA = $(PACKAGE)-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc
@@ -22,6 +22,7 @@ EXTRA_DIST =				\
 	cfg.mk				\
 	GNUmakefile			\
 	maint.mk			\
+	AUTHORS.in			\
 	ChangeLog-old			\
 	$(NULL)
 
@@ -64,10 +65,24 @@ MAINTAINERCLEANFILES = 		\
 GITIGNOREFILES = plugin/gtk-vnc-plugin.la plugin/gtk-vnc-plugin.so
 
 gen_start_date = 2008-12-07
-dist-hook:
-	$(top_srcdir)/build-aux/gitlog-to-changelog           \
-            --since=$(gen_start_date) > $(distdir)/cl-t;      \
-        rm -f $(distdir)/ChangeLog;                           \
-        mv $(distdir)/cl-t $(distdir)/ChangeLog;
+dist-hook: gen-ChangeLog gen-AUTHORS
+
+.PHONY: gen-ChangeLog
+gen-ChangeLog:
+	$(AM_V_GEN)if test -d .git; then		\
+	  $(top_srcdir)/build-aux/gitlog-to-changelog	\
+	    --since=$(gen_start_date) > $(distdir)/cl-t;\
+	  rm -f $(distdir)/ChangeLog;			\
+	  mv $(distdir)/cl-t $(distdir)/ChangeLog;	\
+	fi
+
+.PHONY: gen-AUTHORS
+gen-AUTHORS:
+	$(AM_V_GEN)if test -d $(srcdir)/.git; then 			\
+	    out="`cd $(srcdir) && git log --pretty=format:'%aN <%aE>' | sort -u`" && \
+	    perl -p -e "s/#authorslist#// and print '$$out'"		\
+	      < $(srcdir)/AUTHORS.in > $(distdir)/AUTHORS-tmp &&	\
+	    mv -f $(distdir)/AUTHORS-tmp $(distdir)/AUTHORS ;		\
+	fi
 
 -include $(top_srcdir)/git.mk

@@ -747,11 +747,13 @@ static vnc_base_framebuffer_blt_func *vnc_base_framebuffer_blt_table[6][4] = {
       vnc_base_framebuffer_blt_cmap16x64 },
 };
 
-static vnc_base_framebuffer_rgb24_blt_func *vnc_base_framebuffer_rgb24_blt_table[4] = {
+static vnc_base_framebuffer_rgb24_blt_func *vnc_base_framebuffer_rgb24_blt_table[6] = {
     (vnc_base_framebuffer_rgb24_blt_func *)vnc_base_framebuffer_rgb24_blt_32x8,
     (vnc_base_framebuffer_rgb24_blt_func *)vnc_base_framebuffer_rgb24_blt_32x16,
     (vnc_base_framebuffer_rgb24_blt_func *)vnc_base_framebuffer_rgb24_blt_32x32,
     (vnc_base_framebuffer_rgb24_blt_func *)vnc_base_framebuffer_rgb24_blt_32x64,
+    NULL, /* 8bbp cmap */
+    NULL, /* 16bpp cmap */
 };
 
 
@@ -963,7 +965,10 @@ static void vnc_base_framebuffer_rgb24_blt(VncFramebuffer *iface,
 
     vnc_base_framebuffer_reinit_render_funcs(fb);
 
-    priv->rgb24_blt(priv, src, rowstride, x, y, width, height);
+    if (priv->rgb24_blt)
+        priv->rgb24_blt(priv, src, rowstride, x, y, width, height);
+    else
+        VNC_DEBUG("Unexpected RGB blt request in colourmap mode");
 }
 
 

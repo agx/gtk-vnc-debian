@@ -19,7 +19,7 @@ gvnccapture_CFLAGS = \
 		-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 		$(GOBJECT_CFLAGS) \
 		$(GDK_PIXBUF_CFLAGS) \
-		$(WARNING_CFLAGS) \
+		$(WARN_CFLAGS) \
 		-I$(top_srcdir)/src/
 
 -include $(top_srcdir)/git.mk

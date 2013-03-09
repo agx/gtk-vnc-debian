@@ -86,6 +86,8 @@
     vnc_grab_sequence_as_string;
     vnc_grab_sequence_get_type;
 
+    vnc_grab_sequence_get_nth;
+
   local:
       *;
 };
