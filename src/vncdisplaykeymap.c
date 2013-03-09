@@ -194,7 +194,7 @@ const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
 #ifdef GDK_WINDOWING_WIN32
     if (GDK_IS_WIN32_DISPLAY(dpy)) {
         VNC_DEBUG("Using Win32 virtual keycode mapping");
-        *maplen = sizeof(keymap_win322rfb);
+        *maplen = G_N_ELEMENTS(keymap_win322rfb);
         return keymap_win322rfb;
     }
 #endif
@@ -202,7 +202,7 @@ const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
 #ifdef GDK_WINDOWING_QUARTZ
     if (GDK_IS_QUARTZ_DISPLAY(dpy)) {
         VNC_DEBUG("Using OS-X virtual keycode mapping");
-        *maplen = sizeof(keymap_osx2rfb);
+        *maplen = G_N_ELEMENTS(keymap_osx2rfb);
         return keymap_osx2rfb;
     }
 #endif
@@ -233,7 +233,7 @@ void vnc_display_keyval_set_entries(void)
 {
     size_t i;
     if (ref_count_for_untranslated_keys == 0)
-        for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++)
+        for (i = 0; i < G_N_ELEMENTS(untranslated_keys); i++)
             gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
                                               untranslated_keys[i].keyval,
                                               &untranslated_keys[i].keys,
@@ -251,7 +251,7 @@ void vnc_display_keyval_free_entries(void)
 
     ref_count_for_untranslated_keys--;
     if (ref_count_for_untranslated_keys == 0)
-        for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++)
+        for (i = 0; i < G_N_ELEMENTS(untranslated_keys); i++)
             g_free(untranslated_keys[i].keys);
 
 }
@@ -260,7 +260,7 @@ void vnc_display_keyval_free_entries(void)
 guint vnc_display_keyval_from_keycode(guint keycode, guint keyval)
 {
     size_t i;
-    for (i = 0; i < sizeof(untranslated_keys) / sizeof(untranslated_keys[0]); i++) {
+    for (i = 0; i < G_N_ELEMENTS(untranslated_keys); i++) {
         if (keycode == untranslated_keys[i].keys[0].keycode) {
             return untranslated_keys[i].keyval;
         }

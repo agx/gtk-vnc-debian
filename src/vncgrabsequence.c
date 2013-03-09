@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include <gdk/gdk.h>
+#include <gdk/gdkkeysyms.h>
 
 #include "vncgrabsequence.h"
 
@@ -136,6 +137,24 @@ gchar *vnc_grab_sequence_as_string(VncGrabSequence *sequence)
 
     return g_string_free(str, FALSE);
 
+}
+
+/**
+ * vnc_grab_sequence_get_nth:
+ * @sequence: (transfer none): the grab sequence
+ * @nth: the index of the key symbol to obtain
+ *
+ * Obtain the nth key symbol in the sequence
+ *
+ * Returns: the nth key symbol
+ */
+guint vnc_grab_sequence_get_nth(VncGrabSequence *sequence,
+                                guint n)
+{
+    if (n > sequence->nkeysyms)
+        return GDK_KEY_VoidSymbol;
+
+    return sequence->keysyms[n];
 }
 
 

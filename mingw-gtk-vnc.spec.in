@@ -7,7 +7,7 @@ Summary: MinGW Windows port of VNC client GTK widget
 
 License: LGPLv2+
 Group: Development/Libraries
-Source: http://ftp.gnome.org/pub/GNOME/sources/gtk-vnc/0.5/gtk-vnc-%{version}.tar.gz
+Source: http://ftp.gnome.org/pub/GNOME/sources/gtk-vnc/0.5/gtk-vnc-%{version}.tar.xz
 URL: http://live.gnome.org/gtk-vnc
 
 BuildArch: noarch
@@ -25,6 +25,8 @@ BuildRequires: mingw32-gettext
 BuildRequires: mingw64-gettext
 BuildRequires: mingw32-win-iconv
 BuildRequires: mingw64-win-iconv
+BuildRequires: mingw32-libgcrypt
+BuildRequires: mingw64-libgcrypt
 BuildRequires: mingw32-gnutls
 BuildRequires: mingw64-gnutls
 BuildRequires: mingw32-gtk2
@@ -34,6 +36,8 @@ BuildRequires: mingw64-gtk3
 
 BuildRequires: pkgconfig
 BuildRequires: intltool
+
+BuildRequires: /usr/bin/pod2man
 
 # Mingw32
 %package -n mingw32-gtk-vnc

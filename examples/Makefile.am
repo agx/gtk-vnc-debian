@@ -16,9 +16,10 @@ gvncviewer_LDADD += ../src/libgvncpulse-1.0.la
 endif
 gvncviewer_CFLAGS = $(GTK_CFLAGS) \
 		    $(GIOUNIX_CFLAGS) \
-		    $(WARNING_CFLAGS) \
+		    $(WARN_CFLAGS) \
 		    $(VIEW_CFLAGS) -I$(top_srcdir)/src/
 
-EXTRA_DIST = gvncviewer.py gvncviewer.js
+EXTRA_DIST = gvncviewer-bindings.py gvncviewer-introspection.py \
+             gvncviewer.js gvncviewer.pl
 
 -include $(top_srcdir)/git.mk

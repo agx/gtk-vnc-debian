@@ -33,7 +33,7 @@ _wrap_vnc_display_send_keys(PyGObject *self,
 	return NULL;
 
     len = PyList_Size(keyList);
-    keys = malloc(sizeof(guint)*len);
+    keys = g_new0(uint, len);
     for (i = 0 ; i < len ; i++) {
         PyObject *val;
         char *sym;
@@ -47,7 +47,7 @@ _wrap_vnc_display_send_keys(PyGObject *self,
     }
 
     vnc_display_send_keys_ex(VNC_DISPLAY(self->obj), keys, len, kind);
-    free(keys);
+    g_free(keys);
 
     Py_INCREF(Py_None);
     return Py_None;

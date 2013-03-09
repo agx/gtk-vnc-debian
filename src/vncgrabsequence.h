@@ -46,6 +46,8 @@ VncGrabSequence *vnc_grab_sequence_copy(VncGrabSequence *sequence);
 void vnc_grab_sequence_free(VncGrabSequence *sequence);
 gchar *vnc_grab_sequence_as_string(VncGrabSequence *sequence);
 
+guint vnc_grab_sequence_get_nth(VncGrabSequence *sequence,
+                                guint n);
 
 G_END_DECLS
 

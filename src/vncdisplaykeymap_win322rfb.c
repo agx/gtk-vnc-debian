@@ -135,6 +135,7 @@ static const guint16 keymap_win322rfb[] = {
   [0xdb] = 0x1a,       /* 219 (VK_OEM_4) => 26 via 26 (KEY_LEFTBRACE) */
   [0xdc] = 0x2b,       /* 220 (VK_OEM_5) => 43 via 43 (KEY_BACKSLASH) */
   [0xdd] = 0x1b,       /* 221 (VK_OEM_6) => 27 via 27 (KEY_RIGHTBRACE) */
+  [0xde] = 0x28,       /* 222 (VK_OEM_7) => 40 via 40 (KEY_APOSTROPHE) */
   [0xe1] = 0x56,       /* 225 (VK_OEM_102) => 86 via 86 (KEY_102ND) */
   [0xfa] = 0xb3,       /* 250 (VK_PLAY) => 179 via 207 (KEY_PLAY) */
 };

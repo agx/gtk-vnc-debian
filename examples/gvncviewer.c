@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib.h>
-#if HAVE_GIOUNIX
+#ifdef HAVE_GIOUNIX
 #include <gio/gunixsocketaddress.h>
 #endif
 
@@ -317,9 +317,10 @@ static gboolean dialog_key_ignore(int keyval)
     case GDK_Return:
     case GDK_Escape:
         return TRUE;
-    }
 
-    return FALSE;
+    default:
+        return FALSE;
+    }
 }
 
 static gboolean dialog_key_press(GtkWidget *window G_GNUC_UNUSED,
@@ -619,7 +620,7 @@ int main(int argc, char **argv)
 #endif
     menubar = gtk_menu_bar_new();
 
-#if HAVE_PULSEAUDIO
+#ifdef HAVE_PULSEAUDIO
     pa = vnc_audio_pulse_new();
 #endif
 
@@ -688,7 +689,7 @@ int main(int argc, char **argv)
     gtk_container_add(GTK_CONTAINER(window), layout);
     gtk_widget_realize(vnc);
 
-#if HAVE_GIOUNIX
+#ifdef HAVE_GIOUNIX
     if (strchr(args[0], '/')) {
         GSocketAddress *addr = g_unix_socket_address_new_with_type
             (args[0], strlen(args[0]),
@@ -718,7 +719,7 @@ int main(int argc, char **argv)
         vnc_display_open_host(VNC_DISPLAY(vnc), hostname, port);
         g_free(hostname);
         g_free(port);
-#if HAVE_GIOUNIX
+#ifdef HAVE_GIOUNIX
     }
 #endif
     vnc_display_set_keyboard_grab(VNC_DISPLAY(vnc), TRUE);

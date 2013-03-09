@@ -142,8 +142,7 @@ VncCairoFramebuffer *vnc_cairo_framebuffer_new(guint16 width, guint16 height,
     localFormat.blue_shift = 0;
     localFormat.depth = 32;
     localFormat.bits_per_pixel = 32;
-    /* XXX is cairo native endian ? */
-    localFormat.byte_order = G_LITTLE_ENDIAN;
+    localFormat.byte_order = G_BYTE_ORDER;
 
     pixels = cairo_image_surface_get_data(surface);
 

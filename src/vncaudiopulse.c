@@ -65,6 +65,7 @@ static gboolean vnc_audio_pulse_playback_start(VncAudio *audio,
     case VNC_AUDIO_FORMAT_RAW_U16:
     case VNC_AUDIO_FORMAT_RAW_U32:
     default:
+        VNC_DEBUG("Unable to handle audio format %d", format->format);
         return FALSE;
     }
     pulse_spec.channels = format->nchannels;
@@ -103,6 +104,9 @@ static gboolean vnc_audio_pulse_playback_data(VncAudio *audio,
 {
     VncAudioPulse *pulse = VNC_AUDIO_PULSE(audio);
     VncAudioPulsePrivate *priv = pulse->priv;
+
+    if (!priv->pa)
+        return FALSE;
 
     if (pa_simple_write(priv->pa, sample->data, sample->length, NULL) < 0)
         return FALSE;
