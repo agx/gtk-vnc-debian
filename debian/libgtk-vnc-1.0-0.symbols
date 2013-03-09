@@ -49,6 +49,7 @@ libgtk-vnc-1.0.so.0 libgtk-vnc-1.0-0 #MINVER#
  vnc_grab_sequence_as_string@Base 0.4.1
  vnc_grab_sequence_copy@Base 0.4.1
  vnc_grab_sequence_free@Base 0.4.1
+ vnc_grab_sequence_get_nth@Base 0.5.2
  vnc_grab_sequence_get_type@Base 0.4.1
  vnc_grab_sequence_new@Base 0.4.1
  vnc_grab_sequence_new_from_string@Base 0.4.1
