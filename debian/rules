@@ -6,7 +6,6 @@
 override_dh_auto_configure:
 	dh_auto_configure -B build/gtk2 -- --with-gtk=2.0 \
                                            --with-python \
-                                           --enable-plugin=yes \
                                            --disable-introspection \
                                            $(shell dpkg-buildflags --export=configure)
 	dh_auto_configure -B build/gtk3 -- --with-gtk=3.0 \
@@ -42,14 +41,12 @@ override_dh_install:
 
 	dh_install -plibgtk-vnc-1.0-0 \
                    -plibgtk-vnc-1.0-dev \
-                   -pmozilla-gtk-vnc \
                    -ppython-gtk-vnc \
                   --sourcedir=debian/gtk2
 
 override_dh_strip:
 	dh_strip -plibgvnc-1.0-0 --dbg-package=libgvnc-1.0-0-dbg
 	dh_strip -plibgtk-vnc-1.0-0 --dbg-package=libgtk-vnc-1.0-0-dbg
-	dh_strip -pmozilla-gtk-vnc --dbg-package=libgtk-vnc-1.0-0-dbg
 	dh_strip -plibgtk-vnc-2.0-0 --dbg-package=libgtk-vnc-2.0-0-dbg
 	dh_strip -pgvncviewer -ppython-gtk-vnc
 
@@ -58,7 +55,5 @@ override_dh_python2:
 
 override_dh_makeshlibs:
 	dh_makeshlibs -plibgtk-vnc-1.0-0 -V 'libgtk-vnc-1.0-0 (>= 0.3.9)'
-	dh_makeshlibs -pmozilla-gtk-vnc --noscripts -X /plugins/
-	dh_makeshlibs -a -Nlibgtk-vnc-1.0-0 -Nmozilla-gtk-vnc
+	dh_makeshlibs -a -Nlibgtk-vnc-1.0-0
 	dh_girepository
-
