@@ -1,3 +1,9 @@
+gtk-vnc (0.5.2-2) unstable; urgency=low
+
+  * [c792964] Switch to Vala 0.20 (Closes: #709166, #675645)
+
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 22 May 2013 07:49:19 +0200
+
 gtk-vnc (0.5.2-1) unstable; urgency=low
 
   * [63d4584] Imported Upstream version 0.5.2
