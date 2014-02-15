@@ -1,3 +1,15 @@
+gtk-vnc (0.5.2-3) unstable; urgency=medium
+
+  * [d2a1860] Depend on valac (>= 0.20) instead of valac-0.20 to ease vala
+    upgrades (Closes: #739026, #738999)
+  * [96583cf] Remove DM-Upload-Allowed.  Not used anymore.
+  * [56298bf] Remove xul-runner build-dep since we don't build the iceweasel
+    plugin since ages
+  * [fd993d0] Move introspection data to section introspection
+  * [e113a9b] Bump standards version
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 15 Feb 2014 12:49:11 +0100
+
 gtk-vnc (0.5.2-2) unstable; urgency=low
 
   * [c792964] Switch to Vala 0.20 (Closes: #709166, #675645)
