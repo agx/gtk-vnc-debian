@@ -9,7 +9,6 @@ Build-Depends:
  python-dev,
  libgnutls-dev (>= 1.4.0),
  libcairo2-dev,
- xulrunner-dev (>= 8.0),
  autotools-dev,
  libffi-dev,
  libsasl2-dev,
