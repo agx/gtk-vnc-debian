@@ -192,7 +192,7 @@ Description: VNC viewer widget for GTK+3 (development files)
  This package contains the development headers and Vala bindings.
 
 Package: gir1.2-gtk-vnc-2.0
-Section: libs
+Section: introspection
 Architecture: any
 Provides: gir1.2-gvnc-1.0
 Depends: ${gir:Depends},
