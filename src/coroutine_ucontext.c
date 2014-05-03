@@ -20,6 +20,7 @@
 
 #include <config.h>
 
+#include <glib.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <stdio.h>
@@ -40,6 +41,8 @@ static int _coroutine_release(struct continuation *cc)
         if (ret < 0)
             return ret;
     }
+
+    munmap(co->cc.stack, co->cc.stack_size);
 
     co->caller = NULL;
 
@@ -63,7 +66,8 @@ int coroutine_init(struct coroutine *co)
                         MAP_PRIVATE | MAP_ANONYMOUS,
                         -1, 0);
     if (co->cc.stack == MAP_FAILED)
-        return -1;
+        g_error("Failed to allocate %u bytes for coroutine stack",
+                (unsigned)co->stack_size);
     co->cc.entry = coroutine_trampoline;
     co->cc.release = _coroutine_release;
     co->exited = 0;

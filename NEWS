@@ -1,6 +1,29 @@
     GTK VNC News
     ============
 
+Sep 18, 2013: Release 0.5.3
+===========================
+
+New features:
+
+ o Support QEMU LED state extension
+
+Bug fixes:
+
+ o Time out connection attempt after 10 seconds
+ o Abort if out of memory when mmap'ing coroutine stack
+ o Stop leaking coroutine stack memory
+ o Improve perfornmance of ZRLE encoding by avoiding memmove
+ o Only trigger keyboard grab sequence upon key release to
+   allow modifiers to go to the remote server
+ o Avoid busy loop upon I/O error which follows blocking I/O,
+   commonly seen when a server drops the connection
+ o Fix handling of --no-undefined flag
+ o Don't break implicit pointer grab from mouse clicks
+ o Don't drop mouse events that are out of bounds, clamp their
+   coordinates instead
+ o Show how to block all accelerators in gvncviewer demo program
+
 Feb 22, 2013: Release 0.5.2
 ===========================
 

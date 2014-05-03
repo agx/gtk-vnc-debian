@@ -80,6 +80,7 @@ struct _VncDisplayPrivate
     size_t keycode_maplen;
     const guint16 *keycode_map;
 
+    gboolean vncgrabpending; /* Key sequence detected, waiting for release */
     VncGrabSequence *vncgrabseq; /* the configured key sequence */
     gboolean *vncactiveseq; /* the currently pressed keys */
 };
@@ -763,11 +764,19 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
             dx = (int)motion->x;
             dy = (int)motion->y;
 
-            /* Drop out of bounds motion to avoid upsetting
-             * the server */
-            if (dx < 0 || dx >= fbw ||
-                dy < 0 || dy >= fbh)
-                return FALSE;
+            /* If the co-ords are out of bounds we want to clamp
+             * them to the boundaries. We don't want to actually
+             * drop the events though, because even if the X coord
+             * is out of bounds we want the server to see Y coord
+             * changes, and vica-verca. */
+            if (dx < 0)
+                dx = 0;
+            if (dy < 0)
+                dy = 0;
+            if (dx >= fbw)
+                dx = fbw - 1;
+            if (dy >= fbh)
+                dy = fbh - 1;
         } else {
             /* Just send the delta since last motion event */
             dx = (int)motion->x + 0x7FFF - priv->last_x;
@@ -784,6 +793,17 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
 }
 
 
+/*
+ * Lets say the grab sequence of Ctrl_L + Alt_L
+ *
+ * We first need to detect when both Ctrl_L and Alt_L are pressed.
+ * When this happens we are "primed" to tigger.
+ *
+ * If any further key is pressed though, we unprime ourselves
+ *
+ * If any key is released while we are primed, then we
+ * trigger.
+ */
 static gboolean check_for_grab_key(GtkWidget *widget, int type, int keyval)
 {
     VncDisplayPrivate *priv = VNC_DISPLAY(widget)->priv;
@@ -793,23 +813,42 @@ static gboolean check_for_grab_key(GtkWidget *widget, int type, int keyval)
         return FALSE;
 
     if (type == GDK_KEY_RELEASE) {
+        gboolean active = priv->vncgrabpending;
         /* Any key release resets the whole grab sequence */
         memset(priv->vncactiveseq, 0,
                sizeof(gboolean)*priv->vncgrabseq->nkeysyms);
+        priv->vncgrabpending = FALSE;
+        return active;
+    } else {
+        gboolean setone = FALSE;
+
+        /* Record the new key press */
+        for (i = 0 ; i < priv->vncgrabseq->nkeysyms ; i++) {
+            if (priv->vncgrabseq->keysyms[i] == keyval) {
+                priv->vncactiveseq[i] = TRUE;
+                setone = TRUE;
+            }
+        }
+
+        if (setone) {
+            /* Return if any key is not pressed */
+            for (i = 0 ; i < priv->vncgrabseq->nkeysyms ; i++)
+                if (priv->vncactiveseq[i] == FALSE)
+                    return FALSE;
+
+            /* All keys in grab seq are pressed, so prime
+             * to trigger on release
+             */
+            priv->vncgrabpending = TRUE;
+        } else {
+            /* Key not in grab seq, so must reset any pending
+             * grab keys we have */
+            memset(priv->vncactiveseq, 0,
+                   sizeof(gboolean)*priv->vncgrabseq->nkeysyms);
+            priv->vncgrabpending = FALSE;
+        }
 
         return FALSE;
-    } else {
-        /* Record the new key press */
-        for (i = 0 ; i < priv->vncgrabseq->nkeysyms ; i++)
-            if (priv->vncgrabseq->keysyms[i] == keyval)
-                priv->vncactiveseq[i] = TRUE;
-
-        /* Return if any key is not pressed */
-        for (i = 0 ; i < priv->vncgrabseq->nkeysyms ; i++)
-            if (priv->vncactiveseq[i] == FALSE)
-                return FALSE;
-
-        return TRUE;
     }
 }
 
@@ -931,7 +970,10 @@ static gboolean leave_event(GtkWidget *widget, GdkEventCrossing *crossing G_GNUC
     if (priv->grab_keyboard)
         do_keyboard_ungrab(VNC_DISPLAY(widget), FALSE);
 
-    if (priv->grab_pointer)
+    if (priv->local_pointer)
+        do_pointer_hide(VNC_DISPLAY(widget));
+
+    if (priv->grab_pointer && !priv->absolute)
         do_pointer_ungrab(VNC_DISPLAY(widget), FALSE);
 
     return TRUE;
@@ -2238,6 +2280,7 @@ void vnc_display_set_pointer_grab(VncDisplay *obj, gboolean enable)
  */
 void vnc_display_set_grab_keys(VncDisplay *obj, VncGrabSequence *seq)
 {
+    obj->priv->vncgrabpending = FALSE;
     if (obj->priv->vncgrabseq) {
         vnc_grab_sequence_free(obj->priv->vncgrabseq);
         g_free(obj->priv->vncactiveseq);

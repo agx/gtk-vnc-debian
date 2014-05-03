@@ -208,7 +208,8 @@ struct _VncConnectionPrivate
     z_stream *strm;
     z_stream streams[5];
 
-    size_t uncompressed_length;
+    size_t uncompressed_offset;
+    size_t uncompressed_size;
     guint8 uncompressed_buffer[4096];
 
     size_t compressed_length;
@@ -217,6 +218,7 @@ struct _VncConnectionPrivate
     guint8 zrle_pi;
     int zrle_pi_bits;
 
+    int ledstate;
     gboolean has_ext_key_event;
 
     struct {
@@ -248,6 +250,7 @@ enum {
     VNC_FRAMEBUFFER_UPDATE,
     VNC_DESKTOP_RESIZE,
     VNC_PIXEL_FORMAT_CHANGED,
+    VNC_LED_STATE,
 
     VNC_AUTH_FAILURE,
     VNC_AUTH_UNSUPPORTED,
@@ -449,6 +452,7 @@ struct signal_data
         VncCursor *cursor;
         gboolean absPointer;
         const char *text;
+        int ledstate;
         struct {
             int x;
             int y;
@@ -523,6 +527,13 @@ static gboolean do_vnc_connection_emit_main_context(gpointer opaque)
                       signals[data->signum],
                       0,
                       data->params.pixelFormat);
+        break;
+
+    case VNC_LED_STATE:
+        g_signal_emit(G_OBJECT(data->conn),
+                      signals[data->signum],
+                      0,
+                      data->params.ledstate);
         break;
 
     case VNC_AUTH_FAILURE:
@@ -614,19 +625,15 @@ static int vnc_connection_zread(VncConnection *conn, void *buffer, size_t size)
     while (offset < size) {
         /* if data is available in the uncompressed buffer, then
          * copy */
-        if (priv->uncompressed_length) {
-            size_t len = MIN(priv->uncompressed_length,
+        if (priv->uncompressed_size - priv->uncompressed_offset) {
+            size_t len = MIN(priv->uncompressed_size - priv->uncompressed_offset,
                              size - offset);
 
             memcpy(ptr + offset,
-                   priv->uncompressed_buffer,
+                   priv->uncompressed_buffer + priv->uncompressed_offset,
                    len);
 
-            priv->uncompressed_length -= len;
-            if (priv->uncompressed_length)
-                memmove(priv->uncompressed_buffer,
-                        priv->uncompressed_buffer + len,
-                        priv->uncompressed_length);
+            priv->uncompressed_offset += len;
             offset += len;
         } else {
             int err;
@@ -643,7 +650,8 @@ static int vnc_connection_zread(VncConnection *conn, void *buffer, size_t size)
                 return -1;
             }
 
-            priv->uncompressed_length = (guint8 *)priv->strm->next_out - priv->uncompressed_buffer;
+            priv->uncompressed_offset = 0;
+            priv->uncompressed_size = (guint8 *)priv->strm->next_out - priv->uncompressed_buffer;
             priv->compressed_length -= (guint8 *)priv->strm->next_in - priv->compressed_buffer;
             priv->compressed_buffer = priv->strm->next_in;
         }
@@ -705,6 +713,7 @@ static int vnc_connection_read_wire(VncConnection *conn, void *data, size_t len)
             } else {
                 g_io_wait(priv->sock, G_IO_IN);
             }
+            blocking = FALSE;
             goto reread;
         } else {
             priv->has_error = TRUE;
@@ -1413,6 +1422,19 @@ static void vnc_connection_read_pixel_format(VncConnection *conn, VncPixelFormat
               fmt->bits_per_pixel, fmt->depth, fmt->byte_order, fmt->true_color_flag,
               fmt->red_max, fmt->green_max, fmt->blue_max,
               fmt->red_shift, fmt->green_shift, fmt->blue_shift);
+}
+
+static void vnc_connection_ledstate_change(VncConnection *conn)
+{
+    VncConnectionPrivate *priv = conn->priv;
+    struct signal_data sigdata;
+
+    priv->ledstate = vnc_connection_read_u8(conn);
+
+    VNC_DEBUG("LED state: %d\n", priv->ledstate);
+
+    sigdata.params.ledstate = priv->ledstate;
+    vnc_connection_emit_main_context(conn, VNC_LED_STATE, &sigdata);
 }
 
 /* initialize function */
@@ -2265,7 +2287,8 @@ static void vnc_connection_zrle_update(VncConnection *conn,
     vnc_connection_read(conn, zlib_data, length);
 
     /* setup subsequent calls to vnc_connection_read*() to use the compressed data */
-    priv->uncompressed_length = 0;
+    priv->uncompressed_offset = 0;
+    priv->uncompressed_size = 0;
     priv->compressed_length = length;
     priv->compressed_buffer = zlib_data;
     priv->strm = &priv->streams[0];
@@ -2281,7 +2304,8 @@ static void vnc_connection_zrle_update(VncConnection *conn,
     }
 
     priv->strm = NULL;
-    priv->uncompressed_length = 0;
+    priv->uncompressed_offset = 0;
+    priv->uncompressed_size = 0;
     priv->compressed_length = 0;
     priv->compressed_buffer = NULL;
 
@@ -2545,7 +2569,8 @@ static void vnc_connection_tight_update(VncConnection *conn,
 
             vnc_connection_read(conn, zlib_data, zlib_length);
 
-            priv->uncompressed_length = 0;
+            priv->uncompressed_offset = 0;
+            priv->uncompressed_size = 0;
             priv->compressed_length = zlib_length;
             priv->compressed_buffer = zlib_data;
         }
@@ -2569,7 +2594,8 @@ static void vnc_connection_tight_update(VncConnection *conn,
         }
 
         if (data_size >= 12) {
-            priv->uncompressed_length = 0;
+            priv->uncompressed_offset = 0;
+            priv->uncompressed_size = 0;
             priv->compressed_length = 0;
             priv->compressed_buffer = NULL;
 
@@ -2882,6 +2908,10 @@ static gboolean vnc_connection_framebuffer_update(VncConnection *conn, gint32 et
         break;
     case VNC_CONNECTION_ENCODING_POINTER_CHANGE:
         vnc_connection_pointer_type_change(conn, x);
+        vnc_connection_resend_framebuffer_update_request(conn);
+        break;
+    case VNC_CONNECTION_ENCODING_LED_STATE:
+        vnc_connection_ledstate_change(conn);
         vnc_connection_resend_framebuffer_update_request(conn);
         break;
     case VNC_CONNECTION_ENCODING_WMVi:
@@ -4609,6 +4639,16 @@ static void vnc_connection_class_init(VncConnectionClass *klass)
                       1,
                       G_TYPE_POINTER);
 
+    signals[VNC_LED_STATE] =
+        g_signal_new ("vnc-led-state",
+                      G_OBJECT_CLASS_TYPE (object_class),
+                      G_SIGNAL_RUN_FIRST,
+                      G_STRUCT_OFFSET (VncConnectionClass, vnc_led_state),
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__INT,
+                      G_TYPE_NONE,
+                      0);
+
     signals[VNC_AUTH_FAILURE] =
         g_signal_new ("vnc-auth-failure",
                       G_OBJECT_CLASS_TYPE (object_class),
@@ -4776,7 +4816,8 @@ static void vnc_connection_close(VncConnection *conn)
 
     priv->read_offset = priv->read_size = 0;
     priv->write_offset = 0;
-    priv->uncompressed_length = 0;
+    priv->uncompressed_offset = 0;
+    priv->uncompressed_size = 0;
     priv->compressed_length = 0;
 
     priv->width = priv->height = 0;
@@ -4989,7 +5030,17 @@ static gboolean vnc_connection_open_fd_internal(VncConnection *conn)
     return !vnc_connection_has_error(conn);
 }
 
-static GSocket *vnc_connection_connect_socket(GSocketAddress *sockaddr,
+static gboolean connect_timeout(gpointer data)
+{
+    struct wait_queue *wait = data;
+
+    g_io_wakeup(wait);
+
+    return FALSE;
+}
+
+static GSocket *vnc_connection_connect_socket(struct wait_queue *wait,
+                                              GSocketAddress *sockaddr,
                                               GError **error)
 {
     GSocket *sock = g_socket_new(g_socket_address_get_family(sockaddr),
@@ -5000,27 +5051,39 @@ static GSocket *vnc_connection_connect_socket(GSocketAddress *sockaddr,
     if (!sock)
         return NULL;
 
+    guint timeout = g_timeout_add_seconds(10, connect_timeout, wait);
+
     g_socket_set_blocking(sock, FALSE);
     if (!g_socket_connect(sock, sockaddr, NULL, error)) {
         if (*error && (*error)->code == G_IO_ERROR_PENDING) {
             g_error_free(*error);
             *error = NULL;
             VNC_DEBUG("Socket pending");
-            g_io_wait(sock, G_IO_OUT|G_IO_ERR|G_IO_HUP);
-
-            if (!g_socket_check_connect_result(sock, error)) {
-                VNC_DEBUG("Failed to connect %s", (*error)->message);
-                g_object_unref(sock);
-                return NULL;
+            if (!g_io_wait_interruptable(wait, sock, G_IO_OUT|G_IO_ERR|G_IO_HUP)) {
+                VNC_DEBUG("connect interrupted");
+                timeout = 0;
+                goto timeout;
             }
-        } else {
-            VNC_DEBUG("Socket error: %s", *error ? (*error)->message : "unknown");
-            g_object_unref(sock);
-            return NULL;
-        }
+
+            if (!g_socket_check_connect_result(sock, error))
+                goto error;
+        } else
+            goto error;
     }
 
     VNC_DEBUG("Finally connected");
+    goto end;
+
+error:
+    VNC_DEBUG("Socket error: %s", *error ? (*error)->message : "unknown");
+
+timeout:
+    g_object_unref(sock);
+    sock = NULL;
+
+end:
+    if (timeout != 0)
+        g_source_remove(timeout);
 
     return sock;
 }
@@ -5033,7 +5096,7 @@ static gboolean vnc_connection_open_addr_internal(VncConnection *conn)
 
     VNC_DEBUG("Connecting with addr %p", priv->addr);
 
-    sock = vnc_connection_connect_socket(priv->addr, &conn_error);
+    sock = vnc_connection_connect_socket(&priv->wait, priv->addr, &conn_error);
     g_clear_error(&conn_error);
     if (sock) {
         priv->sock = sock;
@@ -5068,7 +5131,7 @@ static gboolean vnc_connection_open_host_internal(VncConnection *conn)
            (sockaddr = g_socket_address_enumerator_next(enumerator, NULL, &conn_error))) {
         VNC_DEBUG("Trying one socket");
         g_clear_error(&conn_error);
-        sock = vnc_connection_connect_socket(sockaddr, &conn_error);
+        sock = vnc_connection_connect_socket(&priv->wait, sockaddr, &conn_error);
         g_object_unref(sockaddr);
     }
     g_object_unref(enumerator);
@@ -5442,6 +5505,13 @@ gboolean vnc_connection_get_abs_pointer(VncConnection *conn)
     VncConnectionPrivate *priv = conn->priv;
 
     return priv->absPointer;
+}
+
+int vnc_connection_get_ledstate(VncConnection *conn)
+{
+    VncConnectionPrivate *priv = conn->priv;
+
+    return priv->ledstate;
 }
 
 /*

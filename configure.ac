@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.5.2],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.5.3],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -144,7 +144,7 @@ AC_ARG_WITH(examples,
 WITH_EXAMPLES=$withval
 
 
-NO_UNDEFINED_LDFLAGS=
+NO_UNDEFINED_FLAGS=
 VERSION_SCRIPT_FLAGS=
 USE_VERSION_DEFS=0
 case "$host" in
@@ -155,11 +155,12 @@ case "$host" in
     ;;
 
   *-*-cygwin*)
-    NO_UNDEFINED_LDFLAGS="-no-undefined"
+    NO_UNDEFINED_FLAGS="-no-undefined"
     ;;
 
   *)
-    NO_UNDEFINED_FLAGS="-Wl,--no-undefined"
+    `ld --help 2>&1 | grep -- --no-undefined >/dev/null` && \
+      NO_UNDEFINED_FLAGS="-Wl,--no-undefined"
     VERSION_SCRIPT_FLAGS=-Wl,--version-script=
     `ld --help 2>&1 | grep -- --version-script >/dev/null` || \
       VERSION_SCRIPT_FLAGS="-Wl,-M -Wl,"
