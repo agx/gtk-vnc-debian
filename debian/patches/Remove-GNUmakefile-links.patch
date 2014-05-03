@@ -1,18 +1,18 @@
-From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+From: =?utf-8?q?Guido_G=C3=BCnther?= <agx@sigxcpu.org>
 Date: Wed, 21 Dec 2011 22:43:13 +0100
 Subject: Remove GNUmakefile links
 
 since it breaks the out of tree build
 ---
- configure    |   11 -----------
- configure.ac |   11 -----------
+ configure    | 11 -----------
+ configure.ac | 11 -----------
  2 files changed, 22 deletions(-)
 
 diff --git a/configure b/configure
-index b335ce0..d8765e2 100755
+index 9e779d3..7e8162d 100755
 --- a/configure
 +++ b/configure
-@@ -11971,17 +11971,6 @@ cat >>confdefs.h <<_ACEOF
+@@ -12015,17 +12015,6 @@ cat >>confdefs.h <<_ACEOF
  #define VERSION_MICRO $VERSION_MICRO
  _ACEOF
  
@@ -31,7 +31,7 @@ index b335ce0..d8765e2 100755
    no) :
      ac_cv_prog_cc_c99=no; ac_cv_prog_cc_c89=no ;; #(
 diff --git a/configure.ac b/configure.ac
-index f7a17b8..5427f60 100644
+index ff38b17..3568a2b 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -56,17 +56,6 @@ AC_DEFINE_UNQUOTED([VERSION_MAJOR], [$VERSION_MAJOR], [Major version number of p
