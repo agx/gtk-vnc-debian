@@ -69,7 +69,7 @@ dist-hook: gen-ChangeLog gen-AUTHORS
 
 .PHONY: gen-ChangeLog
 gen-ChangeLog:
-	$(AM_V_GEN)if test -d .git; then		\
+	$(AM_V_GEN)if test -d $(srcdir)/.git; then	\
 	  $(top_srcdir)/build-aux/gitlog-to-changelog	\
 	    --since=$(gen_start_date) > $(distdir)/cl-t;\
 	  rm -f $(distdir)/ChangeLog;			\

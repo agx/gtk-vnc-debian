@@ -108,6 +108,12 @@ typedef struct {
     gboolean set;
 } VncGrabDefs;
 
+gboolean enable_mnemonics_save;
+GtkAccelGroup *accel_group;
+gboolean accel_enabled = TRUE;
+GValue accel_setting;
+GSList *accel_list;
+
 static void set_title(VncDisplay *vncdisplay, GtkWidget *window,
                       gboolean grabbed)
 {
@@ -141,12 +147,86 @@ static gboolean vnc_screenshot(GtkWidget *window G_GNUC_UNUSED,
     return FALSE;
 }
 
-static void vnc_grab(GtkWidget *vncdisplay, GtkWidget *window)
+
+static void
+vnc_disable_modifiers(GtkWindow *window)
+{
+    GtkSettings *settings = gtk_settings_get_default();
+    GValue empty;
+    GSList *accels;
+
+    if (!accel_enabled)
+        return;
+
+    /* This stops F10 activating menu bar */
+    memset(&empty, 0, sizeof empty);
+    g_value_init(&empty, G_TYPE_STRING);
+    g_object_get_property(G_OBJECT(settings), "gtk-menu-bar-accel", &accel_setting);
+    g_object_set_property(G_OBJECT(settings), "gtk-menu-bar-accel", &empty);
+
+    /* This stops global accelerators like Ctrl+Q == Quit */
+    for (accels = accel_list ; accels ; accels = accels->next) {
+        if (accel_group == accels->data)
+            continue;
+        gtk_window_remove_accel_group(GTK_WINDOW(window), accels->data);
+    }
+
+    /* This stops menu bar shortcuts like Alt+F == File */
+    g_object_get(settings,
+                 "gtk-enable-mnemonics", &enable_mnemonics_save,
+                 NULL);
+    g_object_set(settings,
+                 "gtk-enable-mnemonics", FALSE,
+                 NULL);
+
+    accel_enabled = FALSE;
+}
+
+
+static void
+vnc_enable_modifiers(GtkWindow *window)
+{
+    GtkSettings *settings = gtk_settings_get_default();
+    GSList *accels;
+
+    if (accel_enabled)
+        return;
+
+    /* This allows F10 activating menu bar */
+    g_object_set_property(G_OBJECT(settings), "gtk-menu-bar-accel", &accel_setting);
+
+    /* This allows global accelerators like Ctrl+Q == Quit */
+    for (accels = accel_list ; accels ; accels = accels->next) {
+        if (accel_group == accels->data)
+            continue;
+        gtk_window_add_accel_group(GTK_WINDOW(window), accels->data);
+    }
+
+    /* This allows menu bar shortcuts like Alt+F == File */
+    g_object_set(settings,
+                 "gtk-enable-mnemonics", enable_mnemonics_save,
+                 NULL);
+
+    accel_enabled = TRUE;
+}
+
+
+static void vnc_key_grab(GtkWidget *vncdisplay G_GNUC_UNUSED, GtkWidget *window)
+{
+    vnc_disable_modifiers(GTK_WINDOW(window));
+}
+
+static void vnc_key_ungrab(GtkWidget *vncdisplay G_GNUC_UNUSED, GtkWidget *window)
+{
+    vnc_enable_modifiers(GTK_WINDOW(window));
+}
+
+static void vnc_mouse_grab(GtkWidget *vncdisplay, GtkWidget *window)
 {
     set_title(VNC_DISPLAY(vncdisplay), window, TRUE);
 }
 
-static void vnc_ungrab(GtkWidget *vncdisplay, GtkWidget *window)
+static void vnc_mouse_ungrab(GtkWidget *vncdisplay, GtkWidget *window)
 {
     set_title(VNC_DISPLAY(vncdisplay), window, FALSE);
 }
@@ -588,6 +668,7 @@ int main(int argc, char **argv)
     GtkWidget *scaling;
     GtkWidget *showgrabkeydlg;
     const char *help_msg = "Run 'gvncviewer --help' to see a full list of available command line options";
+    GSList *accels;
 
     name = g_strdup_printf("- Simple VNC Client on Gtk-VNC %s",
                            vnc_util_get_version_string());
@@ -689,6 +770,15 @@ int main(int argc, char **argv)
     gtk_container_add(GTK_CONTAINER(window), layout);
     gtk_widget_realize(vnc);
 
+    g_value_init(&accel_setting, G_TYPE_STRING);
+
+    accels = gtk_accel_groups_from_object(G_OBJECT(window));
+
+    for ( ; accels ; accels = accels->next) {
+        accel_list = g_slist_append(accel_list, accels->data);
+        g_object_ref(G_OBJECT(accels->data));
+    }
+
 #ifdef HAVE_GIOUNIX
     if (strchr(args[0], '/')) {
         GSocketAddress *addr = g_unix_socket_address_new_with_type
@@ -724,6 +814,7 @@ int main(int argc, char **argv)
 #endif
     vnc_display_set_keyboard_grab(VNC_DISPLAY(vnc), TRUE);
     vnc_display_set_pointer_grab(VNC_DISPLAY(vnc), TRUE);
+    vnc_display_set_pointer_local(VNC_DISPLAY(vnc), TRUE);
 
     if (!gtk_widget_is_composited(window)) {
         vnc_display_set_scaling(VNC_DISPLAY(vnc), TRUE);
@@ -747,9 +838,15 @@ int main(int argc, char **argv)
                      G_CALLBACK(vnc_desktop_resize), NULL);
 
     g_signal_connect(vnc, "vnc-pointer-grab",
-                     G_CALLBACK(vnc_grab), window);
+                     G_CALLBACK(vnc_mouse_grab), window);
     g_signal_connect(vnc, "vnc-pointer-ungrab",
-                     G_CALLBACK(vnc_ungrab), window);
+                     G_CALLBACK(vnc_mouse_ungrab), window);
+
+    g_signal_connect(vnc, "vnc-keyboard-grab",
+                     G_CALLBACK(vnc_key_grab), window);
+    g_signal_connect(vnc, "vnc-keyboard-ungrab",
+                     G_CALLBACK(vnc_key_ungrab), window);
+
 
     g_signal_connect(window, "key-press-event",
                      G_CALLBACK(vnc_screenshot), vnc);

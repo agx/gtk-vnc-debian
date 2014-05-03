@@ -19,7 +19,7 @@
 
 Summary: A GTK2 widget for VNC clients
 Name: gtk-vnc
-Version: 0.5.2
+Version: 0.5.3
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
@@ -29,7 +29,7 @@ URL: http://live.gnome.org/gtk-vnc
 Requires: gvnc = %{version}-%{release}
 BuildRequires: gtk2-devel >= 2.14
 BuildRequires: pygtk2-devel python-devel zlib-devel
-BuildRequires: gnutls-devel cyrus-sasl-devel intltool
+BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel intltool
 %if %{with_gir}
 BuildRequires: gobject-introspection-devel
 %if 0%{?fedora} && 0%{?fedora} < 14
@@ -168,12 +168,14 @@ cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
 cd gtk-vnc-%{version}
 %configure --with-gtk=2.0 %{gir_arg}
 %__make %{?_smp_mflags} V=1
+chmod -x examples/*.pl examples/*.js examples/*.py
 cd ..
 
 %if %{with_gtk3}
 cd gtk-vnc2-%{version}
 %configure --with-gtk=3.0 %{gir_arg}
 %__make %{?_smp_mflags} V=1
+chmod -x examples/*.pl examples/*.js examples/*.py
 cd ..
 %endif
 
@@ -225,11 +227,6 @@ rm -fr %{buildroot}
 %files devel
 %defattr(-, root, root)
 %doc gtk-vnc-%{version}/examples/gvncviewer.c
-%if %{with_gir}
-%doc gtk-vnc-%{version}/examples/gvncviewer.js
-%doc gtk-vnc-%{version}/examples/gvncviewer.pl
-%doc gtk-vnc-%{version}/examples/gvncviewer-introspection.py
-%endif
 %{_libdir}/libgtk-vnc-1.0.so
 %dir %{_includedir}/%{name}-1.0/
 %{_includedir}/%{name}-1.0/*.h
@@ -313,6 +310,8 @@ rm -fr %{buildroot}
 %doc gtk-vnc2-%{version}/examples/gvncviewer.c
 %if %{with_gir}
 %doc gtk-vnc2-%{version}/examples/gvncviewer.js
+%doc gtk-vnc2-%{version}/examples/gvncviewer.pl
+%doc gtk-vnc2-%{version}/examples/gvncviewer-introspection.py
 %endif
 %{_libdir}/libgtk-vnc-2.0.so
 %dir %{_includedir}/%{name}-2.0/

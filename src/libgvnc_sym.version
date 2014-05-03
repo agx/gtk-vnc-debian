@@ -87,6 +87,7 @@
 	vnc_connection_set_audio_format;
 	vnc_connection_get_audio_format;
 	vnc_connection_set_audio;
+	vnc_connection_get_ledstate;
 
 	vnc_util_set_debug;
 	vnc_util_get_debug;

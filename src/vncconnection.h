@@ -39,6 +39,11 @@ G_BEGIN_DECLS
 #define VNC_IS_CONNECTION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VNC_TYPE_CONNECTION))
 #define VNC_CONNECTION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VNC_TYPE_CONNECTION, VncConnectionClass))
 
+/* identical to the ledstate bits */
+#define VNC_LEDSTATE_SCROLL_LOCK (1 << 0)
+#define VNC_LEDSTATE_NUM_LOCK    (1 << 1)
+#define VNC_LEDSTATE_CAPS_LOCK   (1 << 2)
+
 
 typedef struct _VncConnection VncConnection;
 typedef struct _VncConnectionPrivate VncConnectionPrivate;
@@ -73,12 +78,13 @@ struct _VncConnectionClass
     void (*vnc_connected)(VncConnection *conn);
     void (*vnc_initialized)(VncConnection *conn);
     void (*vnc_disconnected)(VncConnection *conn);
+    void (*vnc_led_state)(VncConnection *conn);
 
     /*
      * If adding fields to this struct, remove corresponding
      * amount of padding to avoid changing overall struct size
      */
-    gpointer _vnc_reserved[VNC_PADDING_LARGE];
+    gpointer _vnc_reserved[VNC_PADDING_LARGE - 4];
 };
 
 
@@ -114,6 +120,7 @@ typedef enum {
     VNC_CONNECTION_ENCODING_POINTER_CHANGE = -257,
     VNC_CONNECTION_ENCODING_EXT_KEY_EVENT = -258,
     VNC_CONNECTION_ENCODING_AUDIO = -259,
+    VNC_CONNECTION_ENCODING_LED_STATE = -261,
 } VncConnectionEncoding;
 
 typedef enum {
@@ -203,6 +210,7 @@ VncCursor *vnc_connection_get_cursor(VncConnection *conn);
 
 gboolean vnc_connection_get_abs_pointer(VncConnection *conn);
 gboolean vnc_connection_get_ext_key_event(VncConnection *conn);
+int vnc_connection_get_ledstate(VncConnection *conn);
 
 gboolean vnc_connection_set_audio(VncConnection *conn,
                                   VncAudio *audio);

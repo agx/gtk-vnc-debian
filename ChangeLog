@@ -1,0 +1,2102 @@
+2013-09-18  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.5.3 release
+
+	Fix generation of ChangeLog with VPATH build
+
+	Remove trailing whitespace
+
+	Only put examples in gtk3 based devel RPM
+	The example programs which use introspection are only compatible
+	with GTK3, so should be in gtk-vnc2-devel rather than gtk-vnc-devel
+
+	Remove execute permission from example programs in RPM
+	Avoid getting pointless RPM deps by removing the execute
+	permission from the example programs.
+
+	Add explicit dep on libgcrypt-devel RPM
+	gnutls-devel no longer pulls in libgcrypt-devel since the
+	switch to use nettle.
+
+2013-09-17  Daniel P. Berrange  <berrange@redhat.com>
+
+	Block all accelerators when grabbing keyboard
+	Prevent any global accelerators from activating in the
+	gvncviewer demo program when keyboard grab is active
+
+	  https://bugzilla.gnome.org/show_bug.cgi?id=594571
+
+	Don't ungrab pointer on leave-notify events
+	If we ungrab the pointer on leave-notify events, this breaks
+	the automatic grabs when a button is pressed in absolute pointer.
+	A symptom of this is that if you press to start highlighting text
+	in a gedit window in a server, and move the mouse outside the VNC
+	widget and release the button, the server will never see the mouse
+	up event. We must preserve grabs upon button press so that the
+	VNC server always sees the eventual release events.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=664567
+
+	Don't drop mouse events that are out of bounds
+	In absolute mode, if the mouse cursor goes outside the bounds
+	of the window, we drop the motion event entirely. This is bad
+	because only one of the co-ordinates may be out of bounds, and
+	the server still wants to see movement in the other axis. Instead
+	of dropping the events, just clamp co-ordinates to the boundary.
+
+2013-09-16  Doug Goldstein  <cardoe@cardoe.com>
+
+	Fix typo in NO_UNDEFINED_FLAGS name
+	Fix typo in the configuration of the NO_UNDEFINED_FLAGS name for Cygwin.
+
+	test for --no-undefined linker flag
+	Currently the code assumes that all non-Windows like platforms have a
+	linker that supports --no-undefined, however llvm based compilers do not
+	support this on Linux or Mac OS X, so instead test for it and only
+	use if it is available.
+
+2013-09-16  Daniel P. Berrange  <berrange@redhat.com>
+
+	Reset 'blocking' flag after I/O wait
+	If the 'vnc_connection_read_wire' goes into an I/O wait
+	due to blocking I/O, the 'blocking' flag gets set to
+	true. Upon returning from the wait, it jumps back to
+	the start of the function, but does not reset the 'blocking'
+	flag to false. If the I/O attempt succeeds, this doesn't
+	matter, but if it fails for an error reason, this gets
+	mistakenly treated as blocking I/O again.
+
+	This is seen most often when the remote server drops the
+	connection. If the client was blocking on I/O at this
+	time, it could get into a potentially infinite loop.
+
+	  https://bugzilla.gnome.org/show_bug.cgi?id=704098
+
+2013-09-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Only trigger grab sequence upon release
+	GTK-VNC uses the keyboard shortcut ctrl+alt to toggle inside/outside
+	the VM (aka release pointer). Now Gnome uses ctrl+alt+arrow_key to
+	switch virtual desktops. So these two shortcuts collide and gtk-vnc
+	will grab the key presses as soon as ctrl+alt is pressed and toogle
+	inside/outside the VM, which makes switching desktops impossible.
+
+	The solution is to only trigger the grab sequence when the user
+	releases the key. So if they press Ctrl+alt and then release it,
+	we trigger, but if they press Ctrl+alt+left-arrow we don't trigger
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=685257
+
+2013-09-13  Artem Rusanov  <artem.rusanov@gmail.com>
+
+	Make handling of ZRLE encoding more efficient
+	Avoid memmove() on the uncompressed data buffer when dealing
+	with ZRLE encoding. Instead just track what offset we've read
+	upto.
+
+2013-09-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Free coroutine stack when releasing coroutine
+	The coroutine_init function mmap's a stack for the
+	ucontext coroutine, but nothing ever munmaps it.
+
+	Abort if mmap of coroutine stack fails
+	If we fail to mmap the stack, abort the processs rather
+	than returning an error. This is standard practice in
+	glib apps, and the caller was not checking the
+	coroutine_init() return code leading to memory corruption.
+
+2013-05-20  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	connection: timeout connect() after 10s
+	It can take a minute or so before the connect() fails. Add an explicit
+	shorter timeout of 10s.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=700240
+
+2013-05-20  Lei Li  <lilei@linux.vnet.ibm.com>
+
+	Add support for LED state extension to gvnc
+	Support the QEMU LED state extension
+
+2013-03-19  Enrico Nicoletto  <enriconlto@src.gnome.org>
+
+	Added Tajik language on LINGUAS
+
+2013-03-19  Victor Ibragimov  <victor.ibragimov@gmail.com>
+
+	Updated Tajik translation
+
+2013-02-22  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.5.2 release
+
+	Delete browser plugin
+	The plugin code has been unmaintained for years and almost
+	certainly has security problems. A pure HTML5 solution like
+	noVNC is a far better approach to browser support for VNC.
+
+	Update RPM specs for F19 changes
+
+	Add perl example to RPM spec
+
+	Add python example using introspection
+
+	Add vnc_grab_sequence_get_nth
+	To allow introspected bindings to get access to keysyms, add
+	a vnc_grab_sequence_get_nth method
+
+	Rename gvncviewer.py to gvncviewer-bindings.py
+
+	Convert VncConnectionCredential to VncDisplayCredential
+	When forwarding the auth signal from VncConnection to consumers
+	of VncDisplay, the VncConnectionCredential enums must be turned
+	into VncDisplayCredential enums
+
+2013-01-31  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix conditionals in gvncviewer example
+
+	Auto-generate AUTHORS file from GIT logs
+	Rather than trying to manually keep track of authors,
+	just auto-generate the list from GIT logs
+
+	Add missing 'default' case to switch statement
+
+	Disable deprecation warnings
+	Glib deprecated GValueArray in favour of GArry
+
+	  gvncviewer.c:450:9: warning: ‘g_value_array_get_nth’ is deprecated (declared at /usr/include/glib-2.0/gobject/gvaluearray.h:65): Use 'g_array_index' instead [-Wdeprecated-declarations]
+
+	Unfortunately these types are not ABI compatible. eg
+	compare the field orders
+
+	  struct GValueArray {
+	    guint   n_values;
+	    GValue *values;
+	  };
+
+	vs
+
+	  struct GArray {
+	    gchar *data;
+	    guint len;
+	  };
+
+	So the replacement can't be used without a change in API
+	and ABI. This is unacceptable, so the deprecation warniings
+	must be disabled :-(
+
+	Avoid crash with unsupported audio formats
+	Currently if the VNC server sends an unsupported audio format,
+	we skip creating the pulse audio instance. When we later receive
+	audio data from QEMU we crash on this NULL instance. Instead we
+	should simply discard the audio data. Also log a warning if we
+	get a format we can't supported
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=679283
+
+2013-01-31  Cole Robinson  <crobinso@redhat.com>
+
+	Fix enabling pulseaudio bits in gvncviewer
+	The gvncviewer.c file used a HAVE_PULSEAUDIO conditional,
+	but this was only defined for make and not in config.h
+
+	Add introspection annotation for vnc_display_send_keys
+	The vnc_display_send_keys method signature is too complex
+	to be interpreted correctly without some annotations.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=691821
+
+2012-12-07  Daniel P. Berrange  <berrange@redhat.com>
+
+	Avoid use of uninitialized variables in password echo prompt
+
+	Remove bogus check for 'conn' being null in vnc_connection_is_open
+
+	Fix size check on available write buffer space
+	The vnc_connection_write() function did not consider the current
+	write offset when calculating how much space was available in
+	the write buffer. This could lead to an array overrun.
+
+	Avoid array overrun setting up blt24 function
+	If a VNC colourmap mode was enabled, we would attempt to access
+	beyond the end of the blt24 function table. There are no blt
+	functions that can work for this mode, so just stub out the
+	array with NULL, and add a later check for NULL.
+
+	Fix missing check for OOM in python binding by s/malloc/g_new0/
+
+	Fix NULL dereference in debug logging on socket read error
+
+	Replace strncpy with memcpy in VNC password code
+	Using strncpy for the VNC key makes coverity worried about
+	unterminated strings. Switch to use memcpy to keep it
+	happier
+
+2012-12-04  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	win32: fix quote key handling
+	Fix keymaps to correctly handle the quote key.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=686177
+
+	Fix invalid array size
+	Avoid further out of bound access.
+	Also simplify other code using G_N_ELEMENTS.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=686178
+
+2012-12-04  Christophe Fergeau  <cfergeau@redhat.com>
+
+	spec: Tarballs are now in .xz format
+	https://bugzilla.gnome.org/show_bug.cgi?id=689101
+
+	spec: Use %global instead of %define
+	https://bugzilla.gnome.org/show_bug.cgi?id=689101
+
+	spec: Fix GTK2 typo in description of gtk3 package
+	https://bugzilla.gnome.org/show_bug.cgi?id=689101
+
+2012-12-04  Adam Jackson  <ajax@redhat.com>
+
+	cairo: Fix framebuffer setup on big-endian
+	Without this, big-endian machines would over-swizzle.
+
+2012-11-09  Yaron Shahrabani  <sh.yaron@gmail.com>
+
+	Added he.
+
+	Updated Hebrew translation.
+
+2012-10-17  Мирослав Николић  <miroslavnikolic@rocketmail.com>
+
+	Added Serbian translation
+
+2012-09-04  Piotr Drąg  <piotrdrag@gmail.com>
+
+	Updated Polish translation
+
+2012-09-04  Daniel P. Berrange  <berrange@redhat.com>
+
+	Call ldconfig from gvnc/gvncpulse/gtk-vnc2 %post/%postun
+
+	Add missing deps on gvnc package from gtk-vnc/gtk-vnc2
+
+2012-07-12  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix check for Text::CSV in configure.ac
+
+2012-07-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Updates for 0.5.1 release
+
+	Add support for connecting to GSocketAddress instances
+	To improve UNIX domain socket support, add the ability to open
+	a GSocketAddress instance. Pass the 'hostname' with the addr
+	for the purposes of SASL/TLS hostname verification. Also add
+	another method for opening a FD which accepts a hostname, again
+	for SASL/TLS hostname verification when using a tunnelled
+	socket
+
+2012-07-02  Daniel P. Berrange  <berrange@redhat.com>
+
+	Remove use of hardcoded constants
+	Currently code which sends/receives client/server messages uses
+	hardcoded constants for message types. Replace these with a bunch
+	of enums for clarity
+
+	Fix mistaken use of g_object_unref instead of gdk_cursor_unref
+
+2012-06-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Rūdolfs Mazurs to AUTHORS
+
+2012-06-27  Rūdolfs Mazurs  <rudolfsm@src.gnome.org>
+
+	Added Latvian translation
+
+2012-06-21  Christophe Fergeau  <cfergeau@redhat.com>
+
+	build: allow building with newer glibc-headers and -O0
+	Commit log and autoconf snippet written by Eric Blake for libvirt.
+
+	glibc 2.15 (on Fedora 17) coupled with explicit disabling of
+	optimization during development dies a painful death:
+
+	In file included from /usr/include/limits.h:27:0,
+	                 from /usr/lib/gcc/x86_64-redhat-linux/4.7.0/include/limits.h:169,.
+	                 from /usr/lib/gcc/x86_64-redhat-linux/4.7.0/include/syslimits.h:7,
+	                 from /usr/lib/gcc/x86_64-redhat-linux/4.7.0/include/limits.h:34,
+	                 from util/bitmap.c:26:
+	/usr/include/features.h:314:4: error: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Werror=cpp]
+	cc1: all warnings being treated as errors
+
+	Work around this by only conditionally defining _FORTIFY_SOURCE,
+	in the case where glibc can actually use it.  The trick is using
+	AH_VERBATIM instead of AC_DEFINE.
+
+	* m4/gtk-vnc-warnings.m4 (LIBOSINFO_COMPILE_WARNINGS): Squelch
+	_FORTIFY_SOURCE when needed to avoid glibc #warnings.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=678014
+
+2012-06-21  Alban Browaeys  <prahal@yahoo.com>
+
+	gir: link against builddir libgvnc (pulse and gtkvnc)
+	Linking against builddir gnv fixes GVncPulse generation.
+	Done also against GtkVnc for completness.
+
+2012-06-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add compat macro for g_mutex_new|free with glib >= 2.31
+
+	Fix triplet for mingw64 64-bit builds in autobuild.sh
+
+2012-06-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Andika Triwidada to AUTHORS
+
+2012-06-15  Andika Triwidada  <andika@gmail.com>
+
+	Added Indonesian translation
+
+2012-05-04  Daniel P. Berrange  <berrange@redhat.com>
+
+	Avoid some deprecation warnings from GTK3 about device grabs
+	Temporary workaround to avoid deprecation warnings from GTK3
+	about device grabs. Currently this just emulates existing
+	behaviour of grabbing all devices, but in the future should
+	be fine tuned to only grab specific devices
+
+	Fix constness wrt g_getenv
+
+	Switch to use mingw64 toolchain for cross-compiles
+
+2012-04-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix introspection of key grab APIs
+
+	Update specfile for RHEL-7
+
+2012-04-26  Daniel P. Berrange  <berrange@redhat.com>
+
+	Replace getenv/setenv with g_getenv/g_setenv for Win32 portability
+
+2012-04-25  Daniel P. Berrange  <berrange@redhat.com>
+
+	Ensure debugging works on GLib >= 2.32
+
+	Use g_object_unref instead of gdk_pixbuf_unref
+
+2012-04-06  Alexandre Rostovtsev  <tetromino@gentoo.org>
+
+	configure: make pulseaudio detection non-automagic
+	This is to allow building gtk-vnc on a system with pulseaudio and then
+	deploying on a system without pulseaudio.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=673570
+
+2012-04-05  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Fabiano Fidêncio to AUTHORS
+
+2012-03-29  Fabiano Fidêncio  <fabiano@fidencio.org>
+
+	Add check for Perl::Text::CSV if building from GIT
+
+2012-03-19  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Sasi Bhushan Boddepalli <sasi@swecha.net> to AUTHORS
+
+2012-03-16  Sasi Bhushan Boddepalli  <sasi@swecha.net>
+
+	Updated Telugu Translations
+
+2012-03-16  Sasi Bhushan  <sasi@swecha.net>
+
+	Added new language Telugu translation
+
+2012-03-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add Alexandre Rostovtsev to AUTHORS
+
+2012-03-13  Alexandre Rostovtsev  <tetromino@gentoo.org>
+
+	tools/gvnccapture: unbreak pod syntax
+	For pod, the presence or absence of leading whitespace is significant.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=667943
+
+2012-03-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Ensure syntax-check files are included in dist
+
+	Change the way header files are handled by automake
+	Switch over to using the official _HEADERS target against the
+	library, instead of doing it manually. This helps automake
+	with VPATH builds
+
+2012-02-17  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add GVNCPULSE_VERSION_FILE to BUILT_SOURCES
+
+	Remove duplicated AC_SUBST var in configure.ac
+
+2012-02-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix autobuild flags
+
+	Replace #if HAVE_SASL with #ifdef HAVE_SASL
+
+	Import GNULIBs GCC warning module
+	Replace hand-written warning checks with GNULIB module
+
+	Misc code fixes to vncconnectionc.
+	 - Add default cases for switch statements
+	 - Replace #if with #ifdef for DEBUG check
+	 - Reduce excessive stack usage
+
+	Update to use modern function decl style
+
+2011-12-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.5.0 release
+
+2011-12-21  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	windows: fix broken left shift
+	On Windows, the received key when pressing left shift is VK_SHIFT 0x10
+	Patch from spice-gtk
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=666171
+
+2011-12-21  Christophe Fergeau  <cfergeau@redhat.com>
+
+	properly free xkbDesk
+	valgrind detects a memory leak if it's not freed using
+	xkbFreeKeyboard.
+
+2011-12-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix some more indentation mistakes
+
+2011-12-15  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update AUTHORS file
+
+	Add support for '--system' arg to autogen.sh
+
+	Add --pkg statements for all external libs needed in build
+	Ensure g-ir-scanner adds -I and -L flags for all external
+	libraries required to build
+
+2011-12-13  Christophe Fergeau  <cfergeau@redhat.com>
+
+	Include locale.h in gvnccapture.c
+	It uses setlocale and LC_ALL, without this header compilation fails
+	on RHEL 6.2
+
+	More fixing for gir generation
+	I missed the new GVncPulse.gir file in the previous fix
+
+	Fix GIR generation
+	Overriding PKG_CONFIG_PATH when generating GtkVnc-2.0.gir is
+	wrong since this means that if glib/... is installed in a prefix that
+	is not one of the default pkg-config paths, then it won't be found.
+	PKG_CONFIG_PATH is overridden so that g-ir-scanner can find GVnc-1.0.gir
+	in the build tree. Since g-ir-scanner provides --include-uninstalled
+	for that purpose, use that instead.
+
+2011-12-11  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update AUTHORS file
+
+2011-12-11  Daniel Korostil  <ted.korostiled@gmail.com>
+
+	Added uk translation
+
+2011-12-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Import GNULIB framework for checking code style / rules
+	Add a new 'make syntax-check' rule which validates some
+	aspects of coding style. This is imported from GNULIB
+
+	Remove trailing whitespace at end of lines
+
+	Ensure <config.h> is always the first header included
+
+	Remove redundant 'const' annotations
+
+	use "test C1 && test C2", not "test C1 -a C2" etc
+
+	Remove trailing blank lines from COPYING.LIB
+
+	Remove use of @FOO@ syntax from Makefile.am in favour of $(FOO)
+
+	Ensure vars are fully quoted in configure.ac
+
+	Fix mistakes in copyright header
+
+	Update authors file & add a mailmap for non-primary addrs
+
+	Ensure gvnccapture calls bindtextdomain to setup localization
+
+	Remove useless if before free
+
+	Change debug function into a null macro
+
+	Death to tabs
+	Remove all tabs, change indentation level to 4 spaces. Add
+	emacs magic to files which were missing it. Reindent all
+	files with new rules
+
+	Batch up incoming audio samples for upto 100ms
+	The length of samples received from the guest can be very
+	small (as little as 1 sample). If this is dispatched directly
+	to the audio sink this can cause excessive CPU consumption
+	and context switching. Batch up incoming data for upto 100ms
+	until dispatching it
+
+	Convert connection over to use audio objects
+	* src/vncconnection.c, src/vncconnection.h: Convert to use
+	  VncAudio, VncAudioFormat & VncAudioSample objects
+	* examples/Makefile.am, examples/gvncviewer.c: Convert to
+	  use new API & pulse audio object impl
+	* src/vncmarshal.txt: Remove unused marshaller
+
+	Make decoding of audio extension more robust
+	Add checks for unknown QEMU messages and crazy sized audio
+	data packets
+
+	Remove all audio APIs from VncDisplay since we expose the connection
+	Now that there is a vnc_display_get_connection() method there is
+	no need to duplicate all the audio APIs & signals in the VncDisplay
+	class
+
+	Fix compiler warning in gvnccapture.c
+	Recent GCC warn about assignments to variables which are then
+	not used.
+
+	Introduce pulse audio bridge for GVnc
+	Introduce a new library libgvncpulse-1.0.so which provides an
+	implementation of VncAudio that uses Pulse Audio for output
+
+	* Makefile.am, gvncpulse-1.0.pc.in: Add pkgconfig file for
+	  libgvncpulse
+	* gtk-vnc.spec.in: Add gvncpulse & gvncpulse-devel sub-RPMS
+	* src/Makefile.am, src/gvncpulse.h, src/libgvncpulse_sym.version
+	  Add gvncpulse-1.0 library
+	* src/vncaudiopulse.c, src/vncaudiopulse.h: Pulse audio
+	  impl of VncAudio
+	* vapi/Makefile.am: Build vala binding for pulse audio
+
+	Introduce a basic impl of audio handler
+	Introduce a basic implementation of the audio handler which
+	emits a signal for each method. This enables apps to support
+	audio playback without needing to create subclasses. It also
+	isolates subclasses from extensions in the interface
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncbaseaudio.c, src/vncbaseaudio.h: Introduce basic
+	  audio handler
+
+	Introduce an interface for handling audio data
+	Define a new interface VncAudio which is used to handle playback
+	of audio data
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncaudio.c, src/vncaudio.h: Add interface for handling
+	  audio data
+
+	Introduce a basic data type for audio samples
+	To avoid having to pass around all the parameters individually,
+	introduce a boxed data type for audio samples
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncaudiosample.c, src/vncaudiosample.h: Boxed type for
+	  audio samples
+
+	Introduce a basic data type for audio formats
+	To avoid having to pass around all the parameters individually,
+	introduce a boxed data type for audio formats
+
+	* src/Makefile.am, src/libgvnc_sym.version,
+	  src/vncaudioformat.c, src/vncaudioformat.h: Boxed type for
+	  audio formats
+
+2011-12-09  Steven Carr  <Steven.Carr@scaa-usa.com>
+
+	Introduce support for the VNC audio tunnel extension
+	Add support for handling VNC audio extension and a pulse
+	audio implementation to the gvncviewer.c
+
+	* src/vncconnection.c, src/vncconnection.h: Handle VNC
+	  audio extension
+	* src/vncdisplay.c, src/vncdisplay.h: Passthrough audio
+	  control to connection
+	* src/vncmarshal.txt: New signal types
+	* examples/gvncviewer.c, examples/Makefile.am: Pulse
+	  audio impl
+	* configure.ac: Check for pulse audio
+
+2011-12-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add a 'connection' property to VncDisplay class
+	Allow apps access to the VncConnection behind the VncDisplay
+	instance, by adding a property and a getter API
+
+	* src/vncdisplay.c: Add a 'connection' property to allow
+	  apps to get the VncConnection object
+
+	Adapt to avoid deprecated gnutls functions
+	Switch to using gnutls_priority_set_direct on newer GNUTLS
+
+2011-11-18  Algimantas Margevičius  <gymka@mail.ru>
+
+	Added Lithuanian translation
+
+2011-11-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Misc RPM specfile fixes
+
+	Add Perl example program using GTK3
+
+	Update NEWS for 0.4.4 release
+
+2011-11-04  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update automated build to test both GTK2 and GTK3
+
+	Add rules for building GTK3 library on mingw32
+
+	Fix GTK3 build on mingw32
+	The mingw32 linker does not like .def files with symbols which
+	do not exist. Filter out the vnc_image_framebuffer* symbols.
+	Also ensure the python module generated files are not included
+	in the dist
+
+2011-11-02  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	Fix introspection of vnc_display_get_pixbuf()
+
+2011-10-31  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add vala files to RPM spec
+
+2011-10-28  Zeeshan Ali (Khattak)  <zeeshanak@gnome.org>
+
+	Specify location of pkg-config files to gir scanner
+	Fixes fresh build (when gtk-vnc isn't already installed).
+
+	Specify GIR directory to vapigen
+
+	Disable VAPI generation for gtk+ 2.0
+	Disable vala checks and binding generation by default when building
+	against gtk 2.0.
+
+2011-10-26  Zeeshan Ali (Khattak)  <zeeshanak@gnome.org>
+
+	Post release version bump
+	This is needed so apps depending on git master can require the correct
+	version at 'configure' time.
+
+2011-10-26  Marc-André Lureau  <marcandre.lureau@gmail.com>
+
+	Add vapi bindings generation
+	https://bugzilla.gnome.org/show_bug.cgi?id=662708
+
+2011-09-24  Stanislav Petrek  <stanislav.petrek@gmail.com>
+
+	Added Slovak translation
+
+2011-07-30  Seong-ho, Cho  <darkcircle.0426@gmail.com>
+
+	Add Korean translation
+
+2011-07-12  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix leak of string list when parsing grab sequence string
+
+2011-07-11  Guido Günther  <agx@sigxcpu.org>
+
+	Explicitly link gvncviewer against GTK + libgvnc
+
+2011-07-01  Marc-André Lureau  <marcandre.lureau@redhat.com>
+
+	gtk maps LAlt & LCtrl to Alt and Ctrl keycode, but they are missing from keymaps.csv
+
+2011-06-04  Kristjan SCHMIDT  <kristjan.schmidt@googlemail.com>
+
+	Add Esperanto translation
+
+2011-05-05  Muhammet Kara  <muhammet.k@gmail.com>
+
+	Added Turkish translation
+
+2011-04-14  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix missing OS-X keymapping for letter 'A'
+	The keymap-gen.pl script was not correctly distinguishing
+	keycodes with a value of '0', from undefined keycodes. All
+	were skipped. This meant that the mapping for OS-X ANSI_A
+	key was lost (since it has value 0).
+
+	For similar reasons the XQuartz mapping for the letter A
+	was also lost.
+
+	* src/keymap-gen.pl: Fix handling of 0 vs undef for keycodes
+	* src/keymaps.csv: Remove bogus 0x0 entry in OS-X keymap
+
+	Tweak logging messages for TLS auth sub-types
+
+2011-02-18  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.4.3 release
+	* NEWS: List of changes
+	* README: Remove note about GTK3 being experimental
+	* configure.ac: Update version & GTK3 required version
+	* gtk-vnc.spec.in: Remove bogus changelog
+
+	Remove some unused variables in VncConnection
+	* src/vncconnection.c: Remove unused vars
+
+2011-01-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Make pointer warp check more robust
+	The pointer warp code checks whether the local cursor
+	is hitting a boundary == 0, ==width, or ==height. This
+	is slightly too strict, it should check <= 0, >= width
+	or >= height
+
+	* src/vncdisplay.c: Make boundary check more robust
+
+	Fix warning about unused 'dpy' variable in keymap code
+	In GTK2 paths, GDK_IS_*_DISPLAY(dpy) evaluated to '1'
+	which meant 'dpy' could be unused. Change it to eval
+	to 'dpy == dpy' to trick compiler into thinking the
+	variable is in use.
+
+	* src/vncdisplaykeymap.c: Fix warning of unused variable
+
+2011-01-14  George Stefanakis  <george.stefanakis@gmail.com>
+
+	Updated Greek translation
+
+2011-01-13  Sébastien Granjoux  <seb.sfo@free.fr>
+
+	Fix setup of 'shared flag' when opening connection
+	The VncDisplay class forgot to pass the 'shared flag' onto
+	the VncConnection class when establishing a connection
+
+2011-01-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Refactor keymap handling to cope with multiple GDK backends
+	In GTK3 it is possible to have multiple GDK backends present.
+	The vncdisplaykeymap code needs a minor refactoring to cope
+	with this enhancement. The refactoring also trivially maintains
+	GTK2 compat
+
+2011-01-05  Akom Chotiphantawanon  <knight2000@gmail.com>
+
+	Added Thai translation.
+
+2010-12-14  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix leak of GSource objects which causes performance problems
+	The GLib event loop scales poorly as the number of GSource objects
+	increases. A missing unref on the GSource objects used in the VNC
+	connection meant that many unused instances accumulated, slowing
+	down the event loop processing.
+
+	* src/vncconnection.c: Unref all GSource objects
+
+2010-12-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Adapt to avoid further Gtk3 changes
+	More gdk_drawable calls have gone away in Gtk3. Adapt code to avoid
+	needing to use them, by calling gtk_widget APIs instead.
+
+2010-11-29  Daniel P. Berrange  <berrange@redhat.com>
+
+	Re-introduce a server side Pixmap to cache framebuffer
+	Despite use of clipping during drawing, rendering directly
+	from the client side cairo image, to the window incurred
+	a serious performance penalty for some users' X servers.
+	Re-introduce a server side copy of the VNC desktop using
+	a cairo surface, backed by an X Pixmap. This uses cairo
+	APIs directly, avoiding any need for GdkPixmap.
+
+	Remove check for Text::CSV
+	Revert the check for Text::CSV added in
+
+	  753ddcb203fd9ad26829a065fd4d47c82773e849
+
+	Since the keymap files are now included in EXTRA_DIST, there
+	is no requirement fo Text::CSV at end user build time. Only
+	maintainers required the Text::CSV file when generating a
+	new dist.
+
+2010-11-29  Daniel P. Berrange  <dan@berrange.com>
+
+	Fix framebuffer update boundary check
+	Framebuffer boundary checks need to take into account offset,
+	in addition to width/height
+
+	* src/vncconnection.c: Fix boundary check
+
+	Avoid crash in TLS cleanup code on shutdown
+	The gnutls_bye() method may try to send data on the socket todo
+	graceful TLS shutdown. The priv->sock variable is possibly
+	already NULL at this point if the close was triggered via the
+	vnc_connection_shutdown() method. Change the latter so that
+	it only calls g_socket_close, not actually free'ing the
+	priv->sock object immediately. Also put sanity check code in
+	the TLS push/pull functions to catch future bugs in this area
+
+	Distribute built keymap files
+	Avoid the need for end users to have the Perl Text::CSV module
+	installed, by including the pre-generated keymap source files
+	in the dist.
+
+	* gtk-vnc.spec.in: Remove dep on perl(Text::CSV)
+	* src/Makefile.am: Include keymaps in dist
+
+	Avoid crash in motion event & vnc_display_get_pixbuf
+	If a mouse event occurs before a connection completes setup
+	priv->fb will be NULL and a crash can occur. Likewise if
+	vnc_display_get_pixbuf() is called before priv->fb is set,
+	then a crash occurs. Add checks for NULL in both cases
+
+2010-11-26  Jonh Wendell  <jwendell@gnome.org>
+
+	check for Text::CVS perl module in configure. closes #634621
+
+2010-11-05  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update NEWS/README/configure.ac  for 0.4.2 release
+	* NEWS: List of new features/bugs fixed
+	* README: Expand on GTK3 notes
+	* configure.ac: Increase version number
+
+2010-11-03  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix data type of arg to cut-text signal in VncConnection
+	The vnc-server-cut-text signal is marshalled by
+
+	  g_cclosure_marshal_VOID__STRING
+
+	so its argument must be a 'const char *', not a 'GString *'
+	datatype.
+
+	* src/vncconnection.c: Fix data type for cut-text signal arg
+
+2010-10-29  Carles Ferrando  <carles.ferrando@gmail.com>
+
+	Added Catalan (Valencian) translation
+
+2010-10-29  Kjartan Maraas  <kmaraas@gnome.org>
+
+	Add nb
+
+	Updated Norwegian bokmål translation.
+
+2010-10-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Enable building of a sub-RPM for gtk3
+	Allow a single RPM to build both gtk2 and gtk3 libraries
+
+	* gtk-vnc.spec.in: Add gtk-vnc2 sub-RPM for gtk3 binaries
+
+	Cope with building against newer gobject-introspection
+	Newer gobject-introspection wants --symbol-prefix and
+	--identifier-prefix instead of --strip-prefix. Test
+	for such a version and use the new style options if
+	appropriate
+
+	* configure.ac: Check for new gobject introspection
+	* src/Makefile.am: Adapt to g-ir-scanner flags
+
+	Fix rendering artifacts when running in scaling mode
+	The expose region was not large enough when running in scaling mode
+	resulting in horizontal & vertical line artifacts when moving
+	windows around on the virtual desktop. The previous fix used in
+	Gtk2 was not sufficient for Gtk3, so change the fix to be entirely
+	within the on_framebuffer_update handler
+
+	* src/vncdisplay.c: Hack to fix rendering artifacts
+
+	Add compat macro for GDK_DISPLAY
+	The GDK_DISPLAY macro is removed in Gtk3, add a compatibility
+	macro to allow build with Gtk2 and Gtk3
+
+	* src/vncdisplaykeymap.c: Add GDK_DISPLAY compat
+
+	Add compatability code for GDK symbolic keys
+	The GDK key macros were changed from GDK_ to GDK_KEY_ in GTK3.
+	Add some compatibility #ifdefs to allow the same macros to be
+	used on both Gtk2 and Gtk3.
+
+	* examples/gvncviewer.c: Add GDK_KEY compat
+	* src/vncdisplaykeymap.c: Add GDK_KEY compat
+
+2010-10-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Refactor drawing code to allow compatibility with Gtk3
+	In Gtk3, the expose_event is replaced with a 'draw' callback.
+	This is provided with a 'cairo_t' context that is already
+	configured with the clip region.
+
+	Split the current expose_event into two parts, the first
+	which creates a cairo_t based on the GdkEventExpose data,
+	and the second method which draws to that cairo_t. The
+	expose_event is conditionally disabled for Gtk3 builds,
+	just leaving the draw method which works on Gtk2 and Gtk3
+
+	* src/vncdisplay.c: Pull drawing code out of expose_event
+	  method and disable expose_event on Gtk3
+
+	Remove the server side framebuffer cached in GdkPixmap
+	For rendering efficiency a GdkPixmap was kept on the server
+	duplicating what was in the old GdkImage object on the client
+	side. The client was changed to use a cairo image surface.
+	This can easily be rendered straight to the window and does
+	not appear to have any performance degradation. Thus the
+	GdkPixmap can be eliminated, avoiding the extra memory usage
+	that entails
+
+	* src/vncdisplay.c: Remove the GdkPixmap copy of the framebuffer
+
+	Change cursor to use GDK_BLANK_CURSOR instead of a GdkPixmap
+	The GdkPixmap class has been removed in GTK3. Since Gtk 2.16
+	there is a standard GDK_BLANK_CURSOR which can replace their
+	usage and works across Gtk 2 and 3.
+
+	* src/vncdisplay.c: Use GDK_BLANK_CURSOR
+
+2010-10-25  Daniel P. Berrange  <berrange@redhat.com>
+
+	Clear out more fields when closing a vnc connection
+	Be more paranoid about reseting internal fields when closing
+	a VNC connection, to prevent surprises when reconnecting
+
+	* src/vncconnection.c: Clear out more fields when closing
+	  a connection
+
+	Add strict bounds checking on framebuffer updates
+	Some broken VNC servers send frame buffer updates which stray
+	outside the boundary of the desktop. This will lead to memory
+	corruption when rendering, so explicitly check for this and
+	drop the VNC connection.
+
+	* src/vncconnection.c: Add framebuffer update bounds checking
+
+2010-10-21  Michal Novotny  <minovotn@redhat.com>
+
+	Introduce vnc_util_get_version() functions to get version
+	this is the patch to allow user to get the GTK-VNC version using the
+	vnc_util_get_version() and vnc_util_get_version_string() functions.
+	Both the functions returns the version numbers based on the VERSION
+	definition as created by autotools. Also, in version 2 (previous
+	version) a new function called vnc_util_check_version() has been added
+	to check whether the version of gtk-vnc is equal or higher to version
+	requested. Function vnc_util_check_version() is defined as:
+
+	gboolean vnc_util_check_version(gint major, gint minor, gint micro);
+
+	The version of gtk-vnc is written in a "major.minor.micro" format
+	and since the version number didn't change once the package was
+	compiled version 3 is using VERSION_{MAJOR,MINOR,MICRO} constants
+	being parsed and set by configure itself rather then parsing it
+	at run-time.
+
+	Then there are 2 version functions. The difference between those
+	functions is that vnc_util_get_version() returns the gint value
+	based on bit flags that have to be converted to get the version
+	number in the string format. It's designed for further processing of
+	the major, minor and release versions.
+
+	If you want to get the version number only (e.g. to let the user
+	know the GTK-VNC version he/she is using) you can use the second
+	function called the vnc_util_get_version_string() which returns
+	the string representation, e.g. 0.4.1.
+
+	For the vnc_util_get_version() function the gint is being returned
+	with setting up appropriate bits. You can get the versions using
+	following formula:
+
+	ver = vnc_util_get_version();
+	major = (ver >> 24) & 0xff;
+	minor = (ver >> 16) & 0xff;
+	micro = (ver >> 8 ) & 0xff;
+
+	I think this patch could be useful for mainly for reason mentioned
+	above. To check whether the user has at least 0.4.1 version of
+	gtk-vnc using the vnc_util_check_version(0, 4, 1) is preferred.
+	The vnc_util_get_version() function is a low-level function that
+	could be useful to get the version number to be converted further.
+
+2010-09-17  Guido Günther  <agx@sigxcpu.org>
+
+	Don't close the socket before the coroutine shut down
+	The connection shutdown needs the socket intact:
+
+	7  0xb6d38cdf in vnc_connection_tls_push (transport=0x8d84108, data=0x8df33c0, len=229) at vncconnection.c:942
+	8  0xb6b30437 in ?? () from /usr/lib/libgnutls.so.26
+	9  0xb6b2d12c in _gnutls_send_int () from /usr/lib/libgnutls.so.26
+	10 0xb6b4d682 in gnutls_alert_send () from /usr/lib/libgnutls.so.26
+	11 0xb6b2d662 in gnutls_bye () from /usr/lib/libgnutls.so.26
+	12 0xb6d3a620 in vnc_connection_close (conn=0x8d84108) at vncconnection.c:4323
+
+	so close the socket after the coroutine shutdown. Otherwise it fills the
+	console with:
+
+	(gvncviewer:11056): GLib-GIO-CRITICAL **: g_socket_send: assertion `G_IS_SOCKET (socket) && buffer != NULL' failed
+
+	and gets stuck in an endless loop.
+
+2010-09-17  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add missing keytable entry for KEY_KATAKANAHIRAGANA
+	* src/keymaps.csv: Add XT code for KEY_KATAKANAHIRAGANA
+
+	Fix auth subtype choosing logic in vncdisplay
+	The method for choosing auth subtypes was rather flawed. Rewrite
+	it to work correctly. Introduce an explicit list of vencrypt
+	subtypes, since these are distinct from main subtypes. Improve
+	debug logging in auth choice code.
+
+	* src/vncdisplay.c: Fix auth type choice
+	* src/vncconnection.c: Improve auth debugging & invoke correct
+	  signal for auth subtype choice
+
+2010-09-08  Guido Günther  <agx@sigxcpu.org>
+
+	Simplify logic in host open code
+	The second else clause checks for conn_error != NULL twice and since we
+	don't use it to determine the return value we can clear it
+	unconditionally.
+
+	* src/vncconnection.c: Simplify logic in vnc_connection_open_host_internal
+
+	Clear error when trying next IP address
+	If connecting to an IP address fails, the GError must be
+	cleared before trying the next address, otherwise the
+	error will be overwritten on next failure
+
+	* src/vncconnection.c: Clear error when trying next IP addr
+
+2010-09-02  Jonh Wendell  <jwendell@gnome.org>
+
+	Check if we have an error before reading or writing to the socket
+	If, in the middle of an operation the widget is destroyed, we
+	should check the has_error variable otherwise we can try to
+	read/write from/to an invalid socket.
+
+	Fix logic for removing unwanted encodings
+
+2010-08-27  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix files list in mingw32 specfile
+	The files for gtk-vnc and gvnc were inverted in the mingw32
+	RPM specfile
+
+2010-08-27  Marek Černocký  <marek@manet.cz>
+
+	Add Czech translation
+
+2010-08-27  Jonh Wendell  <jwendell@gnome.org>
+
+	Check if we have a valid socket before trying to close it
+	If we attempt to destroy the widget while VncConnection still
+	is trying to connect to the host, then priv->sock is not valid yet.
+
+2010-08-22  Shushi Kurose  <md81bird@hitaki.net>
+
+	Updated Japanese translation.
+
+2010-08-20  Håkon Enger  <hakon.enger@gmail.com>
+
+	Support Mac OS VNC authentication
+
+2010-08-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add comment about where each keymap datasource came from
+	To assist in people identifying/resolving mistakes, add a note
+	about where each data source from keymaps.csv came from. Most
+	are from Linux kernel source data tables, a few were manually
+	matched up (Xwin/OS-X)
+
+	* src/keymap-gen.pl: Record data sources for keymaps.csv
+
+	Ensure automake maintainer mode is enabled
+
+	Add a cairo based framebuffer implementation
+	In GTK3, GdkImage has been removed completely. The vncimageframebuffer
+	class cannot thus be used. Replace it with a vnccairoframebuffer
+	class instead, but keep the old one around in GTK2 builds for ABI
+	compatability.
+
+	* src/vnccairoframebuffer.c, src/vnccairoframebuffer.h,
+	  src/libgtk-vnc_sym.version: Add new framebuffer impl
+	  based on Cairo.
+	* src/Makefile.am: Disable GdkImage based framebuffer on
+	  GTK3 builds
+	* src/vncdisplay.c: Always use Cairo based framebuffer
+
+	Fix typo in keycode names & improve error message
+	Fix typo in evdev keycode names left over from debugging. Improve
+	the error message when finding unknown keycodes
+
+	Mandate the use of Cairo for all drawing
+	Cairo has been used for GTK drawing for a long time and is now
+	mandatory in GTK3. Drop support for non-Cairo drawing ops since
+	they're obsolete.
+
+	* configure.ac: Check for Cairo
+	* src/vncdisplay.c: Drop non-cairo drawing
+
+2010-08-15  Daniel P. Berrange  <dan@berrange.com>
+
+	Reset xmit_buffer fields to fix reconnect
+	If a vnc_connection object was closed and reopened old data
+	in the xmit_buffer fields would cause a crash, since it was
+	not re-initialized
+
+2010-08-04  Lucian Adrian Grijincu  <lucian.grijincu@gmail.com>
+
+	Updated Romanian translation
+
+2010-08-03  Nils-Christoph Fiedler  <ncfiedler@gnome.org>
+
+	Added LowGerman translation
+
+	Added LowGerman translation
+
+2010-07-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Rewrite keymap code to work on more platforms
+	The current keymap code assumes an Xorg server on Linux with
+	either evdev or kbd drivers. This adds heuristics to detect
+	XQuartz (Xorg on OS-X) and XWin (Xorg on Cygwin). Further it
+	adds support for native GDK on OS-X and Win32.
+
+	It is not possible to assume that keycodes < 87 have a 1-1
+	mapping to RFB (XT) keycodes. Thus the keymap arrays must
+	have a complete dataset, all special casing is removed.
+
+	All master  keymaps are defined in a CSV file. THis covers
+	Linux keycodes, OSX keycodes, AT set1, 2 & 3, XT keycodes,
+	the XT encoding used by the Linux KBD driver, USB keycodes,
+	Win32 keycodes, the XT encoding used by Xorg on Cygwin,
+	the XT encoding used by Xorg on Linux with kbd driver.
+
+	Further RFB and final Xorg driver mappings are derived
+	from these master maps automatically. The keymap-gen.pl
+	tool can generate lookup tables between all possible
+	keycode sets as required.
+
+	eg To generate a map from native Win32 keycodes to RFB
+	keycodes
+
+	   keymap-gen.pl keymaps.csv win32 rfb
+
+	* gtk-vnc.spec.in, mingw32-gtk-vnc.spec.in: Require Text::CSV
+	  for generating keymaps
+	* src/Makefile.am: Generate keymaps dynamically
+	* src/keymap-gen.pl: Tool to generate keymaps from CSV file
+	* src/keymaps.csv: Master keymap definitions
+	* src/vncconnection.c: Improve keypress log message
+	* src/vncdisplay.c: Convert to guint16 for keymap table
+	* src/vncdisplaykeymap.c, src/vncdisplaykeymap.h: Use a
+	  new dynamically generated, full keymap.
+
+2010-07-20  Daniel P. Berrange  <dan@berrange.com>
+
+	Disable extended key events if keymap is unknown
+	Currently if we cannot determine the GDK keymap, we default to
+	the XT keymap. This is not a good choice because is causes
+	definite breakage on several platforms. If the keymap cannot
+	be determined, it is safer to disable the extended key event
+	support completely & rely on traditional VNC keysyms.
+
+	Also rename the x2pc methods to be gdk2rfb, since that's what
+	the conversion is actually doing.
+
+	Change way encodings are disabled at runtime
+	The approach for disabling pseudo encodings is fragile because
+	it relies on ordering in the array. Rewrite to allow removing
+	arbitrary encodings
+
+	Remove all gnulib code
+	Since the port to use GIO for sockets, there is no requirement
+	for gnulib. Delete it all
+
+	Switch over to use GIO for socket connections / DNS resolution
+	GIO provides GSocket and GResolver classes that can replace all
+	current use of POSIX sockets / DNS resolution APIs. This gives
+	cross platform portability for free, removing the need to use
+	gnulib for socket portability
+
+	* configure.ac: Check for GIO
+	* src/Makefile.am: Link to GIO
+	* src/vncconnection.c: Switch to using GSocket & friends
+	* src/vncdisplay.c: Remove winsock initialization code
+
+2010-07-14  Daniel P. Berrange  <dan@berrange.com>
+
+	Remove a few uses of stdint in favour of glib int types
+
+	Resync RPM specfiles based on latest Fedora devel
+
+	Update version to 0.4.1
+
+2010-07-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix test suite
+	* Makefile.am: list files in build-aux instead of wildcarding
+	* vc-list-files: Move to build-aux
+	* gnulib/lib/Makefile.am: Point to build-aux for vc-list-files
+	* gtk-vnc.spec.in: Run tests during RPM build
+	* tools/gvnccapture.c: Remove bogus N_ annotation. Not yet
+	  ready for i18n support.
+
+	Use separate soname when building against GTK-3
+	The GTK-3 library is not ABI compatible with GTK-2. Thus when
+	GTK-VNC builds against GTK-3 it is not ABI compatible with a
+	build done against GTK-2. It is thus neccessasry to allow for
+	parallel install of GTK-2 and GTK-3 builds. This is done by
+	changing the library name, pkgconfig name and include file
+	locations
+
+	 GTK-2:
+
+	    libgtk-vnc-1.0.so
+	    gtk-vnc-1.0.pc
+	    /usr/include/gtk-vnc-1.0
+
+	 GTK-3:
+
+	    libgtk-vnc-2.0.so
+	    gtk-vnc-2.0.pc
+	    /usr/include/gtk-vnc-2.0
+
+	NB, when enabling GTK-3, the traditional python bindings will
+	be disabled. The new GObject Introspection support provide an
+	alternative python binding for users of GTK-3
+
+	* gtk-vnc-1.0.pc.in: Fix to only use GTK-2
+	* gtk-vnc-2.0.pc.in: New for GTK-3 support
+	* src/Makefile.am: Different sonames & include dirs when
+	  building against GTK3
+	* configure.ac: Disable python binding with GTK3
+	* README: Add note about GTK3
+	* Makefile.am: Install new pkgconfig file for GTK3
+
+2010-07-11  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix ChangeLog generation
+	Cannot assume changelog generation is run directlyin source
+	directory
+
+	Add gvncviewer.js to EXTRA_DIST
+
+	Remove GNOME compile warnings checks
+	Remove GNOME compile warnings checks, since GTK-VNC already has
+	custom checks that are far more aggressive in enabling compile
+	warnings. C++ compiler warnings are not required
+
+	Update metadata files ready for new release
+	Updated AUTHORS, MAINTAINERS, NEWS, README for new release.
+
+	Autogenerate ChangeLog from GIT logs
+
+	Fix mingw32 RPM specfile
+	Add the gvnccapture program to the mingw32 RPM spec
+
+	Fix DLL linking on mingw32
+	libtool does not like -Wl,--no-undefined, even though the compiler
+	and linker are happy enough. Revert to using -no-undefined on
+	mingw32 platforms. Also use the correct style of linker script
+	for exporting symbols on mingw32
+
+	Add missing deps for gobject introspection
+	Add RPM specfile BRs for gobject introspection support
+
+2010-07-11  Daniel P. Berrange  <dan@berrange.com>
+
+	Replace getline with fgets for win32 portability
+	The getline function is gnu specific. Replace with use of fgets
+	for portability to win32
+
+	Make use of termios.h conditional, to fix win32 builds
+	Win32 does not have termios support to disable terminal echo.
+	Disable that code until a better solution can be found.
+
+	Drop autoconf version back to 2.63
+	Fedora 12 only has autoconf 2.63. Drop back minimum version to
+	allow this usage
+
+2010-07-05  Daniel P. Berrange  <dan@berrange.com>
+
+	Fix dead framebuffer refresh after psuedo encodings
+	Users of VncConnection are responsible for requesting framebuffer
+	updates after every framebuffer update, resize of pixel encoding
+	change. Other pseudo encodings are not visible to users of the
+	VncConnection class, so a framebuffer update request must be
+	re-requested if one of these psuedo encodings arrives
+
+	Fix parallel build with introspection data
+	THe GVnc introspection data must be built before GtkVnc data.
+
+	Add a gvnccapture command line tool
+	Add a command line tool for capturing a screenshot of a VNC
+	desktop
+
+	Change vnc_connection_framebuffer_update_request to use boolean
+	Use a boolean for the incremental parameter in the
+	vnc_connection_framebuffer_update_request API
+
+	When using 32bpp, depth 24 fill alpha byte.
+	When constructing a GdkPixbuf from the framebuffer pixel array,
+	it will expect the alpha bits to be initialized to a sensible
+	value. Since we don't care about alpha, make sure 32bpp, depth 24
+	format sets alpha to 0xff (full opaque).
+
+	Fix emitting of unsupported auth signal
+	The vnc_connection_set_auth_type method is invoked from the system
+	coroutine, so it must directly emit the signal, not use the delayed
+	signal emitter
+
+	Change vnc_connection_key_event to use a boolean
+	Use a boolean for the down flag in the vnc_connection_key_event#
+	API.
+
+	Add padding to GObject classes
+	To allow the class structs to be expanded later without breaking
+	ABI it is neccessary to include padding in the structs. If extra
+	fields are later added, an equivalent amount padding must be
+	remnoved
+
+2010-06-30  Jonh Wendell  <jwendell@gnome.org>
+
+	Allows linking with gtk+2.0 and gtk+3.0
+	This adds a new configure parameter: --with-gtk=2.0|3.0 (default: 2.0)
+
+	Prepare for gtk+ >= 2.22
+	This uses accessors instead of accessing struct members
+
+2010-06-29  Jonh Wendell  <jwendell@gnome.org>
+
+	Fixed GOBJECT flags
+
+2010-06-26  Gil Forcada  <gforcada@gnome.org>
+
+	Added Catalan translation
+
+2010-06-22  Jonh Wendell  <jwendell@gnome.org>
+
+	Only handle motion events when initialized.
+	Closes #622429.
+
+2010-06-17  Michal Novotny  <minovotn@redhat.com>
+
+	Add APIs for configurable key grab sequences
+	Allow the key grab sequence to be configured by applications.
+	The grab sequence is represented by a new boxed data object
+
+	  VncGrabSequence
+
+	This can be created from an array of keysyms
+
+	  guint keys[] = { GDK_Control_L, GDK_Alt_L };
+	  guint len = sizeof(keys)/sizeof(keys[0]);
+	  vnc_grab_sequence_new(len, keys);
+
+	Or from a string format
+
+	  vnc_grab_sequence_new_from_string("Control_L+Alt_L");
+
+	The gvncviewer.c example program shows a user interface for
+	configuring key sequences. The gvncviewer.py example program
+	demonstrates access from the python binding.
+
+	This patch is heavily based on the original proposal from
+	Michal Novotny
+
+2010-06-17  Daniel P. Berrange  <dan@berrange.com>
+
+	Add support for colourmap based pixel formats
+	The current code will force the server to use the native
+	client's pixel format if it ever sees a pixel format
+	with true_color_flag==0 (ie colourmap).  This is bad because
+	the client native pixel format is almost always 32bpp while
+	the main reason for using a colourmap is to get bandwidth
+	friendly 8bpp format. This makes GTK-VNC look bad in any
+	performance comparisons.
+
+	This patch implements full support for rendering from
+	colourmaps. It introduces a boxed data type to store the
+	colour map entries and wires this upto the framebuffer
+	interface.
+
+	For rendering, the BLT functions for the VncBaseFramebuffer
+	are enhanced to cope with colourmaps. Since colour maps
+	provide 16bit r,g,b triples, the BLT code is enhanced to
+	cope with 64-bit bpp pixels. This is technically required
+	even for non-colourmap entries since the VNC pixel format
+	protocol message allows for 16 bit r,g,b masks which
+	results in a 64-bit true colour pixel.
+
+	* src/vnccolormap.h, src/vnccolormap.c, src/Makefile.am: Add
+	  a VncColorMap boxed data type to hold the colour map entries.
+	* src/vncframebuffer.h, src/vncframebuffer.c: Add an API to
+	  the VncFrameBuffer interface to allow the colour map to be
+	  updated.
+	* src/vncconnection.h, src/vncconnection.c: Remove last case
+	  of vnc_ops and replace with new VncColorMap object
+	* src/vncdisplay.c: Don't override the default server pixel
+	  format, allow use of colour maps
+	* src/vncbaseframebuffer.c, src/vncbaseframebufferblt.h: Add
+	  support for rendering pixels using a colourmap
+
+	Fix off by 1 in initial protocol greeting
+	The client -> server greeting must be 12 bytes long, ending in a
+	newline character. An off-by-1 in snprintf resulted in the 12th
+	byte being a NULL instead. This caused wireshark to not detect
+	the stream as VNC
+
+	Fix the vnc_connection_set_encodings method write
+	The vnc_connection_set_encodings method is a public API which is
+	called from the system coroutine. Thus is must use the buffered
+	write routines.
+
+	Fix crash in server cut text
+	GString needs to be freed with g_string_free rather than g_free.
+	Fix the signature of the cut text callback
+
+2010-06-11  Jonh Wendell  <jwendell@gnome.org>
+
+	Build with GSEAL. Closes #612727.
+	Now we require gtk+ 2.18.
+
+	git-ignore build-aux dir
+
+	Modernize autotools. Bug #621312.
+
+2010-06-08  Daniel P. Berrange  <berrange@redhat.com>
+
+	Try next DNS addr after all connect failures
+	There are many more ways an IPv6 connection can fail than just
+	CONNREFUSED and HOSTUNREACH. For example ETIMEDOUT, NETUNREACH
+	and more. Try the next DNS addr after all connect() failures,
+	no matter what the errno code, to ensure we always fallback
+	to IPv4 eventually.
+
+	* src/vncconnection.c: Retry connection after all errors
+
+2010-04-25  Takeshi AIHANA  <takeshi.aihana@gmail.com>
+
+	Add Japanese translation
+
+2010-04-23  Matej Urbančič  <mateju@svn.gnome.org>
+
+	Updated Slovenian translation
+
+2010-04-05  Kris Thomsen  <lakristho@gmail.com>
+
+	Updated Danish translation
+
+2010-04-05  Kenneth Nielsen  <k.nielsen81@gmail.com>
+
+	Added da to list of languages
+
+2010-03-22  Halton Huo  <halton.huo@sun.com>
+
+	Conditional use JRI stuff in npupp.h
+	Since 3.6, firefox does not ship jri.h, so remove it from npupp.h
+	as GTK-VNC does not need it
+
+	Add -lgpg-error to linker flags
+	The gcrypt.h file has several inline functions which cause code
+	using gcrypt to have a direct link time dependancy on gpg-error,
+	if the compiler decides to inline. Thus we need to add -lgpg-error
+	to the linker flags to cope with potential inlining
+
+	* configure.ac: Add -lgpg-error to GNUTLS_LIBS
+
+2010-03-22  Daniel P. Berrange  <berrange@redhat.com>
+
+	Use --no-undefined instead of -no-undefined
+	Solaris can't cope with -no-undefined, and even Linux prefers the
+	--no-undefined style.
+
+2010-03-21  Daniel P. Berrange  <berrange@redhat.com>
+
+	Turn on debug in javascript example program
+	* src/Makefile.am: Include vncutil.h/.c in introspection processing
+	* examples/gvncviewer.js: Enable debugging
+
+	Fix include files / libs in new RPM split
+	The gvnc-devel package mistakenly included the gtk-vnc include
+	directory. The gtk-vnc package mistakenly included the gvnc.so
+	library
+
+	Support GObject introspection & add javascript demo program
+	Add Makefile.am rules to generate a typelib with introspection
+	data. Add a javascript demo program to show how trivial it is.
+
+	Turn VncPixelFormat into a boxed type
+	To allow introspection to work with VncPixelFormat properties,
+	this struct needs to be a boxed type
+
+	Split up library into libgvnc.so (GObject) bits and libgtk-vnc.so (GTK widget)
+	The libgvnc.so library comprises the classes
+
+	  VncConnection
+	  VncPixelFormat
+	  VncFramebuffer
+	  VncBaseFramebuffer
+	  VncCursor
+	  VncConnection
+
+	This only depends on glib, gobject and gdk-pixbuf
+
+	The libgtk-vnc.so library comprises the classes
+
+	  VncDisplay
+	  VncImageFramebuffer
+
+	Adding a dependancy on GTK
+
+	Update copyright headers after last round of object refactoring
+	In the major 20-patch series of object refactoring, the copyright
+	headers were mistakenly not updated. Add extra copyright header to
+	reflect the work done
+
+	Introduce a function for setting debug flag in prep for library split
+	The base APIs will soon be split into a separate libgvnc.so library.
+	Since libgtk-vnc.so exposes the --gtk-vnc-debug flag, this needs to
+	be implemented using an API in the libgvnc.so library, rather than
+	just a static boolean flag in vncdisplay.c
+
+	The GVNC_DEBUG macros is also renamed to VNC_DEBUG
+
+	* vncutil.c, vncutil.h: New file for vnc_util_set_debug(gboolean)
+	* utils.h: Remove old debug flag
+	* dh.c, vncbaseframebuffer.c, vncconnection.c, vncdisplay.c,
+	  vncdisplaykeymap.c, vncimageframebuffer.c: s/GVNC_DEBUG/VNC_DEBUG/
+	* Makefile.am: Add vncutil.h/.c files
+
+2010-03-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Avoid crash if framebuffer is not set & silence warning
+	* src/vncdisplay.c: Avoid possible crash if framebuffer isn't set
+	* src/vncconnection.c: Avoid warning when sasl is not enabled
+
+	Move all coroutine stuff into VncConnection
+	The VncDisplay class currently runs the main coroutine for the
+	VncConnection. This means some VncConnection APIs need to be
+	invoked from the VNC coroutine context, while others need to be
+	invoked from the main system context. This will make the
+	VncConnection class very hard to use from non-C languages like
+	Python/Perl/Java/etc.
+
+	Move all the coroutine code into the VncConnection class. All
+	its APIs are now to be invoked from system context. This means
+	it can now easily be used from any language
+
+	Move X keycode -> PC scancode conversion into VncDisplay
+	The VncConnection class should not depend on anything from GDK.
+	The X keycode to PC scancode conversion uses GDK. Therefore it
+	had to be moved into the VncDisplay class
+
+	Rename enums from GVNC_ to VNC_CONNECTION_
+	Rename the symbols for the VncConnectionEncoding, VncConnectionAuth
+	and VncConnectionAuthVencrypt enums to use a prefix of
+	VNC_CONNECTION_ instead of GVNC_
+
+	Remove jpeg_render function and use gdk-pixbuf directly
+
+	Replace 'auth_type' and 'auth_subtype' operations with signals
+	Remove the 'auth_type' and 'auth_subtype' operation callbacks.
+	Introduce new 'vnc-auth-choose-type' and 'vnc-auth-choose-subtype'
+	signals
+
+	Replace 'auth_cred' operation with a signal
+	Remove the 'auth_cred' operation in VncConnection. Introduce a
+	new 'vnc-auth-credential' signal
+
+	Remove 'get_preferred_pixel_format' operation
+	Remove the 'get_preferred_pixel_format' operation callback, and
+	instead directly set the pixel format (if desired) during the
+	initialization phase of the coroutine
+
+	Replace 'auth_failure' and 'auth_unsupported' operations with signals
+	Remove the 'auth_failure' and 'auth_unsupported' operation callbacks
+	from VncConnection. Introduce new 'vnc-auth-failure' and
+	'vnc-auth-unsupported' signals.
+
+	Replace 'update', 'resize' and 'pixel_format' operation callbacks with signals
+	Remove the 'update', 'resize' and 'pixel_format' operation callbacks
+	from VncConnection. Introduce new 'vnc-framebuffer-update',
+	'vnc-desktop-resize' and 'vnc-pixel-format-changed' signals
+
+	Replace 'server_cut_text' operation with a signal
+	Remove the 'server_cut_text' operation from VncConnection.
+	Introduce a signal 'vnc-server-cut-text' for VncConnection and
+	pass in the text
+
+	Replace 'bell' operation with a signal
+	Remove the 'bell' operation callback from VncConnection.
+	Introduce a signal 'vnc-bell' for VncConnection.
+
+	Replace 'pointer_type_changed' operation with a signal
+	Remove the 'pointer_type_changed' operation callback from VncConnection.
+	Introduce a signal 'vnc-pointer-mode-changed' and pass it the pointer
+	state as a gboolean
+
+	Replace 'local_cursor' operation callback with a signal
+	Remove the 'local_cursor' operation callback from VncConnection.
+	Introduce a signal 'vnc-cursor-changed' and pass it as a
+	VncCursor object
+
+	Introduce a VncCursor object
+	Introduce a VncCursor object to represent a client side rendered
+	pointer
+
+	Tidy up header files to have consistent coding style
+
+	Convert VncConnection into a proper GObject type
+
+	Generate enum types for VncConnection enums
+
+	Convert VncConnection over to use VncFramebuffer object
+	Remove the vnc_framebuffer struct, and make VncConnection use the
+	new VncFramebuffer object.
+
+	VncDisplay is changed to use the VncImageFramebuffer object
+	type as its implementation of VncFramebuffer
+
+	Add a framebuffer implementation based on a GdkImage
+	Subclass the VncBaseFramebuffer class to add an implementation
+	which uses a GdkImage as its local storage
+
+	Add a VncFrameBuffer interface and basic implementation
+	Define the interface for a framebuffer and rendering into it
+	between local & remote pixel formats.
+
+	Provide a basic implementation of the interface using simple
+	blt functions for a local memory region
+
+	Pull pixel format struct out into a separate file with typedef
+	Turn struct vnc_pixel_format into VncPixelFormat type
+
+	Rename gvnc module to prepare for turning into public GObjects
+	  struct gvnc -> VncConnection
+
+	  gvnc_ops -> vnc_connection_ops   (to be later removed)
+	  gvnc_framebuffer -> vnc_framebuffer (to be later replaced)
+	  gvnc_pixel_format -> vnc_pixel_format (to be later replaced)
+	  gvnc_dh -> vnc_dh
+
+	Rename gvnc.[h,c] -> vncconnection.[h,c]
+
+	Add some installation caveats to README
+	Add note about NetBSD swapcontext() problems & Mingw SASL limitation
+
+	Fix compile warnings
+	Fix the compile warnings / initialization order bug from
+
+	  commit 0a6bae9c19e9f86dda5433d8260d5f29e7ef4ed1
+
+	* src/vncdisplay.c: Fix variable init order & mark function static
+
+2010-03-20  Andre Klapper  <a9016009@gmx.de>
+
+	Remove use of 'widget->window' in favour of gtk_widget_get_window()
+	When building using -DGSEAL_ENABLE, the 'widget->window' field is
+	not available. Instead the gtk_widget_get_window() method must be
+	used
+
+	* configure.ac: Bump dep on GTK to 2.14
+	* src/vncdisplay.c: Switch to gtk_widget_get_window()
+
+2010-03-20  Emilio Pozuelo Monfort  <pochu27@gmail.com>
+
+	Remove use of PATH_MAX in favour of dynamic buffers
+	GNU/Hurd does not define the PATH_MAX constant. Replace use of
+	PATH_MAX with dynamic buffers instead.
+
+	* src/vncdisplay.c: Remove use of PATH_MAX
+
+2010-03-20  Michal Suchanek  <hramrach@centrum.cz>
+
+	Improve error message in gvncviewer when connection fails
+	The 'vnc-disconnected' signal is emitted both when a connection
+	closes, and when a connection fails to initialize at all. The
+	gvncviewer demo was not taking account of this, so providing a
+	misleading diagnostic message
+
+	* examples/gvncviewer.c: Distinguish errors conditions in
+	  disconnect signal
+
+2010-03-20  Halton Huo  <halton.huo@sun.com>
+
+	Remove check for NSPR in configure.ac
+	The firefox/mozilla-plugin pkgconfig files already have a dependancy
+	on the nspr package. Thus there is no need for an explicit NSPR check
+	in gtk-vnc.
+
+	* configure.ac: Remove redundant check for NSPR
+
+2010-03-20  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add plugin to .gitignore files
+
+2010-03-20  Halton Huo  <halton.huo@sun.com>
+
+	Pull in npapi.h & npupp.h from FF3 source to fix plugin build
+	Latest versions of firefox do not provide the npapi.h/npupp.h
+	files that the plugin requires to build. Copy those files from
+	the FF3 source tree into plugin to provide compatability.
+
+	* plugin/npapi.h, plugin/npupp.h: Pull in from FF3 source tree
+
+2010-03-20  Guido Günther  <agx@sigxcpu.org>
+
+	Add -Wl since --no-undefined is a linker option
+	The --no-undefined option was not being processed correctly, since
+	it needs a -Wl prefix to be passed through to the linker
+
+	* src/Makefile.am: Add -Wl to --no-undefined arg
+
+	Explicitly link against X11 libs for XkbGetKeyboard
+	When building with --no-undefined and modern linkers, X11 won't
+	be found implicitly. Therefore it is neccessary to link directly
+	to X11
+
+	* configure.ac: Use pkgconfig to check for X11 libs
+	* src/Makefile.am: Link against X11
+
+	Fix symbol versioning script application
+	* src/Makefile.am: Drop space after -Wl, in libgtk_vnc_1_0_la_LDFLAGS
+	  to ensure linker script is applied
+
+	Add missing symbols
+	* src/libgtk-vnc_sym.version: Add missing symbols from 0.3.8
+	  and 0.3.9 releases
+
+2010-03-18  Sjoerd Simons  <sjoerd.simons@collabora.co.uk>
+
+	Make sure the local pointer setting is respected on enter events
+	Patch from
+
+	  https://bugzilla.gnome.org/show_bug.cgi?id=577580
+
+2010-03-18  Leonid Kanter  <leon@asplinux.ru>
+
+	Added Russian translation
+
+2010-02-27  Chao-Hsiung Liao  <j_h_liau@yahoo.com.tw>
+
+	Added Traditional Chinese translation(Hong Kong and Taiwan)
+
+2010-01-24  A S Alam  <aalam@users.sf.net>
+
+	Adding Punjabi (pa) Translation by A S Alam (aman)
+
+2009-12-17  Daniel P. Berrange  <berrange@redhat.com>
+
+	Initialize gcrypt threading callbacks
+	If GTK has threading enabled, we must be sure to enable gcrypt
+	threading callbacks too for safety
+
+2009-12-13  Daniel P. Berrange  <berrange@redhat.com>
+
+	Remove use of stdint in favour of GLib fixed size types
+	GLib provides guint8, gint8, guint16, gint16, guint32, gint32
+	data types. Use these instead of stdint.h, so we better follow
+	standard GLibc practice.
+
+2009-11-18  Lyper Lai  <lyp069@gmail.com>
+
+	Add Simplified Chinese translation.
+
+2009-10-29  Jonh Wendell  <jwendell@gnome.org>
+
+	Only memcpy() if source and destination are different
+
+	Drop the useless global variable signalCredParam
+
+2009-10-28  Jonh Wendell  <jwendell@gnome.org>
+
+	Fix a memory leak by freeing a buffer variable
+
+	Fix a memory leak by freeing the remote cursor
+
+	Fix a memory leak by freeing a GdkGC private variable
+
+	Fix a memory leak by freeing the result of gdk_pixbuf_format_get_name()
+
+	Fix a memory leak by freeing the private null cursor
+
+	Fix a memory leak by freeing host and port private variables
+
+2009-10-21  Jonh Wendell  <jwendell@gnome.org>
+
+	Fix plugin build. Closes #599146.
+
+2009-10-21  Matej Urbančič  <mateju@svn.gnome.org>
+
+	Added sl for Slovenian language
+
+	Updated Slovenian translation
+
+2009-10-21  Jonh Wendell  <jwendell@gnome.org>
+
+	Avoid a GCC warning
+
+2009-10-20  Jonh Wendell  <jwendell@gnome.org>
+
+	0.3.10 release
+
+2009-10-17  Simos Xenitellis  <simos@gnome.org>
+
+	Added el to po/LINGUAS
+
+2009-10-17  Pavlos Tournaris  <p.tournaris@gmail.com>
+
+	Added Greek translation
+
+2009-10-15  Jonh Wendell  <jwendell@gnome.org>
+
+	Added the ability to request an update.
+	vnc_display_request_update() is the new symbol.
+
+2009-10-06  Jonh Wendell  <jwendell@gnome.org>
+
+	Request a full screen refresh when receives a desktop-resize encoding.
+	Closes #585571.
+
+2009-09-30  Jonh Wendell  <jwendell@gnome.org>
+
+	Added depth color tunning into VncDisplay.
+	Provide a set_depth() in VncDisplay which tunes that setting.
+	In gvnc_initialize we always call get_preferred_pixel_format() which
+	makes use of that tunning.
+
+2009-09-19  Gabor Kelemen  <kelemeng@gnome.hu>
+
+	Added hu to LINGUAS
+
+	Added Hungarian translation
+
+2009-09-18  Luca Ferretti  <elle.uca@libero.it>
+
+	Added it to LINGUAS
+
+	Added Italian translation
+
+2009-09-17  Jonh Wendell  <jwendell@gnome.org>
+
+	Deleted .hgignore
+
+	Updated Makefile rules for .gitignore
+
+	Updated README
+
+	Use glib-mkenums to automatically create GTypes from C enums.
+
+2009-09-13  Philip Withnall  <philip@tecnocode.co.uk>
+
+	Added British English translation
+
+2009-09-09  Piotr Drąg  <piotrdrag@gmail.com>
+
+	Updated Polish translation
+
+2009-09-07  António Lima  <amrlima@gmail.com>
+
+	Updated Portuguese translation
+
+2009-09-06  António Lima  <amrlima@gmail.com>
+
+	Updated Portuguese translation
+
+2009-09-04  Claude Paroz  <claude@2xlibre.net>
+
+	Added French translation
+
+2009-08-30  Jorge González  <jorgegonz@svn.gnome.org>
+
+	Added es to LINGUAS
+
+	Added Spanish translation
+
+2009-08-28  Inaki Larranaga  <dooteo@zundan.com>
+
+	Added Basque translation
+
+2009-08-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Disable build-aux since its broken on older libtool/intltool
+	* configure.ac: Disable use of build-aux rule
+
+2009-08-25  Daniel P. Berrange  <berrange@redhat.com>
+
+	Include po files in RPM builds
+	* gtk-vnc.spec.in, mingw32-gtk-vnc.spec.in: Use %lang related macros
+	  to pull in po files to RPM
+
+	Re-write configure rules to avoid many warnings
+	* acinclude.m4: Add helper function for checking a huge list of
+	  compile flags. Also test ability to link with the flag, not just
+	  to compile.
+	* configure.ac: gl_EARLY must come before every rule that isnt
+	  just autoconf/make metadata initialization. Call out to the
+	  generic compile flag macro. Turn off automake's GNU-make-ism
+	  warnings.
+	* autobuild.sh: Change way compile warnings are turned on
+	* src/Makefile.am: Enable compile warning flags on python build
+
+	Add separate m4 dir to avoid intltool/libtool splattering over gnulib
+	If no generic -I m4 directory is listed, libtool & intltool will
+	splatter their files all over those belonging to gnulib. This gives
+	wierd, unpredictable build errors depending on whose file was copied
+	over most recently.
+
+	* Makefile.am: Add -I m4 flag
+
+	Invoke intltoolize in autogen.sh
+	* autogen.sh: Run intltoolize
+
+	Don't do arithmetic on void *, to avoid compile warnings
+	* src/gvnc.c: Cast to char * before doing arithmetic
+
+2009-08-25  Michal Suchanek  <hramrach@centrum.cz>
+
+	Set a default hostname in viewer demo program
+	* examples/gvncviewer.c: Set a default hostname of 127.0.0.1
+	  if only a port number is given
+
+2009-08-25  John Haxby  <john.haxby@oracle.com>
+
+	Drop the connection if some credentials cannot be set
+	* examples/gvncviewer.py: Close VNC connection if setting a credential
+	  fails
+
+	Make the authorization dialog more friendly
+	* examples/gvncviewer.py: Hide the password as the user types
+	  it in and allow authentication to complete when you hit Enter.
+
+2009-08-23  Mario Blättermann  <mariobl@gnome.org>
+
+	Added German translation
+
+2009-08-20  Halton Huo  <halton.huo@sun.com>
+
+	Checking SASL for -lsasl2 or -lsasl. Closes #591521.
+
+2009-08-20  Daniel Nylander  <po@danielnylander.se>
+
+	Updated Swedish translation
+
+2009-08-19  Fran Diéguez  <fran.dieguez@glug.es>
+
+	Added Galician Translation
+
+2009-08-19  Henrique P. Machado  <zehrique@gmail.com>
+
+	Updated Brazilian Portuguese translation.
+
+2009-08-17  Jonh Wendell  <jwendell@gnome.org>
+
+	Added DOAP file
+
+	Added basic Brazilian Portuguese translation
+
+	Added i18n initial support.
+
+	Use git.mk from Behdad Esfahbod. It generates .gitignore automatically.
+
+	Include vncmarshal.h in vncmarshal.c generation.
+	This fix a gcc warning.
+
+2009-08-11  Jonh Wendell  <jwendell@gnome.org>
+
+	Disable cvs tests
+
+	Output SASL configure options in configure.ac
+
+2009-08-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.3.9 release
+	* NEWS: Add details new features/bugs fixed in 0.3.9
+	* configure.ac: Update version to 0.3.9
+
+	Add rest of C-A-Fn menu options to example
+	* examples/gvncviewer.c: Add menu shortcut for Ctrl-Alt-F2->8
+
+2009-08-10  Jonh Wendell  <jwendell@gnome.org>
+
+	Added vnc_display_get_option_entries() symbol in VncDisplay.
+	It returns a GOptionEntry *. It's up to apps to integrate those
+	options, returned by gtk-vnc into their own groups. This makes
+	things flexible.
+
+2009-07-25  Jonh Wendell  <jwendell@gnome.org>
+
+	Don't send keys if we are in read only mode
+
+2009-07-06  Daniel P. Berrange  <berrange@redhat.com>
+
+	Annotate unusued params with G_GNUC_UNUSED to avoid warnings
+
+	Remove trailing whitespace from all files
+
+	Remove useless if() before free()
+
+	Re-fix Shift+Tab keyval translation from 1e121b4084788399c4d71d60b513997661e3116e, accidentally reverted in 4f4103fbc7021a3ae8e9c43e1f561cd8f65481aa
+
+	Remove bogus trailing newlines from all GVNC_DEBUG calls
+
+2009-06-15  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add explicit link to libgcrypt for MS Logon extension, to avoid link problem on Win32
+
+2009-06-15  Bruce Cowan  <bcowan@fastmail.co.uk>
+
+	Remove deprecated GTK+ symbols
+
+2009-06-15  Daniel P. Berrange  <berrange@redhat.com>
+
+	Disable SASL when building on mingw32
+
+	Added 2 missing #if HAVE_SASL conditionals
+
+2009-06-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add support for SASL authentication type
+
+	Fix inverted logic for releasing pointer grab when switching to absolute mouse mode
+
+	Process all enter/leave events to ensure we release key grab after a mouse ungrab in relative mode
+
+2009-04-17  Jonh Wendell  <jwendell@gnome.org>
+
+	Added support for UltraVNC MS-Logon auth type
+
+2009-03-17  Jonh Wendell  <jwendell@gnome.org>
+
+	Added MAINTAINERS file
+
+	Do not send clipboard messages when in View Only state
+
+2009-02-26  Daniel P. Berrange  <berrange@redhat.com>
+
+	Change pointer grab to allow movement across entire desktop and fix warping of pointer at desktop edges, to make relative mouse mode work correctly. Document what's going on with more comments.
+
+2009-02-20  Jonh Wendell  <jwendell@gnome.org>
+
+	Ignore some files
