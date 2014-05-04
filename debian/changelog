@@ -1,3 +1,11 @@
+gtk-vnc (0.5.3-1) unstable; urgency=medium
+
+  * [66e3bf7] Imported Upstream version 0.5.3
+  * [c1d21eb] Redo patch
+  * [f5c94bf] Update symbols
+
+ -- Laurent Léonard <laurent@open-minds.org>  Sun, 04 May 2014 02:34:06 +0200
+
 gtk-vnc (0.5.2-3) unstable; urgency=medium
 
   * [d2a1860] Depend on valac (>= 0.20) instead of valac-0.20 to ease vala
