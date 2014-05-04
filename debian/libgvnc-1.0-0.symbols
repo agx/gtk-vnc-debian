@@ -33,6 +33,7 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_connection_get_cursor@Base 0.4.1
  vnc_connection_get_ext_key_event@Base 0.4.1
  vnc_connection_get_height@Base 0.4.1
+ vnc_connection_get_ledstate@Base 0.5.3
  vnc_connection_get_name@Base 0.4.1
  vnc_connection_get_pixel_format@Base 0.4.1
  vnc_connection_get_shared@Base 0.4.1
@@ -90,4 +91,3 @@ libgvnc-1.0.so.0 libgvnc-1.0-0 #MINVER#
 libgvncpulse-1.0.so.0 libgvnc-1.0-0 #MINVER#
  vnc_audio_pulse_get_type@Base 0.5.0
  vnc_audio_pulse_new@Base 0.5.0
-
