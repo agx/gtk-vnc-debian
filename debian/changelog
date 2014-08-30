@@ -1,3 +1,20 @@
+gtk-vnc (0.5.3-1.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Upload to unstable.
+  * Use dh-autoreconf (Patch by Breno Leitao). Closes: #746403
+
+ -- Andreas Metzler <ametzler@debian.org>  Sat, 30 Aug 2014 19:12:31 +0200
+
+gtk-vnc (0.5.3-1.1) experimental; urgency=medium
+
+  * Non-maintainer upload.
+  * Change (build-)dependencies from libgnutls-dev to libgnutls28-dev and add
+    a build-dependency on libgcrypt20-dev. Closes: #745946
+  * Upload to experimental to test buildability.
+
+ -- Andreas Metzler <ametzler@debian.org>  Fri, 15 Aug 2014 15:24:38 +0200
+
 gtk-vnc (0.5.3-1) unstable; urgency=medium
 
   * [66e3bf7] Imported Upstream version 0.5.3
