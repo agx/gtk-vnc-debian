@@ -331,6 +331,23 @@ void vnc_base_framebuffer_init(VncBaseFramebuffer *fb)
 }
 
 
+/**
+ * vnc_base_framebuffer_new:
+ * @buffer: (array): the buffer representing the screen
+ * @width: the width of the screen
+ * @height: the height of the screen
+ * @rowstride: the number of bytes per line in @buffer
+ * @localFormat: the format for data stored in @buffer
+ * @remoteFormat: the format for data before storage in @buffer
+ *
+ * Allocate a new general purpose framebuffer object storing
+ * screen updates in @buffer. @buffer must be @height *
+ * @rowstride bytes in size. The returned object will
+ * store a pointer to @buffer, so it should not be free'd
+ * for as long as the framebuffer object exists
+ *
+ * Returns: (transfer full): the new framebuffer
+ */
 VncBaseFramebuffer *vnc_base_framebuffer_new(guint8 *buffer,
                                              guint16 width,
                                              guint16 height,

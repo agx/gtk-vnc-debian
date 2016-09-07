@@ -1,3 +1,462 @@
+2016-08-18  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update for 0.6.0 release
+
+2016-08-16  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix inverted endianness when setting pixel format
+	Least-significant-byte first corresponds to little endian,
+	not big endian. This problem was exposed when we started
+	setting pixel format in
+
+	  commit d8adb75e926872792b57a7ece5ce7d8cf2c2d8bc
+	  Author: Daniel P. Berrange <berrange@redhat.com>
+	  Date:   Fri Apr 25 17:30:12 2014 +0100
+
+	    Always send back pixel format message
+
+	but only if disabling the tight encoding.
+
+	Ignore cast align warnings to avoid tripping up clang
+	Resolves: bz#765389
+
+	Update to newer copies of gnulib's warnings code
+	This introduces many more warning flags, and fixes compat
+	with clang
+
+	Resolves: bz#765389
+
+	Fix many %d vs %u format warnings
+	Newer gcc warning flags are better at catching misuse of
+	%d vs %u
+
+	Remove trailing '.' from error messages
+
+	Add support for using GNUTLS system trust DB
+	If using GNUTLS >= 3.0.0, we can fallback to using the
+	system trust DB, if no explicit CA cert is provided.
+
+	If an explicit CA is provided, we do *NOT* enable the
+	system trust, because we don't want to allow arbitrary
+	public CAs to issue bogus certs for VNC servers using
+	a dedicated CA.
+
+	Resolves: bz#759817
+
+	Assume we can always get GNUTLS version number
+
+	Fix path to h2def.py script
+	Resolves: bz#744393
+
+	Introduce a "vnc-error" signal
+	Provide the app uing GTK-VNC with information about what caused
+	the error via a new "vnc-error" signal.
+
+	Resolves: bz#762223, #768237
+
+	spec: assume Fedora >= 20
+
+	Allow default TLS priority to be set at build time
+	Add a --with-tls-priority flag to configure which takes a
+	GNUTLS cipher/protocol priority string, overriding the
+	built-in default of "NORMAL".
+
+	Drop support for gnutls < 2.2.0
+	The 2.2.0 release of gnutls includes gnutls_priority_set_direct
+	which we already use conditionally. This release dates from Dec
+	2007, so it is reasonable to drop the conditional code for older
+	GNUTLS releases.
+
+2016-08-15  Pavel Grunt  <pgrunt@redhat.com>
+
+	display: Fix redraw in Windows
+	The display redraws only on focus event.
+
+	Replace GDK_WINDOW_HWND by gdk_win32_window_get_impl_hwnd() which gets
+	the HWND directly, without any side effects - causing redrawing issues
+
+2016-07-22  Daniel P. Berrange  <berrange@redhat.com>
+
+	Remove vnc_connection_get_local
+	The last use of this inline method was removed in
+
+	  commit 37fc69f2da557669b14728e2b4af5147f98a3b3c
+	  Author: Daniel P. Berrange <berrange@redhat.com>
+	  Date:   Thu Nov 19 19:06:00 2009 +0000
+
+	    Convert VncConnection over to use VncFramebuffer object
+
+	Add GIO when generating introspection for gvnc library
+	The gvnc library depends on some GIO data types, so this
+	library should be included when generating introspection.
+
+	This fixes the warning:
+
+	vncconnection.h:166: Warning: GVnc: vnc_connection_open_addr: argument addr: Unresolved type: u'GSocketAddress*'
+
+	Add docs for all public APIs
+
+	Default to bulding with GTK-3
+	GTK-2 is pretty obsolete now, so we should default to
+	using GTK-3
+
+	Avoid comparing display to self in gdk stubs
+	Latest gcc warns about the comparison 'dpy == dpy'
+
+	vncdisplaykeymap.c: In function 'vnc_display_keymap_gdk2rfb_table':
+	vncdisplaykeymap.c:165:14: error: self-comparison always evaluates to true [-Werror=tautological-compare]
+	     if (GDK_IS_X11_DISPLAY(dpy)) {
+	              ^~
+
+	Change to using 'dpy != NULL' to avoid this.
+
+2016-02-08  Federico Mena Quintero  <federico@gnome.org>
+
+	Remove duplicate check for cert expiration time
+
+2016-01-23  Aurimas Černius  <aurisc4@gmail.com>
+
+	Updated Lithuanian translation
+
+2015-06-04  Pedro Albuquerque  <palbuquerque73@gmail.com>
+
+	Updated Portuguese translation
+
+2015-05-11  Cédric Valmary  <cvalmary@yahoo.fr>
+
+	Added Occitan translation
+
+2015-03-13  Samir Ribic  <samir.ribic@etf.unsa.ba>
+
+	Added Bosnian translation
+
+2015-03-01  Michael Ramírez  <radical_michael@hotmail.com>
+
+	Added Wayuu translation
+
+2015-02-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Remove previous hack for xwayland
+	With the new Xkb functions we don't need a special check for
+	xwayland.
+
+2015-02-28  Pavel Grunt  <pgrunt@redhat.com>
+
+	vncdisplaykeymap: Use XkbGetMap and XkbGetNames instead of XkbGetKeyboard
+	XkbGetKeyboard does not work in XWayland (bfo#89240).
+
+	Copied from spice-gtk: 95e322a6bbc29dc9c28724fb80706464e276b89f
+
+2015-02-18  Fabiano Fidêncio  <fidencio@redhat.com>
+
+	vncdisplay: check whether the widget is realized in focus_in_event()
+	Returning early on focus_in_event(), when widget is not realized, avoids
+	segfault when running on Windows using GTK3.
+
+	Revert "vncdisplay: check whether the widget is realized in focus_in_event()"
+	This reverts commit 6f4a70d2a8540d121d1a794bef467bb3f54f9f0d, because
+	the patch was applied to the wrong function.
+
+	vncdisplay: check whether the widget is realized in focus_in_event()
+	Returning early on focus_in_event(), when widget is not realized, avoids
+	segfault when running on Windows using GTK3.
+
+2015-02-10  Daniel P. Berrange  <berrange@redhat.com>
+
+	Update to 0..5.4 release
+
+2015-02-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Ensure we find mingw version of libgcrypt-config in $PATH
+
+	Add typo in keymap name for wayland
+
+2015-02-06  Peter Korsgaard  <peter@korsgaard.com>
+
+	keymaps.csv: use official USB/HID scancodes for vol mute/up/down + find/stop
+	The Linux kernel's usb_kbd_keycode translation table oddly enough translates
+	2 different USB/HID scancodes to the same Linux KEY_* symbol for a the
+	volume mute/up/down and find/stop symbols.  The first of these matches the
+	HID usage tables (Hut1_12.pdf), and the second is in the reserved range
+	(0xe8-0xffff).
+
+	It is unclear why this is done (the commit predates the move to git), but
+	for the reverse table in keymaps.csv it makes sense to use the values from
+	the official HID usage tables instead.
+
+2015-02-06  Daniel P. Berrange  <berrange@redhat.com>
+
+	win32: translate virtual-key code to scancode via MapVirtualKey
+	Local client keyboard layout shouldn't affect hardware scancode sent
+	to guest, so that guest keyboard layout configuration can map it
+	properly.
+
+	Unfortunately, the Win32 GdkEventKey.hardware_keycode isn't a hardware
+	scancode, but the Windows virtual-key code. We could modify Gdk to
+	return the scancode (available in MSG.lParam or via global hook), but
+	that would mean some Gdk breakage, or some unnecessary complexity.
+	Instead, we can rely on MapVirtualKey(), which translates the
+	vitual-key code into a scan code using current keyboard layout.
+
+	This code is imported from SPICE-GTK
+
+	Install hook for Windows key code handling
+	To fix handling of AltGr keys on Windows displays, install a
+	hook for Windows keycode handling. This is copied from code
+	in SPICE-GTK
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=731825
+
+	Support GTK Broadway backend
+	Copy changes from SPICE-GTK which implemented support for
+	GTK Broadway backend, with hacky keymapping.
+
+	Fix initialization of gcrypt threading dependant on gnutls
+	For GNUTLS 2.12, if it uses gcrypt, we must not initialize
+	gcrypt threading ourselves.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=734858
+
+	Add support for Wayland and Xwayland keymap
+	Both Wayland and Xwayland use the evdev + 8 map for keycodes,
+	just as regular Xorg with evdev does.
+
+	Disable -Wbad-function-cast for glib
+	The glib atomic access macros cause compiler warnings when
+	-Wbad-function-cast is in effect. There is no practical
+	workaround so the warning must be disabled.
+
+	Do an explicit check for libgcrypt
+	We can no longer assume that any gnutls install will include
+	libgcrypt, so we must do an explicit check for it at configure
+	time.
+
+2015-01-06  Fabiano Fidêncio  <fidencio@redhat.com>
+
+	connection: adapt to libgcrypt >= 1.6
+	From "gcrypt.h":
+
+	> NOTE: Since Libgcrypt 1.6 the thread callbacks are not anymore used.
+	> However we keep it to allow for some source code compatibility if used
+	> in the standard way.
+
+	build: disable -Wbad-function-cast
+	Due to a change in glib headers, gtk-vnc build is broken:
+
+	  In file included from /usr/include/glib-2.0/glib/gthread.h:32:0,
+	                   from /usr/include/glib-2.0/glib/gasyncqueue.h:32,
+	                   from /usr/include/glib-2.0/glib.h:32,
+	                   from /usr/include/glib-2.0/gobject/gbinding.h:28,
+	                   from /usr/include/glib-2.0/glib-object.h:23,
+	                   from vncbaseaudio.h:24,
+	                   from vncbaseaudio.c:25:
+	  vncbaseaudio.c: In function 'vnc_base_audio_get_type':
+	  /usr/include/glib-2.0/glib/gatomic.h:108:5: error: cast from function call of type 'long unsigned int' to non-matching type 'void *' [-Werror=bad-function-cast]
+	       (gpointer) __atomic_load_8 ((atomic), __ATOMIC_SEQ_CST);                 \
+	       ^
+	  /usr/include/glib-2.0/glib/gthread.h:250:7: note: in expansion of macro 'g_atomic_pointer_get'
+	       (!g_atomic_pointer_get (location) &&                             \
+	         ^
+	  /usr/include/glib-2.0/gobject/gtype.h:1697:7: note: in expansion of macro 'g_once_init_enter'
+	     if (g_once_init_enter (&g_define_type_id__volatile))  \
+	         ^
+	  /usr/include/glib-2.0/gobject/gtype.h:1476:60: note: in expansion of macro '_G_DEFINE_TYPE_EXTENDED_BEGIN'
+	   #define G_DEFINE_TYPE_EXTENDED(TN, t_n, T_P, _f_, _C_)     _G_DEFINE_TYPE_EXTENDED_BEGIN (TN, t_n, T_P, _f_) {_C_;} _G_DEFINE_TYPE_EXTENDED_END()
+	                                                              ^
+	  vncbaseaudio.c:40:1: note: in expansion of macro 'G_DEFINE_TYPE_EXTENDED'
+	   G_DEFINE_TYPE_EXTENDED(VncBaseAudio, vnc_base_audio, G_TYPE_OBJECT, 0,
+	   ^
+	  cc1: all warnings being treated as errors
+	  make[3]: *** [libgvnc_1_0_la-vncbaseaudio.lo] Error 1
+	  make[2]: *** [all] Error 2
+	  make[1]: *** [all-recursive] Error 1
+	  make: *** [all] Error 2
+
+	For now, lets remove the -Wbad-function-cast from manywarnings.m4.
+
+2014-10-29  Daniel P. Berrange  <berrange@redhat.com>
+
+	Enable double buffering on GTK3
+
+2014-10-07  Daniel P. Berrange  <berrange@redhat.com>
+
+	Remove tab character
+
+2014-10-07  Cole Robinson  <crobinso@redhat.com>
+
+	Fixes these noisy errors on Fedora 21:
+	gcc: warning: switch '-Wmudflap' is no longer supported
+
+2014-10-07  Daniel P. Berrange  <berrange@redhat.com>
+
+	Always send back pixel format message
+	If operating in 8bpp colourmap mode, at least one, VNC server is
+	known to not send the colourmap entries until after it receives
+	the set pixel format message. So always send that message even
+	if it is just matching the server's default.
+
+2014-09-12  Christophe Fergeau  <cfergeau@redhat.com>
+
+	Chain up to parent vfunc in VncDisplay::realize_event
+	Without this, gtk-vnc will abort when establishing a VNC connection.
+	This regression was introduced in 910c4d40e.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=736560
+
+2014-08-28  Christophe Fergeau  <cfergeau@redhat.com>
+
+	Don't call into GDK when we don't have a GdkWindow yet
+	In some situations, virt-viewer will call some gtk-vnc methods while
+	the gtk-vnc widget is not realized. This means it has no associated
+	GdkWindow and that it's not possible to do GDK calls on this widget.
+	Some of these gtk-vnc were trying to call into GDK without checking
+	this, causing runtime warnings such as:
+
+	(virt-viewer:29150): Gdk-CRITICAL **: gdk_window_set_cursor: assertion
+	'GDK_IS_WINDOW (window)' failed
+
+	or
+
+	(virt-viewer:20076): Gdk-CRITICAL **: gdk_window_get_width: assertion
+	`GDK_IS_WINDOW (window)' failed
+
+	(virt-viewer:20076): Gdk-CRITICAL **: gdk_window_get_height: assertion
+	`GDK_IS_WINDOW (window)' failed
+
+	  #0  g_logv (log_domain=0x3247a74066 "Gdk", log_level=G_LOG_LEVEL_CRITICAL,
+	      format=<optimized out>, args=args@entry=0x7fffffffd1b0) at gmessages.c:1038
+	  #1  0x0000003a97450eff in g_log (
+	      log_domain=log_domain@entry=0x3247a74066 "Gdk",
+	      log_level=log_level@entry=G_LOG_LEVEL_CRITICAL,
+	      format=format@entry=0x3a974bee3a "%s: assertion '%s' failed")
+	      at gmessages.c:1071
+	  #2  0x0000003a97450f39 in g_return_if_fail_warning (
+	      log_domain=log_domain@entry=0x3247a74066 "Gdk",
+	      pretty_function=pretty_function@entry=0x3247a8a320 <__FUNCTION__.33032> "gdk_window_get_width",
+	      expression=expression@entry=0x3247a74794 "GDK_IS_WINDOW (window)")
+	      at gmessages.c:1080
+	  #3  0x0000003247a35ed4 in gdk_window_get_width (window=0x0) at gdkwindow.c:6093
+	  #4  0x00007ffff7dc5e73 in gdk_drawable_get_size (w=0x0, ww=0x7fffffffd2f0,
+	      wh=0x7fffffffd2f4) at vncdisplay.c:140
+	  #5  0x00007ffff7dcc183 in vnc_display_set_scaling (obj=0x9661e0 [VncDisplay],
+	      enable=1) at vncdisplay.c:2446
+	  #6  0x0000000000425555 in virt_viewer_display_vnc_new (
+	      vnc=0x9661e0 [VncDisplay]) at virt-viewer-display-vnc.c:191
+	  #7  0x00000000004241b3 in virt_viewer_session_vnc_disconnected (
+	      vnc=0x9661e0 [VncDisplay], session=0x962560 [VirtViewerSessionVnc])
+	      at virt-viewer-session-vnc.c:114
+	  #8  0x0000003944a10747 in _g_closure_invoke_va (
+	      closure=closure@entry=0x6d2480, return_value=return_value@entry=0x0,
+	      instance=instance@entry=0x9661e0, args=args@entry=0x7fffffffd560,
+	      n_params=0, param_types=0x0) at gclosure.c:831
+	  #9  0x0000003944a299d7 in g_signal_emit_valist (instance=0x9661e0,
+	      signal_id=<optimized out>, detail=0,
+	      var_args=var_args@entry=0x7fffffffd560) at gsignal.c:3215
+	  #10 0x0000003944a2a63f in g_signal_emit (instance=<optimized out>,
+	      signal_id=<optimized out>, detail=<optimized out>) at gsignal.c:3363
+	  #11 0x00007ffff7dc9a60 in on_disconnected (conn=0x975cc0 [VncConnection],
+	      opaque=0x9661e0) at vncdisplay.c:1568
+	  #12 0x0000003944a10747 in _g_closure_invoke_va (
+	      closure=closure@entry=0x6d2190, return_value=return_value@entry=0x0,
+	      instance=instance@entry=0x975cc0, args=args@entry=0x7fffffffd850,
+	      n_params=0, param_types=0x0) at gclosure.c:831
+	  #13 0x0000003944a299d7 in g_signal_emit_valist (instance=0x975cc0,
+	      signal_id=<optimized out>, detail=0,
+	      var_args=var_args@entry=0x7fffffffd850) at gsignal.c:3215
+	  #14 0x0000003944a2a63f in g_signal_emit (instance=<optimized out>,
+	      signal_id=<optimized out>, detail=<optimized out>) at gsignal.c:3363
+	  #15 0x00007ffff7ba419c in do_vnc_connection_emit_main_context (
+	      opaque=0x7fffed16ef40) at vncconnection.c:578
+	  #16 0x0000003a97449c3a in g_main_dispatch (context=0x68d280) at gmain.c:3064
+	  #17 g_main_context_dispatch (context=context@entry=0x68d280) at gmain.c:3663
+	  #18 0x0000003a97449f88 in g_main_context_iterate (context=0x68d280,
+	      block=block@entry=1, dispatch=dispatch@entry=1, self=<optimized out>)
+	      at gmain.c:3734
+	  #19 0x0000003a9744a25a in g_main_loop_run (loop=0x74c560) at gmain.c:3928
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=734348
+
+2014-04-02  Praveen Illa  <mail2ipn@gmail.com>
+
+	updated Telugu translation
+
+	Added Language code te to LINGUAS file
+
+2014-02-07  GunChleoc  <fios@foramnagaidhlig.net>
+
+	Updated Scottish Gaelic translation
+
+	Added Scottish Gaelic translation
+
+2014-01-30  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix dep on Gtk-3 GIR file
+	Related to 423495e6e1cbf5936639e6b68c6cefe4fdadd368 which
+	only fixed it for GTK-2
+
+2014-01-29  Daniel P. Berrange  <berrange@redhat.com>
+
+	Display warnings when running g-ir-scanner
+
+	Release held keys upon grab_notify event
+	gtk may propagate some press event up to the Spice display widget, but
+	a widget may take focus and grab the release event, so the guest will
+	keep seeing the key pressed.
+
+	Releasing the keys when the grab is taken solves two menu-related bugs:
+
+	  https://bugzilla.redhat.com/show_bug.cgi?id=820829
+	  https://bugzilla.redhat.com/show_bug.cgi?id=924577
+
+	This is based on a spice-gtk fix:
+
+	  http://lists.freedesktop.org/archives/spice-devel/2013-May/013351.html
+
+2014-01-28  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add missing dep on Gtk introspection GIR
+	https://bugzilla.gnome.org/show_bug.cgi?id=723009
+
+2014-01-23  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix parallel build of introspection gir files
+	Add deps between build targets for gir files and use the
+	--include-uninstalled option to deal with dependancies.
+
+2013-12-31  Daniel P. Berrange  <dan@berrange.com>
+
+	Remove use of deprecated GTK_STOCK_OK/GTK_STOCK_CANCEL
+
+2013-12-31  Koop Mast  <kwm@rainbow-runner.nl>
+
+	Rework introspection support so it works on FreeBSD.
+	Based on the following documentation.
+
+	https://wiki.gnome.org/Projects/GObjectIntrospection/AutotoolsIntegration
+
+	Add stddef.h for size_t on FreeBSD.
+
+2013-12-31  Christophe Fergeau  <cfergeau@redhat.com>
+
+	sasl: Fix auth when using the PLAIN method
+	sasl_client_start() can return SASL_OK, in which case calling
+	sasl_client_step() returns an error. If sasl_client_start() returned
+	SASL_OK and the remote told us auth is complete, we can break out of the
+	stepping loop early.
+	The upstream documentation is not very explicit about what to do when
+	sasl_client_start() returns SASL_OK but this was clarified by
+	http://asg.andrew.cmu.edu/archive/message.php?mailbox=archive.cyrus-sasl&msg=10104
+
+	This is based on the libvirt patch
+
+	  commit 0955025b9cdb734293adfae09be1fdae231d7a73
+	  Author: Christophe Fergeau <cfergeau@redhat.com>
+	  Date:   Thu Nov 21 18:40:52 2013 +0100
+
+	    sasl: Fix authentication when using PLAIN mechanism
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=712820
+
 2013-09-18  Daniel P. Berrange  <berrange@redhat.com>
 
 	Update for 0.5.3 release

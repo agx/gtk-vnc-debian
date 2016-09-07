@@ -239,6 +239,12 @@ static void vnc_connected(GtkWidget *vncdisplay G_GNUC_UNUSED)
     connected = 1;
 }
 
+static void vnc_error(GtkWidget *vncdisplay G_GNUC_UNUSED,
+                      const gchar *message)
+{
+    fprintf(stderr, "Error: %s\n", message);
+}
+
 static void vnc_initialized(GtkWidget *vncdisplay, GtkWidget *window)
 {
     printf("Connection initialized\n");
@@ -480,9 +486,9 @@ static void do_set_grab_keys(GtkWidget *menu G_GNUC_UNUSED, GtkWidget *window)
     dialog = gtk_dialog_new_with_buttons ("Key recorder",
                                           GTK_WINDOW(window),
                                           GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                          GTK_STOCK_OK,
+                                          "_Ok",
                                           GTK_RESPONSE_ACCEPT,
-                                          GTK_STOCK_CANCEL,
+                                          "_Cancel",
                                           GTK_RESPONSE_REJECT,
                                           NULL);
 
@@ -523,7 +529,7 @@ static void vnc_credential(GtkWidget *vncdisplay, GValueArray *credList)
     unsigned int i, prompt = 0;
     const char **data;
 
-    printf("Got credential request for %d credential(s)\n", credList->n_values);
+    printf("Got credential request for %u credential(s)\n", credList->n_values);
 
     data = g_new0(const char *, credList->n_values);
 
@@ -547,9 +553,9 @@ static void vnc_credential(GtkWidget *vncdisplay, GValueArray *credList)
         dialog = gtk_dialog_new_with_buttons("Authentication required",
                                              NULL,
                                              0,
-                                             GTK_STOCK_CANCEL,
+                                             "_Cancel",
                                              GTK_RESPONSE_CANCEL,
-                                             GTK_STOCK_OK,
+                                             "_Ok",
                                              GTK_RESPONSE_OK,
                                              NULL);
         gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
@@ -829,6 +835,8 @@ int main(int argc, char **argv)
                      G_CALLBACK(vnc_initialized), window);
     g_signal_connect(vnc, "vnc-disconnected",
                      G_CALLBACK(vnc_disconnected), NULL);
+    g_signal_connect(vnc, "vnc-error",
+                     G_CALLBACK(vnc_error), NULL);
     g_signal_connect(vnc, "vnc-auth-credential",
                      G_CALLBACK(vnc_credential), NULL);
     g_signal_connect(vnc, "vnc-auth-failure",

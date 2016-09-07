@@ -22,6 +22,7 @@
 #define _CONTINUATION_H_
 
 #include <ucontext.h>
+#include <stddef.h>
 
 struct continuation
 {

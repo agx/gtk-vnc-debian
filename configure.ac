@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.5.3],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.6.0],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -33,7 +33,9 @@ GIO_REQUIRED=2.10.0
 AC_SUBST(GIO_REQUIRED)
 GDK_PIXBUF_REQUIRED=2.10.0
 AC_SUBST(GDK_PIXBUF_REQUIRED)
-GNUTLS_REQUIRED=1.4.0
+GCRYPT_REQUIRED=1.4.0
+AC_SUBST(GCRYPT_REQUIRED)
+GNUTLS_REQUIRED=2.2.0
 AC_SUBST(GNUTLS_REQUIRED)
 
 PYGTK_REQUIRED=2.0.0
@@ -41,9 +43,6 @@ VIEW_REQUIRED=0.6.0
 GTHREAD_REQUIRED=2.0.0
 PYTHON_REQUIRED=2.4
 CAIRO_REQUIRED=1.2.0
-
-GOBJECT_INTROSPECTION_REQUIRED=0.6.2
-GOBJECT_INTROSPECTION_DESIRED=0.9.4
 
 dnl *******************************************************************************
 dnl Get the version information at compile-time
@@ -92,12 +91,12 @@ dnl ****************************************************************************
 
 AC_MSG_CHECKING([which gtk+ version to compile against])
 AC_ARG_WITH([gtk],
-  [AS_HELP_STRING([--with-gtk=2.0|3.0],[which gtk+ version to compile against (default: 2.0)])],
+  [AS_HELP_STRING([--with-gtk=2.0|3.0],[which gtk+ version to compile against (default: 3.0)])],
   [case "$with_gtk" in
      2.0|3.0) ;;
      *) AC_MSG_ERROR([invalid gtk version specified]) ;;
    esac],
-  [with_gtk=2.0])
+  [with_gtk=3.0])
 AC_MSG_RESULT([$with_gtk])
 
 case "$with_gtk" in
@@ -245,13 +244,38 @@ AC_SUBST(PULSEAUDIO_CFLAGS)
 AC_SUBST(PULSEAUDIO_LIBS)
 
 
+AM_PATH_LIBGCRYPT($GCRYPT_REQUIRED)
+
+
+AC_ARG_WITH([tls-priority],
+  [AS_HELP_STRING([--with-tls-priority],
+    [set the default TLS session priority string @<:@default=NORMAL@:>@])],
+  [],
+  [with_tls_priority=NORMAL])
+
+AC_DEFINE_UNQUOTED([TLS_PRIORITY], ["$with_tls_priority"],
+                  [TLS default priority string])
+
+
 PKG_CHECK_MODULES(GNUTLS, gnutls >= $GNUTLS_REQUIRED)
-dnl Not all versions of gnutls include -lgcrypt and -lgpg-error, and we need it
-dnl explicitly for building MS Logon extension which calls
-dnl gcry_XXX APIs
-GNUTLS_LIBS="$GNUTLS_LIBS -lgcrypt -lgpg-error"
 AC_SUBST(GNUTLS_CFLAGS)
 AC_SUBST(GNUTLS_LIBS)
+
+if $PKG_CONFIG --exists 'gnutls >= 3.0'; then
+    GNUTLS_GCRYPT=no
+elif $PKG_CONFIG --exists 'gnutls >= 2.12'; then
+    case `$PKG_CONFIG --libs --static gnutls` in
+      *gcrypt*) GNUTLS_GCRYPT=yes     ;;
+      *nettle*) GNUTLS_GCRYPT=no      ;;
+      *)        GNUTLS_GCRYPT=yes     ;;
+    esac
+else
+    GNUTLS_GCRYPT=yes
+fi
+if test "x$GNUTLS_GCRYPT" = "xyes"; then
+  AC_DEFINE_UNQUOTED([HAVE_GNUTLS_GCRYPT], [1], [whether gnutls uses gcrypt])
+fi
+
 
 dnl Cyrus SASL
 AC_ARG_WITH([sasl],
@@ -385,44 +409,7 @@ AM_CONDITIONAL(WITH_PYTHON, [test "$WITH_PYTHON" = "yes"])
 
 AM_CONDITIONAL(WITH_EXAMPLES, [test "$WITH_EXAMPLES" = "yes"])
 
-AC_ARG_ENABLE([introspection],
-        AS_HELP_STRING([--enable-introspection], [enable GObject introspection]),
-        [], [enable_introspection=check])
-
-has_symbol_prefix=no
-if test "x$enable_introspection" != "xno" ; then
-        PKG_CHECK_MODULES([GOBJECT_INTROSPECTION],
-                          [gobject-introspection-1.0 >= $GOBJECT_INTROSPECTION_DESIRED],
-                          [
-                             enable_introspection=yes
-                             has_symbol_prefix=yes
-                          ],
-                          [
-                          PKG_CHECK_MODULES([GOBJECT_INTROSPECTION],
-                              [gobject-introspection-1.0 >= $GOBJECT_INTROSPECTION_REQUIRED],
-                              [
-                                 enable_introspection=yes
-                                 has_symbol_prefix=no
-                              ],
-                              [
-                                 if test "x$enable_introspection" = "xcheck"; then
-			           enable_introspection=no
-                                 else
-                                   AC_MSG_ERROR([gobject-introspection is not available])
-                                 fi
-                              ])
-                          ])
-
-        if test "x$enable_introspection" = "xyes" ; then
-          AC_DEFINE([WITH_GOBJECT_INTROSPECTION], [1], [enable GObject introspection support])
-          AC_SUBST(GOBJECT_INTROSPECTION_CFLAGS)
-          AC_SUBST(GOBJECT_INTROSPECTION_LIBS)
-          AC_SUBST([G_IR_SCANNER], [$($PKG_CONFIG --variable=g_ir_scanner gobject-introspection-1.0)])
-          AC_SUBST([G_IR_COMPILER], [$($PKG_CONFIG --variable=g_ir_compiler gobject-introspection-1.0)])
-        fi
-fi
-AM_CONDITIONAL([WITH_GOBJECT_INTROSPECTION], [test "x$enable_introspection" = "xyes"])
-AM_CONDITIONAL([G_IR_SCANNER_SYMBOL_PREFIX], [test "x$has_symbol_prefix" = "xyes"])
+GOBJECT_INTROSPECTION_CHECK([0.9.4])
 
 if test "x$with_gtk" = "x3.0"; then
         default_vala=check
@@ -433,7 +420,7 @@ fi
 AC_ARG_ENABLE([vala],
               AS_HELP_STRING([--enable-vala], [enable Vala binding generation]),
               [], [enable_vala="$default_vala"])
-if test "x$enable_introspection" = "xyes" ; then
+if test "x$found_introspection" = "xyes" ; then
         if test "x$enable_vala" != "xno" ; then
                 AC_PATH_PROG(VAPIGEN, vapigen, no)
                 if test "x$VAPIGEN" != "xno"; then
@@ -489,4 +476,5 @@ Configure summary:
 	SASL support................:  ${enable_sasl}
 	PulseAudio support..........:  ${HAVE_PULSEAUDIO}
 	GTK+ version................:  ${GTK_API_VERSION}
+	TLS priority................:  ${with_tls_priority}
 "

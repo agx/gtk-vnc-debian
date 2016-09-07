@@ -45,6 +45,12 @@ AC_DEFUN([GTK_VNC_COMPILE_WARNINGS],[
     dontwarn="$dontwarn -Wstrict-prototypes"
     # Generated vncmarshal.c file :-(
     dontwarn="$dontwarn -Wunused-macros"
+    # glib atomic access
+    dontwarn="$dontwarn -Wbad-function-cast"
+    # Broken code in glib2's gparam.h
+    dontwarn="$dontwarn -Wshift-overflow=2"
+    # CLang trips up on this see bz #765389
+    dontwarn="$dontwarn -Wcast-align"
     # Get all possible GCC warnings
     gl_MANYWARN_ALL_GCC([maybewarn])
 

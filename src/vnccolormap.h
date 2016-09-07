@@ -51,7 +51,7 @@ struct _VncColorMapEntry {
 
 GType vnc_color_map_get_type(void);
 
-VncColorMap *vnc_color_map_new(guint16 offset, guint16 nentries);
+VncColorMap *vnc_color_map_new(guint16 offset, guint16 size);
 VncColorMap *vnc_color_map_copy(VncColorMap *map);
 void vnc_color_map_free(VncColorMap *map);
 

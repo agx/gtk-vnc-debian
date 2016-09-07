@@ -61,7 +61,7 @@ struct _VncCursorClass
 
 
 GType vnc_cursor_get_type(void);
-VncCursor *vnc_cursor_new(guint8 *rgba24data,
+VncCursor *vnc_cursor_new(guint8 *data,
                           guint16 hotx, guint16 hoty,
                           guint16 width, guint16 height);
 

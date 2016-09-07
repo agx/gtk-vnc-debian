@@ -36,6 +36,7 @@ libgvnc_1_0_la_LIBADD = \
 			$(GIO_LIBS) \
 			$(GTHREAD_LIBS) \
 			$(GDK_PIXBUF_LIBS) \
+			$(LIBGCRYPT_LIBS) \
 			$(GNUTLS_LIBS) \
 			$(SASL_LIBS)
 libgvnc_1_0_la_CFLAGS = \
@@ -43,6 +44,7 @@ libgvnc_1_0_la_CFLAGS = \
 			$(GIO_CFLAGS) \
 			$(GTHREAD_CFLAGS) \
 			$(GDK_PIXBUF_CFLAGS) \
+			$(LIBGCRYPT_CFLAGS) \
 			$(GNUTLS_CFLAGS) \
 			$(SASL_CFLAGS) \
 			$(WARN_CFLAGS) \
@@ -205,7 +207,8 @@ KEYMAPS = \
 	vncdisplaykeymap_xorgxquartz2rfb.c \
 	vncdisplaykeymap_xorgxwin2rfb.c \
 	vncdisplaykeymap_osx2rfb.c \
-	vncdisplaykeymap_win322rfb.c
+	vncdisplaykeymap_win322rfb.c \
+	vncdisplaykeymap_x112rfb.c
 
 $(KEYMAPS): $(KEYMAP_GEN) keymaps.csv
 BUILT_SOURCES += $(KEYMAPS)
@@ -234,6 +237,8 @@ vncdisplaykeymap_osx2rfb.c:
 vncdisplaykeymap_win322rfb.c:
 	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv win32 rfb > $@ || rm $@
 
+vncdisplaykeymap_x112rfb.c:
+	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv x11 rfb > $@ || rm $@
 
 vncdisplayenums.c: vncdisplay.h
 	$(AM_V_GEN)glib-mkenums    --fhead "#include <glib-object.h>\n" \
@@ -318,7 +323,7 @@ gtkvnc_la_SOURCES = vncmodule.c
 nodist_gtkvnc_la_SOURCES = vncmodule.defs.c
 BUILT_SOURCES += vncmodule.defs.c
 
-CODEGENDIR = $(shell pkg-config --variable=codegendir pygtk-2.0)
+CODEGENDIR = $(shell pkg-config --variable=codegendir pygobject-2.0)
 DEFSDIR = $(shell pkg-config --variable=defsdir pygtk-2.0)
 
 vnc.defs: vncdisplay.h vncdisplayenums.h
@@ -337,8 +342,17 @@ else
 EXTRA_DIST += vnc.override vncmodule.c
 endif
 
-if WITH_GOBJECT_INTROSPECTION
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS =
+INTROSPECTION_SCANNER_ARGS = --symbol-prefix=vnc --warn-all \
+			--identifier-prefix=Vnc \
+			--add-include-path=$(top_srcdir) \
+			--add-include-path=$(srcdir) \
+			--add-include-path=$(builddir)
+INTROSPECTION_COMPILER_ARGS = --includedir=$(top_srcdir) \
+			--includedir=$(srcdir)
 
+if HAVE_INTROSPECTION
 GVNC_INTROSPECTION_SRCS = \
 			$(srcdir)/vncpixelformat.h \
 			$(srcdir)/vncaudioformat.h $(srcdir)/vncaudioformat.c \
@@ -367,99 +381,61 @@ GTK_VNC_INTROSPECTION_SRCS += \
 			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c
 endif
 
-if G_IR_SCANNER_SYMBOL_PREFIX
-PREFIX_ARGS = --symbol-prefix=vnc --identifier-prefix=Vnc
-else
-PREFIX_ARGS = --strip-prefix=Vnc
+GVnc-1.0.gir: libgvnc-1.0.la
+GVnc_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
+GVnc_1_0_gir_PACKAGES = gobject-2.0 gio-2.0
+GVnc_1_0_gir_EXPORT_PACKAGES = gvnc-1.0
+GVnc_1_0_gir_LIBS = libgvnc-1.0.la
+GVnc_1_0_gir_FILES = $(GVNC_INTROSPECTION_SRCS)
+GVnc_1_0_gir_CFLAGS = $(libgvnc_1_0_la_CFLAGS) -I$(srcdir)
+GVnc_1_0_gir_SCANNERFLAGS = --c-include="gvnc.h"
+INTROSPECTION_GIRS += GVnc-1.0.gir
+
+if HAVE_PULSEAUDIO
+GVncPulse-1.0.gir: libgvncpulse-1.0.la GVnc-1.0.gir
+GVncPulse_1_0_gir_INCLUDES = GObject-2.0
+GVncPulse_1_0_gir_PACKAGES = gobject-2.0 libpulse-simple
+GVncPulse_1_0_gir_EXPORT_PACKAGES = gvnc-1.0
+GVncPulse_1_0_gir_LIBS = libgvnc-1.0.la libgvncpulse-1.0.la
+GVncPulse_1_0_gir_FILES = $(GVNCPULSE_INTROSPECTION_SRCS)
+GVncPulse_1_0_gir_CFLAGS = $(libgvnc_1_0_la_CFLAGS) $(libgvncpulse_1_0_la_CFLAGS) -I$(srcdir)
+GVncPulse_1_0_gir_SCANNERFLAGS = --c-include="gvncpulse.h" \
+	--include-uninstalled=$(top_builddir)/src/GVnc-1.0.gir
+INTROSPECTION_GIRS += GVncPulse-1.0.gir
 endif
 
-GVnc-1.0.gir: libgvnc-1.0.la $(G_IR_SCANNER) Makefile.am
-	$(AM_V_GEN)$(G_IR_SCANNER) \
-                --namespace GVnc \
-                --nsversion 1.0 \
-		--include GObject-2.0 \
-		$(PREFIX_ARGS) \
-                --library=$(builddir)/libgvnc-1.0.la \
-                --add-include-path=$(top_srcdir) \
-                --add-include-path=$(srcdir) \
-                --add-include-path=$(builddir) \
-		--c-include="gvnc.h" \
-                --output $@ \
-                -I$(top_srcdir) \
-                -I$(srcdir) \
-		--verbose \
-		--pkg=gobject-2.0 \
-                --pkg-export=gvnc-1.0 \
-                $(GVNC_INTROSPECTION_SRCS)
-
-GVncPulse-1.0.gir: GVnc-1.0.gir libgvncpulse-1.0.la $(G_IR_SCANNER) Makefile.am
-	$(AM_V_GEN)$(G_IR_SCANNER) -v \
-                --namespace GVncPulse \
-                --nsversion 1.0 \
-		--include GObject-2.0 \
-		--include-uninstalled $(builddir)/GVnc-1.0.gir \
-		$(PREFIX_ARGS) \
-                --library=$(builddir)/libgvnc-1.0.la \
-                --library=$(builddir)/libgvncpulse-1.0.la \
-                --add-include-path=$(top_srcdir) \
-                --add-include-path=$(srcdir) \
-                --add-include-path=$(builddir) \
-		--c-include="gvncpulse.h" \
-                --output $@ \
-                -I$(top_srcdir) \
-                -I$(srcdir) \
-		--verbose \
-		--pkg=gobject-2.0 \
-		--pkg=libpulse-simple \
-                --pkg-export=gvncpulse-1.0 \
-                $(GVNCPULSE_INTROSPECTION_SRCS)
-
-GtkVnc-$(GTK_VNC_API_VERSION).gir: GVnc-1.0.gir libgtk-vnc-$(GTK_VNC_API_VERSION).la $(G_IR_SCANNER) Makefile.am
-	$(AM_V_GEN)$(G_IR_SCANNER) \
-                --namespace GtkVnc \
-                --nsversion $(GTK_VNC_API_VERSION) \
-		--include GObject-2.0 \
-		--include Gtk-$(GTK_API_VERSION) \
-		--include-uninstalled $(builddir)/GVnc-1.0.gir \
-		$(PREFIX_ARGS) \
-                --library=$(builddir)/libgvnc-1.0.la \
-                --library=$(builddir)/libgtk-vnc-$(GTK_VNC_API_VERSION).la \
-                --add-include-path=$(top_srcdir) \
-                --add-include-path=$(srcdir) \
-                --add-include-path=$(builddir) \
-		--c-include="gtk-vnc.h" \
-                --output $@ \
-                -I$(top_srcdir) \
-                -I$(srcdir) \
-		--verbose \
-		--pkg=gobject-2.0 \
-		--pkg=gtk+-$(GTK_API_VERSION) \
-                --pkg-export=gtk-vnc-$(GTK_VNC_API_VERSION) \
-                $(GTK_VNC_INTROSPECTION_SRCS)
+if HAVE_GTK_2
+GtkVnc-1.0.gir: libgtk-vnc-$(GTK_VNC_API_VERSION).la GVnc-1.0.gir
+GtkVnc_1_0_gir_INCLUDES = GObject-2.0 Gtk-2.0
+GtkVnc_1_0_gir_PACKAGES = gobject-2.0 gtk+-2.0
+GtkVnc_1_0_gir_EXPORT_PACKAGES = gtk-vnc-$(GTK_VNC_API_VERSION)
+GtkVnc_1_0_gir_LIBS = libgvnc-1.0.la libgtk-vnc-$(GTK_VNC_API_VERSION).la
+GtkVnc_1_0_gir_FILES = $(GTK_VNC_INTROSPECTION_SRCS)
+GtkVnc_1_0_gir_CFLAGS = $(libgvnc_1_0_la_CFLAGS) $(libgvncpulse_1_0_la_CFLAGS) -I$(srcdir)
+GtkVnc_1_0_gir_SCANNERFLAGS = --c-include="gtk-vnc.h" \
+	--include-uninstalled=$(top_builddir)/src/GVnc-1.0.gir
+INTROSPECTION_GIRS += GtkVnc-1.0.gir
+else
+GtkVnc-2.0.gir: libgtk-vnc-2.0.la GVnc-1.0.gir
+GtkVnc_2_0_gir_INCLUDES = GObject-2.0 Gtk-3.0
+GtkVnc_2_0_gir_PACKAGES = gobject-2.0 gtk+-3.0
+GtkVnc_2_0_gir_EXPORT_PACKAGES = gtk-vnc-$(GKT_VNC_API_VERSION)
+GtkVnc_2_0_gir_LIBS = libgvnc-1.0.la libgtk-vnc-$(GTK_VNC_API_VERSION).la
+GtkVnc_2_0_gir_FILES = $(GTK_VNC_INTROSPECTION_SRCS)
+GtkVnc_2_0_gir_CFLAGS = $(libgvnc_1_0_la_CFLAGS) $(libgvncpulse_1_0_la_CFLAGS) -I$(srcdir)
+GtkVnc_2_0_gir_SCANNERFLAGS = --c-include="gtk-vnc.h" \
+	--include-uninstalled=$(top_builddir)/src/GVnc-1.0.gir
+INTROSPECTION_GIRS += GtkVnc-2.0.gir
+endif
 
 girdir = $(datadir)/gir-1.0
-gir_DATA = GVnc-1.0.gir GtkVnc-$(GTK_VNC_API_VERSION).gir
-
-if HAVE_PULSEAUDIO
-gir_DATA += GVncPulse-1.0.gir
-endif
+gir_DATA = $(INTROSPECTION_GIRS)
 
 typelibsdir = $(libdir)/girepository-1.0
-typelibs_DATA = GVnc-1.0.typelib GtkVnc-$(GTK_VNC_API_VERSION).typelib
-
-if HAVE_PULSEAUDIO
-typelibs_DATA += GVncPulse-1.0.typelib
-endif
-
-%.typelib: %.gir
-	$(AM_V_GEN)$(G_IR_COMPILER) \
-		--includedir=$(srcdir) \
-		--includedir=$(builddir) \
-		--includedir=$(girdir) \
-		-o $@ $<
+typelibs_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
 CLEANFILES += $(gir_DATA) $(typelibs_DATA)
 
-endif # WITH_GOBJECT_INTROSPECTION
+endif # HAVE_INTROSPECTION
 
 -include $(top_srcdir)/git.mk

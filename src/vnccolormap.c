@@ -39,6 +39,20 @@ GType vnc_color_map_get_type(void)
 }
 
 
+/**
+ * vnc_color_map_new:
+ * @offset: the offset at which the color map starts
+ * @size: the number of entries
+ *
+ * Allocate a new colour map object able to store colour
+ * map entries with indexes in the range @offset to
+ * @offset + @size.
+ *
+ * The color map must be freed with vnc_color_map_free
+ * when no longer required.
+ *
+ * Returns: (transfer full): the new color map
+ */
 VncColorMap *vnc_color_map_new(guint16 offset, guint16 size)
 {
     VncColorMap *map;
@@ -52,25 +66,53 @@ VncColorMap *vnc_color_map_new(guint16 offset, guint16 size)
 }
 
 
-VncColorMap *vnc_color_map_copy(VncColorMap *srcMap)
+/**
+ * vnc_color_map_copy:
+ * @map: (transfer none): the original color map
+ *
+ * Allocate a new color map initializing it with a
+ * copy of the data stored in @map.
+ *
+ * Returns: (transfer full): the new color map
+ */
+VncColorMap *vnc_color_map_copy(VncColorMap *map)
 {
-    VncColorMap *map;
+    VncColorMap *ret;
 
-    map = g_slice_dup(VncColorMap, srcMap);
-    map->colors = g_new0(VncColorMapEntry, srcMap->size);
-    memcpy(map->colors, srcMap->colors,
-           sizeof(VncColorMapEntry) * map->size);
+    ret = g_slice_dup(VncColorMap, map);
+    ret->colors = g_new0(VncColorMapEntry, map->size);
+    memcpy(ret->colors, map->colors,
+           sizeof(VncColorMapEntry) * ret->size);
 
-    return map;
+    return ret;
 }
 
-
+/**
+ * vnc_color_map_free:
+ * @map: the color map object
+ *
+ * Release the memory associated with the
+ * color map @map
+ */
 void vnc_color_map_free(VncColorMap *map)
 {
     g_slice_free(VncColorMap, map);
 }
 
 
+/**
+ * vnc_color_map_set:
+ * @map: the color map object
+ * @idx: the index to set
+ * @red: the new red value
+ * @green: the new green value
+ * @blue: the new blue value
+ *
+ * Update the RGB value associated with the
+ * color map entry at position @idx.
+ *
+ * Returns: TRUE if @idx was in range, FALSE otherwise
+ */
 gboolean vnc_color_map_set(VncColorMap *map,
                            guint16 idx,
                            guint16 red,
@@ -88,6 +130,19 @@ gboolean vnc_color_map_set(VncColorMap *map,
 }
 
 
+/**
+ * vnc_color_map_lookup:
+ * @map: the color map object
+ * @idx: the index to set
+ * @red: pointer to hold the red value
+ * @green: pointer to hold the green value
+ * @blue: pointer to hold the blue value
+ *
+ * Lookup the RGB values associated with the
+ * colour map entry at position @idx
+ *
+ * Returns: TRUE if @idx was in range, FALSE otherwise
+ */
 gboolean vnc_color_map_lookup(VncColorMap *map,
                               guint16 idx,
                               guint16 *red,

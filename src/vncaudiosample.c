@@ -39,6 +39,18 @@ GType vnc_audio_sample_get_type(void)
 }
 
 
+/**
+ * vnc_audio_sample_new:
+ * @capacity: the sample size in bytes
+ *
+ * Allocate a new audio sample able to store @capacity
+ * bytes of audio data.
+ *
+ * The returned sample must be freed with
+ * vnc_audio_sample_free when no longer required.
+ *
+ * Returns: (transfer full): the new audio sample.
+ */
 VncAudioSample *vnc_audio_sample_new(guint32 capacity)
 {
     VncAudioSample *sample;
@@ -52,18 +64,37 @@ VncAudioSample *vnc_audio_sample_new(guint32 capacity)
 }
 
 
-VncAudioSample *vnc_audio_sample_copy(VncAudioSample *srcSample)
+/**
+ * vnc_audio_sample_copy:
+ * @sample: the sample to copy
+ *
+ * Allocate a new audio sample, initializing it with a copy
+ * of the data in @sample.
+ *
+ * The returned sample must be freed with
+ * vnc_audio_sample_free when no longer required.
+ *
+ * Returns: (transfer full): the new audio sample.
+ */
+VncAudioSample *vnc_audio_sample_copy(VncAudioSample *sample)
 {
-    VncAudioSample *sample;
+    VncAudioSample *ret;
 
-    sample = g_slice_dup(VncAudioSample, srcSample);
-    sample->data = g_new0(guint8, srcSample->capacity);
-    memcpy(sample->data, srcSample->data, srcSample->length);
+    ret = g_slice_dup(VncAudioSample, sample);
+    ret->data = g_new0(guint8, sample->capacity);
+    memcpy(ret->data, sample->data, sample->length);
 
-    return sample;
+    return ret;
 }
 
 
+/**
+ * vnc_audio_sample_free:
+ * @sample: the sample to free
+ *
+ * Release memory associated with the audio sample
+ * @sample
+ */
 void vnc_audio_sample_free(VncAudioSample *sample)
 {
     g_free(sample->data);

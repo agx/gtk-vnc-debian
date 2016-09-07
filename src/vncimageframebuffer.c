@@ -129,6 +129,16 @@ void vnc_image_framebuffer_init(VncImageFramebuffer *fb)
 }
 
 
+/**
+ * vnc_image_framebuffer_new:
+ * @image: (transfer none): the image to render into
+ * @remoteFormat: (transfer none): the remote pixel format
+ *
+ * Allocate a new framebuffer that renders the remote
+ * desktop into the image object @image
+ *
+ * Returns: (transfer full): the new framebuffer
+ */
 VncImageFramebuffer *vnc_image_framebuffer_new(GdkImage *image,
                                                const VncPixelFormat *remoteFormat)
 {
@@ -167,7 +177,7 @@ VncImageFramebuffer *vnc_image_framebuffer_new(GdkImage *image,
     pixels = image->mem;
 #endif
 
-    VNC_DEBUG("Visual mask: %3d %3d %3d\n      shift: %3d %3d %3d",
+    VNC_DEBUG("Visual mask: %3u %3u %3u\n      shift: %3d %3d %3d",
               red_mask,
               green_mask,
               blue_mask,
@@ -199,6 +209,14 @@ VncImageFramebuffer *vnc_image_framebuffer_new(GdkImage *image,
 }
 
 
+/**
+ * vnc_image_framebuffer_get_image:
+ * @fb: the framebuffer object
+ *
+ * Get the image to which the remote desktop is being rendered
+ *
+ * Returns: (transfer none): the image object
+ */
 GdkImage *vnc_image_framebuffer_get_image(VncImageFramebuffer *fb)
 {
     VncImageFramebufferPrivate *priv = fb->priv;

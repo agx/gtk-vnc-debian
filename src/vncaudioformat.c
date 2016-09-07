@@ -37,6 +37,16 @@ GType vnc_audio_format_get_type(void)
 }
 
 
+/**
+ * vnc_audio_format_new:
+ *
+ * Allocate a new VNC audio format struct whose
+ * contents is initialized to all zeros. The
+ * struct must be released using vnc_audio_format_free
+ * when no longer required
+ *
+ * Returns: (transfer full): the new audio format struct
+ */
 VncAudioFormat *vnc_audio_format_new(void)
 {
     VncAudioFormat *format;
@@ -47,16 +57,33 @@ VncAudioFormat *vnc_audio_format_new(void)
 }
 
 
-VncAudioFormat *vnc_audio_format_copy(VncAudioFormat *srcFormat)
+/**
+ * vnc_audio_format_copy:
+ * @format: the format to copy
+ *
+ * Allocate a new VNC audio format struct whose
+ * contents is initialized with the data found
+ * in @format. The struct must be released using
+ * vnc_audio_format_free when no longer required.
+ *
+ * Returns: (transfer full): the new audio format struct
+ */
+VncAudioFormat *vnc_audio_format_copy(VncAudioFormat *format)
 {
-    VncAudioFormat *format;
+    VncAudioFormat *ret;
 
-    format = g_slice_dup(VncAudioFormat, srcFormat);
+    ret = g_slice_dup(VncAudioFormat, format);
 
-    return format;
+    return ret;
 }
 
 
+/**
+ * vnc_audio_format_free:
+ * @format: the format to free
+ *
+ * Release the memory associated with @format
+ */
 void vnc_audio_format_free(VncAudioFormat *format)
 {
     g_slice_free(VncAudioFormat, format);

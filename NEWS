@@ -1,6 +1,63 @@
     GTK VNC News
     ============
 
+Aug 18, 2016: Release 0.6.0
+===========================
+
+Important changes:
+
+ o Default to build with GTK-3, use --with-gtk=2.0 to override
+
+New features:
+
+ o Add --with-tls-priority configure flag to set default TLS
+   priority string
+ o Add a 'vnc-error' signal to report reason for disconnect
+ o Add support for fallback to GNUTLS system trust DB
+
+Bug fixes:
+
+ o Fix crash on Windows with GTK3 checking realized state
+ o Fix XKB detection of keyboard mapping with Xwayland
+ o Switch back to XKB detection for Xwayland
+ o Remove duplicate cert expiry check
+ o Avoid misc compile warnings
+ o Add missing API docs + GObject introspection annotations
+ o Add missing GIO dep on gvnc library GObject introspection build
+ o Remove unused code
+ o Fix redraw on Win10
+ o Drop support for gnutls < 2.2.0
+ o Fix path to h2def script
+ o Update compiler warning detection to fix clang build
+ o Ignore cast align warnings to fix clang build
+ o Fix endianess inversion when setting pixel format
+
+Feb 10, 2015: Release 0.5.4
+===========================
+
+Bug fixes:
+
+ o Fix auth when using PLAIN SASL method
+ o Fix introspection build support on FreeBSD
+ o Remove use of deprecated GTK_STOCK_* constants
+ o Fix parallel build for introspection files
+ o Add mising dep on Gtk introspection file
+ o Release held keys when getting grab notify
+ o Updated translations
+ o Don't call into GDK if no GdkWindow is realized
+ o Chain up parent realize_event vfunc
+ o Fix colourmap mode by always sending pixel format message
+ o Update GCC compiler warning flags used
+ o Enable double buffering on Gtk3 to fix child widget clipping
+ o Disable -Wbad-function-cast to avoid glib header warnings
+ o Don't set thread callbacks on gcrypt >= 1.6 or gnutls >= 2.12
+ o Do explicit check for gcrypt since gnutls might use nettle
+ o Add support for Wayland & Xwayland keymaps
+ o Add support for Gtk Broadway backend keymaps
+ o Fix AltGr handling on Windows displays
+ o Fix virtual keycode conversion on Win32
+ o Fix USB/HID scsancodes for volume keys
+
 Sep 18, 2013: Release 0.5.3
 ===========================
 

@@ -44,7 +44,7 @@ GType vnc_grab_sequence_get_type(void)
 /**
  * vnc_grab_sequence_new:
  * @nkeysyms: length of @keysyms
- * @keysyms: (array length=nkeysyms): the keysym values
+ * @keysyms: (transfer none)(array length=nkeysyms): the keysym values
  *
  * Creates a new grab sequence from a list of keysym values
  *
@@ -65,9 +65,12 @@ VncGrabSequence *vnc_grab_sequence_new(guint nkeysyms, guint *keysyms)
 
 /**
  * vnc_grab_sequence_new_from_string:
- * @str: string of keysym names
+ * @str: (transfer none): string of keysym names
  *
  * Creates a new grab sequence from a list of keysym names
+ *
+ * The returned struct must be freed by calling
+ * vnc_grab_sequence_free when no longer required
  *
  * Returns: (transfer full): a new grab sequence object
  */
@@ -97,19 +100,38 @@ VncGrabSequence *vnc_grab_sequence_new_from_string(const gchar *str)
 }
 
 
-VncGrabSequence *vnc_grab_sequence_copy(VncGrabSequence *srcSequence)
+/**
+ * vnc_grab_sequence_copy:
+ * @sequence: (transfer none): the grab sequence
+ *
+ * Allocate a new grab sequence struct, initalizing it
+ * with a copy of data  from @sequence
+ *
+ * The returned struct must be freed by calling
+ * vnc_grab_sequence_free when no longer required
+ *
+ * Returns: (transfer full): the grab sequence
+ */
+VncGrabSequence *vnc_grab_sequence_copy(VncGrabSequence *sequence)
 {
-    VncGrabSequence *sequence;
+    VncGrabSequence *ret;
 
-    sequence = g_slice_dup(VncGrabSequence, srcSequence);
-    sequence->keysyms = g_new0(guint, srcSequence->nkeysyms);
-    memcpy(sequence->keysyms, srcSequence->keysyms,
-           sizeof(guint) * sequence->nkeysyms);
+    ret = g_slice_dup(VncGrabSequence, sequence);
+    ret->keysyms = g_new0(guint, sequence->nkeysyms);
+    memcpy(ret->keysyms, sequence->keysyms,
+           sizeof(guint) * ret->nkeysyms);
 
-    return sequence;
+    return ret;
 }
 
 
+/**
+ * vnc_grab_sequence_free:
+ * @sequence: (transfer none): the grab sequence
+ *
+ * Release memory associated with the grab sequence
+ * @sequence.
+ */
 void vnc_grab_sequence_free(VncGrabSequence *sequence)
 {
     g_slice_free(VncGrabSequence, sequence);
@@ -142,7 +164,7 @@ gchar *vnc_grab_sequence_as_string(VncGrabSequence *sequence)
 /**
  * vnc_grab_sequence_get_nth:
  * @sequence: (transfer none): the grab sequence
- * @nth: the index of the key symbol to obtain
+ * @n: the index of the key symbol to obtain
  *
  * Obtain the nth key symbol in the sequence
  *

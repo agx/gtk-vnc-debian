@@ -2,104 +2,89 @@
 # Copyright (C) 2009 gtk-vnc's
 # This file is distributed under the same license as the gtk-vnc package.
 # António Lima <amrlima@gmail.com>, 2009.
+# Pedro Albuquerque <palbuquerque73@openmailbox.com>, 2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gtk-vnc master\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-09-06 16:53+0100\n"
-"PO-Revision-Date: 2009-08-31 23:39+0000\n"
-"Last-Translator: António Lima <amrlima@gmail.com>\n"
-"Language-Team: Portuguese <gnome_pt@yahoogroups.com>\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=gtk-"
+"vnc&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2013-12-19 14:05+0000\n"
+"PO-Revision-Date: 2015-05-28 06:49+0100\n"
+"Last-Translator: Pedro Albuquerque <palbuquerque73@openmailbox.com>\n"
+"Language-Team: Português <palbuquerque73@openmailbox.com>\n"
+"Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 2.91.6\n"
 
-#: ../gnulib/lib/gai_strerror.c:44
-msgid "Address family for hostname not supported"
-msgstr "Família de endereço para o nome de máquina não suportada"
-
-#: ../gnulib/lib/gai_strerror.c:45
-msgid "Temporary failure in name resolution"
-msgstr "Falha temporária na resolução de nome"
-
-#: ../gnulib/lib/gai_strerror.c:46
-msgid "Bad value for ai_flags"
-msgstr "Valor inválido para ai_flags"
-
-#: ../gnulib/lib/gai_strerror.c:47
-msgid "Non-recoverable failure in name resolution"
-msgstr "Falha não recuperável na resolução de nome"
-
-#: ../gnulib/lib/gai_strerror.c:48
-msgid "ai_family not supported"
-msgstr "ai_family não suportada"
-
-#: ../gnulib/lib/gai_strerror.c:49
-msgid "Memory allocation failure"
-msgstr "Falha de alocação de memória"
-
-#: ../gnulib/lib/gai_strerror.c:50
-msgid "No address associated with hostname"
-msgstr "Nenhum endereço associado com o nome de máquina"
-
-#: ../gnulib/lib/gai_strerror.c:51
-msgid "Name or service not known"
-msgstr "Nome ou serviço desconhecido"
-
-#: ../gnulib/lib/gai_strerror.c:52
-msgid "Servname not supported for ai_socktype"
-msgstr "Nome de servidor não suportado para ai_socktype"
-
-#: ../gnulib/lib/gai_strerror.c:53
-msgid "ai_socktype not supported"
-msgstr "ai_socktype não suportado"
-
-#: ../gnulib/lib/gai_strerror.c:54
-msgid "System error"
-msgstr "Erro de sistema"
-
-#: ../gnulib/lib/gai_strerror.c:55
-msgid "Argument buffer too small"
-msgstr "Argumento de buffer muito pequeno"
-
-#: ../gnulib/lib/gai_strerror.c:57
-msgid "Processing request in progress"
-msgstr "Processamento do pedido em progresso"
-
-#: ../gnulib/lib/gai_strerror.c:58
-msgid "Request canceled"
-msgstr "Pedido cancelado"
-
-#: ../gnulib/lib/gai_strerror.c:59
-msgid "Request not canceled"
-msgstr "Pedido não cancelado"
-
-#: ../gnulib/lib/gai_strerror.c:60
-msgid "All requests done"
-msgstr "Todos os pedidos terminados"
-
-#: ../gnulib/lib/gai_strerror.c:61
-msgid "Interrupted by a signal"
-msgstr "Interrompido por um sinal"
-
-#: ../gnulib/lib/gai_strerror.c:62
-msgid "Parameter string not correctly encoded"
-msgstr "Expressão de parâmetro não codificada correctamente"
-
-#: ../gnulib/lib/gai_strerror.c:74
-msgid "Unknown error"
-msgstr "Erro desconhecido"
-
-#: ../src/vncdisplay.c:169
+#: ../src/vncdisplay.c:167
 msgid "Enables debug output"
-msgstr "Activa saída de depuração"
+msgstr "Ativa saída de depuração"
 
-#: ../src/vncdisplay.c:2245
+#: ../src/vncdisplay.c:2542
 msgid "GTK-VNC Options:"
 msgstr "Opções de GTK-VNC:"
 
-#: ../src/vncdisplay.c:2245
+#: ../src/vncdisplay.c:2542
 msgid "Show GTK-VNC Options"
-msgstr "Mostrar Opções de GTK-VNC"
+msgstr "Mostrar opções de GTK-VNC"
+
+#~ msgid "Address family for hostname not supported"
+#~ msgstr "Família de endereço para o nome de máquina não suportada"
+
+#~ msgid "Temporary failure in name resolution"
+#~ msgstr "Falha temporária na resolução de nome"
+
+#~ msgid "Bad value for ai_flags"
+#~ msgstr "Valor inválido para ai_flags"
+
+#~ msgid "Non-recoverable failure in name resolution"
+#~ msgstr "Falha não recuperável na resolução de nome"
+
+#~ msgid "ai_family not supported"
+#~ msgstr "ai_family não suportada"
+
+#~ msgid "Memory allocation failure"
+#~ msgstr "Falha de alocação de memória"
+
+#~ msgid "No address associated with hostname"
+#~ msgstr "Nenhum endereço associado com o nome de máquina"
+
+#~ msgid "Name or service not known"
+#~ msgstr "Nome ou serviço desconhecido"
+
+#~ msgid "Servname not supported for ai_socktype"
+#~ msgstr "Nome de servidor não suportado para ai_socktype"
+
+#~ msgid "ai_socktype not supported"
+#~ msgstr "ai_socktype não suportado"
+
+#~ msgid "System error"
+#~ msgstr "Erro de sistema"
+
+#~ msgid "Argument buffer too small"
+#~ msgstr "Argumento de buffer muito pequeno"
+
+#~ msgid "Processing request in progress"
+#~ msgstr "Processamento do pedido em progresso"
+
+#~ msgid "Request canceled"
+#~ msgstr "Pedido cancelado"
+
+#~ msgid "Request not canceled"
+#~ msgstr "Pedido não cancelado"
+
+#~ msgid "All requests done"
+#~ msgstr "Todos os pedidos terminados"
+
+#~ msgid "Interrupted by a signal"
+#~ msgstr "Interrompido por um sinal"
+
+#~ msgid "Parameter string not correctly encoded"
+#~ msgstr "Expressão de parâmetro não codificada correctamente"
+
+#~ msgid "Unknown error"
+#~ msgstr "Erro desconhecido"

@@ -1,12 +1,15 @@
 # -*- rpm-spec -*-
 
+# This spec file assumes you are building for Fedora 20 or newer,
+# or for RHEL 6 or newer. It may need some tweaks for other distros.
+
 %global with_gir 0
-%if 0%{?fedora} >= 12 || 0%{?rhel} >= 7
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %global with_gir 1
 %endif
 
 %global with_gtk3 0
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %global with_gtk3 1
 %endif
 
@@ -15,11 +18,19 @@
 %global with_vala 1
 %endif
 
-%global with_pulse 1
+%if 0%{?fedora} >= 25
+    %global tls_priority "@LIBVIRT,SYSTEM"
+%else
+    %if 0%{?fedora} >= 21
+        %global tls_priority "@SYSTEM"
+    %else
+        %global tls_priority "NORMAL"
+    %endif
+%endif
 
 Summary: A GTK2 widget for VNC clients
 Name: gtk-vnc
-Version: 0.5.3
+Version: 0.6.0
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
 Group: Development/Libraries
@@ -32,9 +43,6 @@ BuildRequires: pygtk2-devel python-devel zlib-devel
 BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel intltool
 %if %{with_gir}
 BuildRequires: gobject-introspection-devel
-%if 0%{?fedora} && 0%{?fedora} < 14
-BuildRequires: gir-repository-devel
-%endif
 %endif
 %if %{with_gtk3}
 BuildRequires: gtk3-devel
@@ -42,9 +50,7 @@ BuildRequires: gtk3-devel
 %if %{with_vala}
 BuildRequires: vala-tools
 %endif
-%if %{with_pulse}
 BuildRequires: pulseaudio-libs-devel
-%endif
 BuildRequires: /usr/bin/pod2man
 
 %description
@@ -96,7 +102,6 @@ with the raw protocol itself.
 
 Libraries, includes, etc. to compile with the gvnc library
 
-%if %{with_pulse}
 %package -n gvncpulse
 Summary: A Pulse Audio bridge for VNC connections
 
@@ -117,7 +122,6 @@ It allows VNC clients to play back audio on the local
 system
 
 Libraries, includes, etc. to compile with the gvnc library
-%endif
 
 %package -n gvnc-tools
 Summary: Command line VNC tools
@@ -166,14 +170,16 @@ cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
 %endif
 
 cd gtk-vnc-%{version}
-%configure --with-gtk=2.0 %{gir_arg}
+%configure --with-gtk=2.0 %{gir_arg} \
+	   --with-tls-priority=%{tls_priority}
 %__make %{?_smp_mflags} V=1
 chmod -x examples/*.pl examples/*.js examples/*.py
 cd ..
 
 %if %{with_gtk3}
 cd gtk-vnc2-%{version}
-%configure --with-gtk=3.0 %{gir_arg}
+%configure --with-gtk=3.0 %{gir_arg} \
+	   --with-tls-priority=%{tls_priority}
 %__make %{?_smp_mflags} V=1
 chmod -x examples/*.pl examples/*.js examples/*.py
 cd ..
@@ -213,9 +219,11 @@ rm -fr %{buildroot}
 
 %postun -n gvncpulse -p /sbin/ldconfig
 
+%if %{with_gtk3}
 %post -n gtk-vnc2 -p /sbin/ldconfig
 
 %postun -n gtk-vnc2 -p /sbin/ldconfig
+%endif
 
 %files
 %defattr(-, root, root)
@@ -260,7 +268,6 @@ rm -fr %{buildroot}
 %{_datadir}/gir-1.0/GVnc-1.0.gir
 %endif
 
-%if %{with_pulse}
 %files -n gvncpulse -f %{name}.lang
 %defattr(-, root, root)
 %{_libdir}/libgvncpulse-1.0.so.*
@@ -279,7 +286,6 @@ rm -fr %{buildroot}
 %{_libdir}/pkgconfig/gvncpulse-1.0.pc
 %if %{with_gir}
 %{_datadir}/gir-1.0/GVncPulse-1.0.gir
-%endif
 %endif
 
 %files -n gvnc-tools

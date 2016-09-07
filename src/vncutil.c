@@ -28,6 +28,13 @@
 
 static gboolean debugFlag = FALSE;
 
+/**
+ * vnc_util_set_debug:
+ * @enabled: TRUE to turn on verbose debugging
+ *
+ * Control whether the VNC code emits verbose debug
+ * messages on stderr
+ */
 void vnc_util_set_debug(gboolean enabled)
 {
 #if GLIB_CHECK_VERSION(2, 31, 0)
@@ -45,11 +52,29 @@ void vnc_util_set_debug(gboolean enabled)
     debugFlag = enabled;
 }
 
+
+/**
+ * vnc_util_get_debug:
+ *
+ * Determine whether the VNC code will emit verbose
+ * debug messages
+ *
+ * Returns: TRUE if debugging is enabled, FALSE otherwise
+ */
 gboolean vnc_util_get_debug(void)
 {
     return debugFlag;
 }
 
+/**
+ * vnc_util_get_version:
+ *
+ * Get the encoded version number of the library release.
+ * The major, minor and micro components are encoded in
+ * 8-bits each.
+ *
+ * Returns: the library version number
+ */
 gint vnc_util_get_version(void)
 {
     return (VERSION_MAJOR << 16) |
@@ -57,6 +82,18 @@ gint vnc_util_get_version(void)
         VERSION_MICRO;
 }
 
+
+/**
+ * vnc_util_check_version:
+ * @major: the desired major version
+ * @minor: the desired minor version
+ * @micro: the desired micro version
+ *
+ * Check whether the library is at least as new as the
+ * version (@major, @minor, @micro)
+ *
+ * Returns: TRUE if the library is at least as new as the requested version
+ */
 gboolean vnc_util_check_version(gint major, gint minor, gint micro)
 {
     return ((VERSION_MAJOR > major) || \
@@ -65,6 +102,15 @@ gboolean vnc_util_check_version(gint major, gint minor, gint micro)
              (VERSION_MICRO >= micro)));
 }
 
+
+/**
+ * vnc_util_get_version_string:
+ *
+ * Get the library version number in a printable
+ * string format
+ *
+ * Returns: (transfer none): the version string
+ */
 const gchar *vnc_util_get_version_string(void)
 {
     return VERSION;
