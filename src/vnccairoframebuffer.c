@@ -125,6 +125,18 @@ void vnc_cairo_framebuffer_init(VncCairoFramebuffer *fb)
 }
 
 
+/**
+ * vnc_cairo_framebuffer_new:
+ * @width: the remote desktop width
+ * @height: the remote desktop height
+ * @remoteFormat: (transfer none): the remote pixel format
+ *
+ * Allocate a new framebuffer object which will render the
+ * remote desktop into a cairo image surface (@width * @height)
+ * in size.
+ *
+ * Returns: (transfer full): the new frame buffer object
+ */
 VncCairoFramebuffer *vnc_cairo_framebuffer_new(guint16 width, guint16 height,
                                                const VncPixelFormat *remoteFormat)
 {
@@ -160,6 +172,15 @@ VncCairoFramebuffer *vnc_cairo_framebuffer_new(guint16 width, guint16 height,
 }
 
 
+/**
+ * vnc_cairo_framebuffer_get_surface:
+ * @fb: the framebuffer object
+ *
+ * Get the cairo surface in which the remote desktop is
+ * being rendered.
+ *
+ * Returns: (transfer none): the cairo surface
+ */
 cairo_surface_t *vnc_cairo_framebuffer_get_surface(VncCairoFramebuffer *fb)
 {
     VncCairoFramebufferPrivate *priv = fb->priv;

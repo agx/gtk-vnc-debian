@@ -79,12 +79,13 @@ struct _VncConnectionClass
     void (*vnc_initialized)(VncConnection *conn);
     void (*vnc_disconnected)(VncConnection *conn);
     void (*vnc_led_state)(VncConnection *conn);
+    void (*vnc_error)(VncConnection *conn, const char *message);
 
     /*
      * If adding fields to this struct, remove corresponding
      * amount of padding to avoid changing overall struct size
      */
-    gpointer _vnc_reserved[VNC_PADDING_LARGE - 4];
+    gpointer _vnc_reserved[VNC_PADDING_LARGE - 5];
 };
 
 

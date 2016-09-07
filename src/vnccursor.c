@@ -123,6 +123,22 @@ vnc_cursor_set_property(GObject      *object,
     }
 }
 
+
+/**
+ * vnc_cursor_new:
+ * @data: (array): the bitmap data for the cursor
+ * @hotx: the horizontal position of the hot point
+ * @hoty: the vertical position of the hot point
+ * @width: the width of the cursor
+ * @height: the height of the cursor
+ *
+ * Creates a new cursor using the bitmap data in @data
+ * which should be @width * @height * 4 in size. The
+ * @data parameter should be in the RGBA format, so
+ * each pixel is 32-bits in size.
+ *
+ * Returns: (transfer full): the new cursor
+ */
 VncCursor *vnc_cursor_new(guint8 *data,
                           guint16 hotx, guint16 hoty,
                           guint16 width, guint16 height)
@@ -221,6 +237,15 @@ static void vnc_cursor_init(VncCursor *cursor)
     memset(priv, 0, sizeof(VncCursorPrivate));
 }
 
+
+/**
+ * vnc_cursor_get_data:
+ * @cursor: the cursor object
+ *
+ * Get the bitmap data representing the cursor
+ *
+ * Returns: (transfer none)(array): the bitmap data
+ */
 const guint8 *vnc_cursor_get_data(VncCursor *cursor)
 {
     VncCursorPrivate *priv = cursor->priv;
@@ -228,6 +253,15 @@ const guint8 *vnc_cursor_get_data(VncCursor *cursor)
     return priv->data;
 }
 
+
+/**
+ * vnc_cursor_get_hotx:
+ * @cursor: the cursor object
+ *
+ * Get the horizontal position of the cursor hot point
+ *
+ * Returns: the horizontal position of the hot point
+ */
 guint16 vnc_cursor_get_hotx(VncCursor *cursor)
 {
     VncCursorPrivate *priv = cursor->priv;
@@ -235,6 +269,15 @@ guint16 vnc_cursor_get_hotx(VncCursor *cursor)
     return priv->hotx;
 }
 
+
+/**
+ * vnc_cursor_get_hoty:
+ * @cursor: the cursor object
+ *
+ * Get the vertical position of the cursor hot point
+ *
+ * Returns: the vertical position of the hot point
+ */
 guint16 vnc_cursor_get_hoty(VncCursor *cursor)
 {
     VncCursorPrivate *priv = cursor->priv;
@@ -243,6 +286,14 @@ guint16 vnc_cursor_get_hoty(VncCursor *cursor)
 }
 
 
+/**
+ * vnc_cursor_get_width:
+ * @cursor: the cursor object
+ *
+ * Get the width of the cursor bitmap
+ *
+ * Returns: the width of the bitmap
+ */
 guint16 vnc_cursor_get_width(VncCursor *cursor)
 {
     VncCursorPrivate *priv = cursor->priv;
@@ -250,6 +301,15 @@ guint16 vnc_cursor_get_width(VncCursor *cursor)
     return priv->width;
 }
 
+
+/**
+ * vnc_cursor_get_height:
+ * @cursor: the cursor object
+ *
+ * Get the height of the cursor bitmap
+ *
+ * Returns: the height of the bitmap
+ */
 guint16 vnc_cursor_get_height(VncCursor *cursor)
 {
     VncCursorPrivate *priv = cursor->priv;

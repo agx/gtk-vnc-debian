@@ -37,6 +37,16 @@ GType vnc_pixel_format_get_type(void)
 }
 
 
+/**
+ * vnc_pixel_format_new:
+ *
+ * Allocate a new VNC pixel format struct whose
+ * contents is initialized to all zeros. The
+ * struct must be released using vnc_pixel_format_free
+ * when no longer required
+ *
+ * Returns: (transfer full): the new pixel format struct
+ */
 VncPixelFormat *vnc_pixel_format_new(void)
 {
     VncPixelFormat *format;
@@ -46,7 +56,17 @@ VncPixelFormat *vnc_pixel_format_new(void)
     return format;
 }
 
-
+/**
+ * vnc_pixel_format_copy:
+ * @srcFormat: the format to copy
+ *
+ * Allocate a new VNC pixel format struct whose
+ * contents is initialized with the data found
+ * in @srcFormat. The struct must be released using
+ * vnc_pixel_format_free when no longer required.
+ *
+ * Returns: (transfer full): the new pixel format struct
+ */
 VncPixelFormat *vnc_pixel_format_copy(VncPixelFormat *srcFormat)
 {
     VncPixelFormat *format;
@@ -57,6 +77,12 @@ VncPixelFormat *vnc_pixel_format_copy(VncPixelFormat *srcFormat)
 }
 
 
+/**
+ * vnc_pixel_format_free:
+ * @format: the format to free
+ *
+ * Release the memory associated with @format
+ */
 void vnc_pixel_format_free(VncPixelFormat *format)
 {
     g_slice_free(VncPixelFormat, format);

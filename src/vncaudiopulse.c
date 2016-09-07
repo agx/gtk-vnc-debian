@@ -155,6 +155,14 @@ void vnc_audio_pulse_init(VncAudioPulse *fb)
 }
 
 
+/**
+ * vnc_audio_pulse_new:
+ *
+ * Create a new VNC audio object able to play
+ * audio samples via pulseaudio
+ *
+ * Returns: (transfer full): the new audio object
+ */
 VncAudioPulse *vnc_audio_pulse_new(void)
 {
     return VNC_AUDIO_PULSE(g_object_new(VNC_TYPE_AUDIO_PULSE,

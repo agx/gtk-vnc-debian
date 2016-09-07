@@ -22,17 +22,39 @@
 
 #include "vncaudio.h"
 
-
+/**
+ * vnc_audio_playback_start:
+ * @aud: (transfer none): the audio object
+ * @format: (transfer none): the new audio format
+ *
+ * Indicate that the remote desktop is about to start
+ * audio playback in format @format.
+ */
 void vnc_audio_playback_start(VncAudio *aud, VncAudioFormat *format)
 {
     VNC_AUDIO_GET_INTERFACE(aud)->playback_start(aud, format);
 }
 
+
+/**
+ * vnc_audio_playback_stop
+ * @aud: (transfer none): the audio object
+ *
+ * Indicate that the remote desktop has completed
+ * audio playback
+ */
 void vnc_audio_playback_stop(VncAudio *aud)
 {
     VNC_AUDIO_GET_INTERFACE(aud)->playback_stop(aud);
 }
 
+/**
+ * vnc_audio_playback_data:
+ * @aud: (transfer none): the audio object
+ * @sample: (transfer none): the audio sample
+ *
+ * Request playback of a single audio sample in @sample
+ */
 void vnc_audio_playback_data(VncAudio *aud, VncAudioSample *sample)
 {
     VNC_AUDIO_GET_INTERFACE(aud)->playback_data(aud, sample);

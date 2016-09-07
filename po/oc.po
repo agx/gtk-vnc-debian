@@ -1,0 +1,89 @@
+# Occitan translation for gtk-vnc.
+# Copyright (C) 2009 Listed translators
+# This file is distributed under the same license as the gtk-vnc package.
+# Cédric Valmary (Tot en òc) <cvalmary@yahoo.fr>, 2015.
+msgid ""
+msgstr ""
+"Project-Id-Version: gtk-vnc master fr\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=gtk-"
+"vnc&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2013-12-19 14:05+0000\n"
+"PO-Revision-Date: 2015-05-11 18:05+0200\n"
+"Last-Translator: Cédric Valmary (Tot en òc) <cvalmary@yahoo.fr>\n"
+"Language-Team: Tot en òc (totenoc.eu)\n"
+"Language: oc\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Virtaal 0.7.1\n"
+"X-Project-Style: gnome\n"
+
+#: ../src/vncdisplay.c:167
+msgid "Enables debug output"
+msgstr "Activa la sortida de desbugatge"
+
+#: ../src/vncdisplay.c:2542
+msgid "GTK-VNC Options:"
+msgstr "Opcions GTK-VNC :"
+
+#: ../src/vncdisplay.c:2542
+msgid "Show GTK-VNC Options"
+msgstr "Afichar las opcions GTK-VNC"
+
+#~ msgid "Address family for hostname not supported"
+#~ msgstr "Famille d'adresses non prise en charge per le nom d'hôte"
+
+#~ msgid "Temporary failure in name resolution"
+#~ msgstr "Échec temporaire de résolution de nom"
+
+#~ msgid "Bad value for ai_flags"
+#~ msgstr "Valeur incorrecte per ai_flags"
+
+#~ msgid "Non-recoverable failure in name resolution"
+#~ msgstr "Échec non récupérable de la résolution de nom"
+
+#~ msgid "ai_family not supported"
+#~ msgstr "ai_family n'est pas pris en charge"
+
+#~ msgid "Memory allocation failure"
+#~ msgstr "Échec d'allocation de mémoire"
+
+#~ msgid "No address associated with hostname"
+#~ msgstr "Aucune adresse associée au nom d'hôte"
+
+#~ msgid "Name or service not known"
+#~ msgstr "Nom ou service desonegut"
+
+#~ msgid "Servname not supported for ai_socktype"
+#~ msgstr "« Servname » n'est pas pris en charge per ai_socktype"
+
+#~ msgid "ai_socktype not supported"
+#~ msgstr "ai_socktype non pris en charge"
+
+#~ msgid "System error"
+#~ msgstr "Error système"
+
+#~ msgid "Argument buffer too small"
+#~ msgstr "Le tampon des paramètres est trop petit"
+
+#~ msgid "Processing request in progress"
+#~ msgstr "Traitement de la requèsta en cours"
+
+#~ msgid "Request canceled"
+#~ msgstr "Requèsta anullada"
+
+#~ msgid "Request not canceled"
+#~ msgstr "Requèsta non anullada"
+
+#~ msgid "All requests done"
+#~ msgstr "Toutes les requèstas sont terminées"
+
+#~ msgid "Interrupted by a signal"
+#~ msgstr "Interrompu per un signal"
+
+#~ msgid "Parameter string not correctly encoded"
+#~ msgstr "La chaîne en paramètre n'est pas codée correctement"
+
+#~ msgid "Unknown error"
+#~ msgstr "Error desoneguda"

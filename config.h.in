@@ -28,6 +28,9 @@
 /* Whether GIO UNIX is available */
 #undef HAVE_GIOUNIX
 
+/* whether gnutls uses gcrypt */
+#undef HAVE_GNUTLS_GCRYPT
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -76,12 +79,8 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -107,6 +106,9 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* TLS default priority string */
+#undef TLS_PRIORITY
+
 /* Version number of package */
 #undef VERSION
 
@@ -118,9 +120,6 @@
 
 /* Minor version number of package */
 #undef VERSION_MINOR
-
-/* enable GObject introspection support */
-#undef WITH_GOBJECT_INTROSPECTION
 
 /* Whether to use libview */
 #undef WITH_LIBVIEW

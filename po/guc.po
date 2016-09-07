@@ -1,0 +1,31 @@
+# Wayuu translation for gtk-vnc.
+# Copyright (C) 2015 Listed translators
+# This file is distributed under the same license as the gtk-vnc package.
+# Michael Ramírez <radical_michael@hotmail.com>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gtk-vnc master\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?product=gtk-"
+"vnc&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2013-12-19 14:05+0000\n"
+"PO-Revision-Date: 2015-02-28 14:13-0430\n"
+"Last-Translator: Michael Ramírez <radical_michael@hotmail.com>\n"
+"Language-Team: Wayuunaiki\n"
+"Language: guc\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../src/vncdisplay.c:167
+msgid "Enables debug output"
+msgstr "Activa la salida de depuración"
+
+#: ../src/vncdisplay.c:2542
+msgid "GTK-VNC Options:"
+msgstr "Aneekiaa GTK-VNC:"
+
+#: ../src/vncdisplay.c:2542
+msgid "Show GTK-VNC Options"
+msgstr "Ee'iyataa aneekiaa GTK-VNC"

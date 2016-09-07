@@ -63,9 +63,9 @@ g_cclosure_user_marshal_VOID__INT_INT (GClosure     *closure,
                                               gint         arg_1,
                                               gint         arg_2,
                                               gpointer     data2);
-  register GMarshalFunc_VOID__INT_INT callback;
-  register GCClosure *cc = (GCClosure*) closure;
-  register gpointer data1, data2;
+  GMarshalFunc_VOID__INT_INT callback;
+  GCClosure *cc = (GCClosure*) closure;
+  gpointer data1, data2;
 
   g_return_if_fail (n_param_values == 3);
 
@@ -102,9 +102,9 @@ g_cclosure_user_marshal_VOID__INT_INT_INT_INT (GClosure     *closure,
                                                       gint         arg_3,
                                                       gint         arg_4,
                                                       gpointer     data2);
-  register GMarshalFunc_VOID__INT_INT_INT_INT callback;
-  register GCClosure *cc = (GCClosure*) closure;
-  register gpointer data1, data2;
+  GMarshalFunc_VOID__INT_INT_INT_INT callback;
+  GCClosure *cc = (GCClosure*) closure;
+  gpointer data1, data2;
 
   g_return_if_fail (n_param_values == 5);
 
@@ -141,9 +141,9 @@ g_cclosure_user_marshal_VOID__UINT_BOXED (GClosure     *closure,
                                                  guint        arg_1,
                                                  gpointer     arg_2,
                                                  gpointer     data2);
-  register GMarshalFunc_VOID__UINT_BOXED callback;
-  register GCClosure *cc = (GCClosure*) closure;
-  register gpointer data1, data2;
+  GMarshalFunc_VOID__UINT_BOXED callback;
+  GCClosure *cc = (GCClosure*) closure;
+  gpointer data1, data2;
 
   g_return_if_fail (n_param_values == 3);
 

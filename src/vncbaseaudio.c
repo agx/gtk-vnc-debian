@@ -88,6 +88,15 @@ void vnc_base_audio_init(VncBaseAudio *fb)
 }
 
 
+/**
+ * vnc_base_audio_new:
+ *
+ * Create a new generic VNC audio object, which will emit
+ * signals when key audio events occur. Callers can connect
+ * to these signals to provide playback facilities.
+ *
+ * Returns: (transfer full): a new audio object
+ */
 VncBaseAudio *vnc_base_audio_new(void)
 {
     return VNC_BASE_AUDIO(g_object_new(VNC_TYPE_BASE_AUDIO,
