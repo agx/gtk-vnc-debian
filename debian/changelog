@@ -1,3 +1,13 @@
+gtk-vnc (0.6.0-1) unstable; urgency=medium
+
+  * [2f71b54] gbp.conf: Follow DEP14
+  * [a10053d] New upstream version 0.6.0
+    Closes: #836854
+  * [c58efd2] Fixup gbp section name
+  * [5be7c29] Bump standards version
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 09 Sep 2016 15:19:44 +0200
+
 gtk-vnc (0.5.3-1.2) unstable; urgency=medium
 
   * Non-maintainer upload.
