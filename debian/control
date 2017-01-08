@@ -6,7 +6,7 @@ Uploaders: Guido Günther <agx@sigxcpu.org>,
            Laurent Léonard <laurent@open-minds.org>
 Standards-Version: 3.9.8
 Build-Depends: autotools-dev,
-               debhelper (>= 7.0.50~),
+               debhelper (>= 10),
                dh-autoreconf,
                gobject-introspection,
                intltool,
