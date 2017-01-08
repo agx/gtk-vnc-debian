@@ -24,8 +24,8 @@ Build-Depends: debhelper (>= 10),
                valac (>= 0.20)
 Build-Conflicts: libffi4-dev, valac-0.12
 X-Python-Version: >= 2.5
-Vcs-Git: git://git.debian.org/git/pkg-libvirt/gtk-vnc.git
-Vcs-Browser: http://git.debian.org/?p=pkg-libvirt/gtk-vnc.git
+Vcs-Git: https://anonscm.debian.org/git/pkg-libvirt/gtk-vnc.git
+Vcs-Browser: https://anonscm.debian.org/git/pkg-libvirt/gtk-vnc.git
 
 Package: libgvnc-1.0-0
 Architecture: any
