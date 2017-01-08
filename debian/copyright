@@ -1,62 +1,115 @@
-This package was debianized by Fernando Ribeiro <fernando@staff.nerdgroup.org> on
-Fri, 24 Aug 2007 15:44:36 -0300.
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: gtk-vnc
+Source: https://wiki.gnome.org/Projects/gtk-vnc
 
-It was downloaded from http://sourceforge.net/projects/gtk-vnc
+Files: *
+Copyright: 2006      Anthony Liguori <anthony@codemonkey.ws>
+           2008      Red Hat, Inc.
+           2009-2010 Daniel P. Berrange <dan@berrange.com>
+License: LGPL-2+
 
-Upstream Authors: Anthony Liguori <anthony-at-codemonkey-dot-ws>
-   		  Daniel Berrange <dan-at-berrange-dot-com>
-		  John Wendell <jwendell-at-gnome-dot-org>
+Files: cfg.mk
+Copyright: 2003-2008 Free Software Foundation, Inc.
+           2008-2011 Red Hat, Inc.
+License: GPL-3+
 
-Copyright:
+Files: src/d3des.c
+       src/d3des.h
+Copyright: 1988-1992 Richard Outerbridge
+License: public-domain
 
-Copyright (C) 2000-2004 The Free Software Foundation
-Copyright (C) 1999 AT&T Laboratories Cambridge
-Copyright (c) 1988,1989,1990,1991,1992 by Richard Outerbridge
-Copyright (C) 2006  Anthony Liguori <anthony@codemonkey.ws>
+Files: src/dh.c
+Copyright: 2008  Red Hat, Inc.
+License: LGPL-2.1+
 
-License:
+Files: src/vncdisplaykeymap.c
+Copyright: 2003      Fabrice Bellard
+           2008      Anthony Liguori <anthony@codemonkey.ws>
+           2009-2010 Daniel P. Berrange <dan@berrange.com>
+License: MIT and LGPL-2
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License version 2.1 as published by the Free Software Foundation;
+Files: debian/*
+Copyright: 2007      Fernando Ribeiro <fernando@staff.nerdgroup.org>
+           2007      Sebastien Bacher <seb128@canonical.com>
+           2007-2016 Guido Günther <agx@sigxcpu.org>
+           2009-2014 Laurent Léonard <laurent@open-minds.org>
+           2011      Mike Hommey <glandium@debian.org>
+           2011      Stefano Rivera
+           2012      Flavio Stanchina
+           2014      Andreas Metzler <ametzler@debian.org>
+           2017      Joao Eriberto Mota Filho <eriberto@debian.org>
+License: LGPL-2.1+
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+License: LGPL-2 or LGPL-2+
+ This package is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU Lesser General
+ Public License can be found in "/usr/share/common-licenses/LGPL-2".
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
 
-    On Debian Systems, the full text of the license can be found on
-    /usr/share/common-licenses/LGPL-2.1
+License: public-domain
+ This file is under public domain.
 
+License: LGPL-2.1+
+ This package is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU Lesser General
+ Public License can be found in "/usr/share/common-licenses/LGPL-2.1".
 
-The code of D3DES has the following copyright notice:
-
-    This is D3DES (V5.09) by Richard Outerbridge with the double and
-    triple-length support removed for use in VNC.  Also the bytebit[] array
-    has been reversed so that the most significant bit in each byte of the
-    key is ignored, not the least significant.
-
-    These changes are:
-     Copyright (C) 1999 AT&T Laboratories Cambridge.  All Rights Reserved.
-
-    This software is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-
-    D3DES (V5.09) -
-
-    A portable, public domain, version of the Data Encryption Standard.
-
-    Written with Symantec's THINK (Lightspeed) C by Richard Outerbridge.
-    Thanks to: Dan Hoey for his excellent Initial and Inverse permutation
-    code;  Jim Gillogly & Phil Karn for the DES key schedule code; Dennis
-    Ferguson, Eric Young and Dana How for comparing notes; and Ray Lau,
-    for humouring me on.
-
-    Copyright (c) 1988,1989,1990,1991,1992 by Richard Outerbridge.
-    (GEnie : OUTER; CIS : [71755,204]) Graven Imagery, 1992.
+License: MIT
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
