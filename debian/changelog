@@ -1,3 +1,10 @@
+gtk-vnc (0.6.0-2) unstable; urgency=medium
+
+  * Team upload.
+  * 
+
+ -- Joao Eriberto Mota Filho <eriberto@debian.org>  Sun, 08 Jan 2017 13:40:17 -0200
+
 gtk-vnc (0.6.0-1) unstable; urgency=medium
 
   * [2f71b54] gbp.conf: Follow DEP14
