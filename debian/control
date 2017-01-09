@@ -36,7 +36,7 @@ Section: libs
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Replaces: libgtk-vnc-1.0-0 (<= 0.4.3-1)
-Description: VNC gobject wrapper (runtime libraries)
+Description: VNC GObject wrapper (runtime libraries)
  It is built using coroutines, allowing it to be completely asynchronous while
  remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
@@ -55,7 +55,7 @@ Depends: libgvnc-1.0-0 (=${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Breaks: libgtk-vnc-1.0-0-dbg (<< 0.4.3-2)
 Replaces: libgtk-vnc-1.0-0-dbg (<< 0.4.3-2)
 Priority: extra
-Description: VNC gobject wrapper (debugging symbols)
+Description: VNC GObject wrapper (debugging symbols)
  It is built using coroutines, allowing it to be completely asynchronous while
  remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
