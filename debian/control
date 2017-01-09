@@ -207,7 +207,7 @@ Multi-Arch: same
 Provides: gir1.2-gvnc-1.0
 Depends: ${gir:Depends}, ${misc:Depends}, ${shlibs:Depends}
 Description: GObject introspection data for GTK-VNC.
- This package contains introspection data for the GTK-VNC library
+ This package contains introspection data for the GTK-VNC library.
  .
  It is built using coroutines, allowing it to be completely asynchronous while
  remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
