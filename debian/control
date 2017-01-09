@@ -63,7 +63,7 @@ Description: VNC gobject wrapper (debugging symbols)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the debugging symbols.
+ This package contains the debugging symbols for libgvnc.
 
 Package: libgvnc-1.0-dev
 Architecture: any
@@ -83,7 +83,8 @@ Description: VNC GObject wrapper (development files)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the development headers and Vala bindings.
+ This package contains the development headers for libgvnc-1.0 and
+ Vala bindings.
 
 Package: libgtk-vnc-1.0-0
 Architecture: any
@@ -119,7 +120,7 @@ Description: VNC viewer widget for GTK+2 (debugging symbols)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the debugging symbols.
+ This package contains the debugging symbols for libgtk-vnc.
 
 Package: libgtk-vnc-1.0-dev
 Architecture: any
@@ -174,7 +175,7 @@ Description: VNC viewer widget for GTK+3 (debugging symbols)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the debugging symbols.
+ This package contains the debugging symbols for libgtk-vnc.
 
 Package: libgtk-vnc-2.0-dev
 Architecture: any
@@ -195,7 +196,8 @@ Description: VNC viewer widget for GTK+3 (development files)
  The core library is written in C and a binding for Python using PyGTK is
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
- This package contains the development headers and Vala bindings.
+ This package contains the development headers for libgtk-vnc-2.0 and Vala
+ bindings.
 
 Package: gir1.2-gtk-vnc-2.0
 Section: introspection
