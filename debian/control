@@ -30,7 +30,9 @@ Homepage: https://wiki.gnome.org/Projects/gtk-vnc
 
 Package: libgvnc-1.0-0
 Architecture: any
+Multi-Arch: same
 Section: libs
+Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Replaces: libgtk-vnc-1.0-0 (<= 0.4.3-1)
 Description: VNC gobject wrapper (runtime libraries)
@@ -46,6 +48,7 @@ Description: VNC gobject wrapper (runtime libraries)
 
 Package: libgvnc-1.0-0-dbg
 Architecture: any
+Multi-Arch: same
 Section: debug
 Depends: libgvnc-1.0-0 (=${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Breaks: libgtk-vnc-1.0-0-dbg (<< 0.4.3-2)
@@ -84,7 +87,9 @@ Description: VNC GObject wrapper (development files)
 
 Package: libgtk-vnc-1.0-0
 Architecture: any
+Multi-Arch: same
 Section: libs
+Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: VNC viewer widget for GTK+2 (runtime libraries)
  It is built using coroutines, allowing it to be completely asynchronous while
@@ -99,6 +104,7 @@ Description: VNC viewer widget for GTK+2 (runtime libraries)
 
 Package: libgtk-vnc-1.0-0-dbg
 Architecture: any
+Multi-Arch: same
 Section: debug
 Depends: libgtk-vnc-1.0-0 (=${binary:Version}),
          ${misc:Depends},
@@ -137,6 +143,7 @@ Description: VNC viewer widget for GTK+2 (development files)
 
 Package: libgtk-vnc-2.0-0
 Architecture: any
+Multi-Arch: same
 Section: libs
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: VNC viewer widget for GTK+3 (runtime libraries)
@@ -152,6 +159,7 @@ Description: VNC viewer widget for GTK+3 (runtime libraries)
 
 Package: libgtk-vnc-2.0-0-dbg
 Architecture: any
+Multi-Arch: same
 Section: debug
 Depends: libgtk-vnc-2.0-0 (=${binary:Version}),
          ${misc:Depends},
@@ -192,6 +200,7 @@ Description: VNC viewer widget for GTK+3 (development files)
 Package: gir1.2-gtk-vnc-2.0
 Section: introspection
 Architecture: any
+Multi-Arch: same
 Provides: gir1.2-gvnc-1.0
 Depends: ${gir:Depends}, ${misc:Depends}, ${shlibs:Depends}
 Description: GObject introspection data for GTK-VNC.

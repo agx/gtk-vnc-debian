@@ -1,1 +1,1 @@
-/usr/lib/libgtk-vnc-*.so.*
+/usr/lib/*/libgtk-vnc-*.so.*
