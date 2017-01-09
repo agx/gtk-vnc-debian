@@ -1,0 +1,12 @@
+Description: add -I m4 to Makefile.am
+Author: Joao Eriberto Mota Filho <eriberto@debian.org>
+Last-Update: 2017-01-08
+--- gtk-vnc-0.6.0.orig/Makefile.am
++++ gtk-vnc-0.6.0/Makefile.am
+@@ -1,5 +1,5 @@
+ SUBDIRS = src tools examples po vapi
+-ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
++ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
+ 
+ pkgconfig_DATA = $(PACKAGE)-$(GTK_VNC_API_VERSION).pc gvnc-1.0.pc
+ pkgconfigdir = $(libdir)/pkgconfig
