@@ -1,7 +1,29 @@
 gtk-vnc (0.6.0-2) unstable; urgency=medium
 
   * Team upload.
-  * 
+  * Added changes from Ubuntu to add multiarch and avoid a FTBFS.
+  * Migrations:
+      - debian/copyright to 1.0 format.
+      - DH level to 10.
+  * Used wrap-and-sort -ast.
+  * debian/control:
+      - Added a Homepage field.
+      - Add dh-python to Build-Depends field.
+      - Fixed duplicate descriptions.
+      - Fixed the GObject word.
+      - Removed a dot from short description.
+      - Removed a MIA co-maintainer.
+      - Removed unneeded build dependency autotools-dev (using dh-autoreconf
+        now).
+      - Updated Vcs-* fields.
+  * debian/gvncviewer.install: added a manpage for gvnccapture.
+  * debian/patches/Add-m4.patch: created to add '-I m4' option to Makefile.am.
+  * debian/rules:
+      - Added DEB_BUILD_MAINT_OPTIONS variable to improve the GCC hardening.
+      - Removed no longer necessary autoreconf addon.
+  * debian/watch:
+      - Bumped to version 4.
+      - Removed an extra line.
 
  -- Joao Eriberto Mota Filho <eriberto@debian.org>  Sun, 08 Jan 2017 13:40:17 -0200
 
