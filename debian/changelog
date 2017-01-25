@@ -94,7 +94,7 @@ gtk-vnc (0.5.2-1) unstable; urgency=low
 
 gtk-vnc (0.5.1-2) unstable; urgency=low
 
-  * [40547ee] Add proper Breasks/Replaces to libgvnc-1.0-0-dbg. Thanks to
+  * [40547ee] Add proper Breaks/Replaces to libgvnc-1.0-0-dbg. Thanks to
     Andreas Beckmann for the detailed report and fix (Closes: #694461)
 
  -- Guido Günther <agx@sigxcpu.org>  Mon, 26 Nov 2012 21:44:25 +0100
@@ -380,7 +380,7 @@ gtk-vnc (0.3.8-1) experimental; urgency=low
 
 gtk-vnc (0.3.7-4) unstable; urgency=low
 
-  * [1e928cf] fix ungrab when switching from absolute to relativ pointer
+  * [1e928cf] fix ungrab when switching from absolute to relative pointer
     mode (Closes: #503318)
   * [090c84f] fix bogus screen updates
 
@@ -468,7 +468,7 @@ gtk-vnc (0.3.4-1) unstable; urgency=low
 
 gtk-vnc (0.3.3-2) unstable; urgency=low
 
-  * fix keyboard grab, many thanks to Emilio Pozuelo Monfort for
+  * fix keyboard grab, many thanks to Emilio Pozuelo Monfort for
     forwarding this
 
  -- Guido Guenther <agx@sigxcpu.org>  Mon, 18 Feb 2008 21:39:06 +0100
