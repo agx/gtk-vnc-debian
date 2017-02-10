@@ -3,3 +3,4 @@ Add-I-m4-to-Makefile.am.patch
 security/Fix-bounds-checking-for-RRE-hextile-copyrect-encodings.patch
 security/Don-t-accept-color-map-entries-for-true-color-pixel-forma.patch
 security/Correctly-validate-color-map-range-indexes.patch
+Link-against-GIO_LIBS-explicitly.patch
