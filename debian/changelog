@@ -1,3 +1,14 @@
+gtk-vnc (0.6.0-3) unstable; urgency=medium
+
+  * [b8d9918] CVE-2017-5884: Fix bounds checking for RRE, hextile & copyrect
+    encodings
+  * [ca87ace] CVE-2017-5885: Correctly validate color map range indexes
+    (Closes: #854450)
+  * [0e71020] Link against GIO_LIBS explicitly to fix build failure
+  * [7d3fdde] Rediff patches to make them more git-format-patch compatible
+
+ -- Guido Günther <agx@sigxcpu.org>  Fri, 10 Feb 2017 14:20:29 +0100
+
 gtk-vnc (0.6.0-2) unstable; urgency=medium
 
   * Team upload.
