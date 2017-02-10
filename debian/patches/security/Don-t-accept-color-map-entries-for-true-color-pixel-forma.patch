@@ -1,0 +1,171 @@
+From: "Daniel P. Berrange" <berrange@redhat.com>
+Date: Thu, 2 Feb 2017 18:01:53 +0000
+Subject: Don't accept color map entries for true-color pixel format
+
+The color map entries should only be sent by the server
+when true-color flag is false.
+
+Signed-off-by: Daniel P. Berrange <berrange@redhat.com>
+---
+ src/vncconnection.c     |  5 +++
+ src/vncconnectiontest.c | 96 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 99 insertions(+), 2 deletions(-)
+
+diff --git a/src/vncconnection.c b/src/vncconnection.c
+index 39f1966..8290b65 100644
+--- a/src/vncconnection.c
++++ b/src/vncconnection.c
+@@ -3333,6 +3333,11 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
+         VncColorMap *map;
+         int i;
+ 
++        if (priv->fmt.true_color_flag) {
++            vnc_connection_set_error(conn, "Got color map entries in true-color pix format");
++            break;
++        }
++
+         vnc_connection_read(conn, pad, 1);
+         first_color = vnc_connection_read_u16(conn);
+         n_colors = vnc_connection_read_u16(conn);
+diff --git a/src/vncconnectiontest.c b/src/vncconnectiontest.c
+index 7ae7265..521529e 100644
+--- a/src/vncconnectiontest.c
++++ b/src/vncconnectiontest.c
+@@ -88,6 +88,22 @@ static void test_recv_u8(GInputStream *is, guint8 v)
+     g_assert(e == v);
+ }
+ 
++static void test_recv_u16(GInputStream *is, guint16 v)
++{
++    guint16 e;
++    g_assert(g_input_stream_read_all(is, &e, 2, NULL, NULL, NULL));
++    e = GINT16_FROM_BE(e);
++    g_assert(e == v);
++}
++
++static void test_recv_s32(GInputStream *is, gint32 v)
++{
++    gint32 e;
++    g_assert(g_input_stream_read_all(is, &e, 4, NULL, NULL, NULL));
++    e = GINT32_FROM_BE(e);
++    g_assert(e == v);
++}
++
+ 
+ static gpointer test_helper_server(gpointer opaque)
+ {
+@@ -128,6 +144,9 @@ static gpointer test_helper_server(gpointer opaque)
+     /* auth result */
+     test_send_u32(os, 0);
+ 
++    /* shared flag */
++    test_recv_u8(is, 0);
++
+     data->test_func(is, os);
+ 
+     g_mutex_lock(&data->clock);
+@@ -179,8 +198,7 @@ static void test_helper_initialized(VncConnection *conn,
+                                     gpointer opaque)
+ {
+     struct GVncTest *test = opaque;
+-    gint32 encodings[] = {  VNC_CONNECTION_ENCODING_DESKTOP_RESIZE,
+-                            VNC_CONNECTION_ENCODING_ZRLE,
++    gint32 encodings[] = {  VNC_CONNECTION_ENCODING_ZRLE,
+                             VNC_CONNECTION_ENCODING_HEXTILE,
+                             VNC_CONNECTION_ENCODING_RRE,
+                             VNC_CONNECTION_ENCODING_COPY_RECT,
+@@ -359,6 +377,74 @@ static void test_copyrect_bounds_server(GInputStream *is, GOutputStream *os)
+ }
+ 
+ 
++static void test_unexpected_cmap_server(GInputStream *is, GOutputStream *os)
++{
++    /* Frame buffer width / height */
++    test_send_u16(os, 100);
++    test_send_u16(os, 100);
++
++    /* BPP, depth, endian, true color */
++    test_send_u8(os, 32);
++    test_send_u8(os, 8);
++    test_send_u8(os, 1);
++    test_send_u8(os, 1);
++
++    /* RGB max + shift*/
++    test_send_u16(os, 255);
++    test_send_u16(os, 255);
++    test_send_u16(os, 255);
++    test_send_u8(os, 0);
++    test_send_u8(os, 8);
++    test_send_u8(os, 16);
++
++    guint8 pad[3] = {0};
++    test_send_bytes(os, pad, G_N_ELEMENTS(pad));
++
++    /* name */
++    guint8 name[] = { 'T', 'e', 's', 't' };
++    test_send_u32(os, G_N_ELEMENTS(name));
++    test_send_bytes(os, name, G_N_ELEMENTS(name));
++
++    /* n-encodings */
++    test_recv_u8(is, 2);
++    /* pad */
++    test_recv_u8(is, 0);
++    /* num encodings */
++    test_recv_u16(is, 5);
++
++    /* encodings */
++    test_recv_s32(is, 16);
++    test_recv_s32(is, 5);
++    test_recv_s32(is, 2);
++    test_recv_s32(is, 1);
++    test_recv_s32(is, 0);
++
++    /* update request */
++    test_recv_u8(is, 3);
++    /* ! incremental */
++    test_recv_u8(is, 0);
++
++    /* x, y, w, h */
++    test_recv_u16(is, 0);
++    test_recv_u16(is, 0);
++    test_recv_u16(is, 100);
++    test_recv_u16(is, 100);
++
++    /* set color map */
++    test_send_u8(os, 1);
++    /* pad */
++    test_send_u8(os, 0);
++    /* first color, ncolors */
++    test_send_u16(os, 0);
++    test_send_u16(os, 1);
++
++    /* r,g,b */
++    test_send_u16(os, 128);
++    test_send_u16(os, 128);
++    test_send_u16(os, 128);
++}
++
++
+ static void test_validation(void (*test_func)(GInputStream *, GOutputStream *))
+ {
+     struct GVncTest *test;
+@@ -435,6 +521,11 @@ static void test_validation_copyrect(void)
+ {
+     test_validation(test_copyrect_bounds_server);
+ }
++
++static void test_validation_unexpected_cmap(void)
++{
++    test_validation(test_unexpected_cmap_server);
++}
+ #endif
+ 
+ int main(int argc, char **argv) {
+@@ -449,6 +540,7 @@ int main(int argc, char **argv) {
+     g_test_add_func("/conn/validation/rre", test_validation_rre);
+     g_test_add_func("/conn/validation/copyrect", test_validation_copyrect);
+     g_test_add_func("/conn/validation/hextile", test_validation_hextile);
++    g_test_add_func("/conn/validation/unexpectedcmap", test_validation_unexpected_cmap);
+ #endif
+ 
+     return g_test_run();
