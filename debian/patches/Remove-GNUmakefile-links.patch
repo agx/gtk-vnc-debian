@@ -9,10 +9,10 @@ since it breaks the out of tree build
  2 files changed, 22 deletions(-)
 
 diff --git a/configure b/configure
-index 9e779d3..7e8162d 100755
+index 6974f35..d103091 100755
 --- a/configure
 +++ b/configure
-@@ -12015,17 +12015,6 @@ cat >>confdefs.h <<_ACEOF
+@@ -12615,17 +12615,6 @@ cat >>confdefs.h <<_ACEOF
  #define VERSION_MICRO $VERSION_MICRO
  _ACEOF
  
@@ -31,10 +31,10 @@ index 9e779d3..7e8162d 100755
    no) :
      ac_cv_prog_cc_c99=no; ac_cv_prog_cc_c89=no ;; #(
 diff --git a/configure.ac b/configure.ac
-index ff38b17..3568a2b 100644
+index a208501..f4f3dbd 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -56,17 +56,6 @@ AC_DEFINE_UNQUOTED([VERSION_MAJOR], [$VERSION_MAJOR], [Major version number of p
+@@ -55,17 +55,6 @@ AC_DEFINE_UNQUOTED([VERSION_MAJOR], [$VERSION_MAJOR], [Major version number of p
  AC_DEFINE_UNQUOTED([VERSION_MINOR], [$VERSION_MINOR], [Minor version number of package])
  AC_DEFINE_UNQUOTED([VERSION_MICRO], [$VERSION_MICRO], [Micro version number of package])
  
