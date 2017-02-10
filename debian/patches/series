@@ -1,2 +1,3 @@
 Remove-GNUmakefile-links.patch
 Add-I-m4-to-Makefile.am.patch
+security/Fix-bounds-checking-for-RRE-hextile-copyrect-encodings.patch
