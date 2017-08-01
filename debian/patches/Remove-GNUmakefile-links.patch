@@ -9,7 +9,7 @@ since it breaks the out of tree build
  2 files changed, 22 deletions(-)
 
 diff --git a/configure b/configure
-index 6974f35..d103091 100755
+index 308f931..274cf94 100755
 --- a/configure
 +++ b/configure
 @@ -12615,17 +12615,6 @@ cat >>confdefs.h <<_ACEOF
@@ -31,7 +31,7 @@ index 6974f35..d103091 100755
    no) :
      ac_cv_prog_cc_c99=no; ac_cv_prog_cc_c89=no ;; #(
 diff --git a/configure.ac b/configure.ac
-index a208501..f4f3dbd 100644
+index bebbe46..9fba174 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -55,17 +55,6 @@ AC_DEFINE_UNQUOTED([VERSION_MAJOR], [$VERSION_MAJOR], [Major version number of p
