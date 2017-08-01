@@ -103,6 +103,8 @@
 #endif
 
 
+#define GTK_VNC_ERROR g_quark_from_static_string("gtk-vnc")
+
 struct wait_queue
 {
     gboolean waiting;
@@ -345,6 +347,23 @@ static GIOCondition g_io_wait(GSocket *sock, GIOCondition cond)
 }
 
 
+static void g_io_wakeup(struct wait_queue *wait)
+{
+    if (wait->waiting)
+        coroutine_yieldto(wait->context, NULL);
+}
+
+
+static gboolean vnc_connection_timeout(gpointer data)
+{
+    struct wait_queue *wait = data;
+
+    g_io_wakeup(wait);
+
+    return FALSE;
+}
+
+
 static GIOCondition g_io_wait_interruptable(struct wait_queue *wait,
                                             GSocket *sock,
                                             GIOCondition cond)
@@ -370,13 +389,6 @@ static GIOCondition g_io_wait_interruptable(struct wait_queue *wait,
     } else
         return *ret;
 }
-
-static void g_io_wakeup(struct wait_queue *wait)
-{
-    if (wait->waiting)
-        coroutine_yieldto(wait->context, NULL);
-}
-
 
 /*
  * Call immediately before the main loop does an iteration. Returns
@@ -919,8 +931,13 @@ static int vnc_connection_read(VncConnection *conn, void *data, size_t len)
         } else if (priv->read_offset == priv->read_size) {
             int ret = vnc_connection_read_buf(conn);
 
-            if (ret < 0)
-                return ret;
+            if (ret < 0) {
+                if (ret == -EAGAIN) {
+                    return offset == 0 ? -EAGAIN : offset;
+                } else {
+                    return ret;
+                }
+            }
             priv->read_offset = 0;
             priv->read_size = ret;
         }
@@ -933,7 +950,7 @@ static int vnc_connection_read(VncConnection *conn, void *data, size_t len)
         offset += tmp;
     }
 
-    return 0;
+    return len;
 }
 
 /*
@@ -2168,6 +2185,21 @@ static vnc_connection_tight_sum_pixel_func *vnc_connection_tight_sum_pixel_table
     (vnc_connection_tight_sum_pixel_func *)vnc_connection_tight_sum_pixel_32x32,
 };
 
+static gboolean vnc_connection_validate_boundary(VncConnection *conn,
+                                                 guint16 x, guint16 y,
+                                                 guint16 width, guint16 height)
+{
+    VncConnectionPrivate *priv = conn->priv;
+
+    if ((x + width) > priv->width || (y + height) > priv->height) {
+        vnc_connection_set_error(conn, "Framebuffer update %dx%d at %d,%d "
+                                 "outside boundary %dx%d",
+                                 width, height, x, y, priv->width, priv->height);
+    }
+
+    return !vnc_connection_has_error(conn);
+}
+
 
 static void vnc_connection_raw_update(VncConnection *conn,
                                       guint16 x, guint16 y,
@@ -2215,6 +2247,9 @@ static void vnc_connection_copyrect_update(VncConnection *conn,
     src_x = vnc_connection_read_u16(conn);
     src_y = vnc_connection_read_u16(conn);
 
+    if (!vnc_connection_validate_boundary(conn, src_x, src_y, width, height))
+        return;
+
     vnc_framebuffer_copyrect(priv->fb,
                              src_x, src_y,
                              dst_x, dst_y,
@@ -2256,6 +2291,10 @@ static void vnc_connection_hextile_rect(VncConnection *conn,
 
                 xy = vnc_connection_read_u8(conn);
                 wh = vnc_connection_read_u8(conn);
+
+                if (!vnc_connection_validate_boundary(conn, x + nibhi(xy), y + niblo(xy),
+                                                      nibhi(wh) + 1, niblo(wh) + 1))
+                    return;
 
                 vnc_framebuffer_fill(priv->fb, fg,
                                      x + nibhi(xy), y + niblo(xy),
@@ -2312,6 +2351,9 @@ static void vnc_connection_rre_update(VncConnection *conn,
         sub_y = vnc_connection_read_u16(conn);
         sub_w = vnc_connection_read_u16(conn);
         sub_h = vnc_connection_read_u16(conn);
+
+        if (!vnc_connection_validate_boundary(conn, x + sub_x, y + sub_y, sub_w, sub_h))
+            break;
 
         vnc_framebuffer_fill(priv->fb, fg,
                              x + sub_x, y + sub_y, sub_w, sub_h);
@@ -2972,7 +3014,7 @@ static void vnc_connection_rich_cursor_blt(VncConnection *conn, guint8 *pixbuf,
     priv->rich_cursor_blt(conn, pixbuf, image, mask, pitch, width, height);
 }
 
-static void vnc_connection_rich_cursor(VncConnection *conn, int x, int y, int width, int height)
+static void vnc_connection_rich_cursor(VncConnection *conn, guint16 x, guint16 y, guint16 width, guint16 height)
 {
     VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
@@ -3004,6 +3046,16 @@ static void vnc_connection_rich_cursor(VncConnection *conn, int x, int y, int wi
         g_free(image);
         g_free(mask);
 
+        /* Some broken VNC servers send hot-pixel outside
+         * bounds of the cursor. We could disconnect and
+         * report an error, but it is more user friendly
+         * to just clamp the hot pixel coords
+         */
+        if (x >= width)
+            x = width - 1;
+        if (y >= height)
+            y = height - 1;
+
         priv->cursor = vnc_cursor_new(pixbuf, x, y, width, height);
     }
 
@@ -3015,7 +3067,7 @@ static void vnc_connection_rich_cursor(VncConnection *conn, int x, int y, int wi
     vnc_connection_emit_main_context(conn, VNC_CURSOR_CHANGED, &sigdata);
 }
 
-static void vnc_connection_xcursor(VncConnection *conn, int x, int y, int width, int height)
+static void vnc_connection_xcursor(VncConnection *conn, guint16 x, guint16 y, guint16 width, guint16 height)
 {
     VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
@@ -3029,7 +3081,7 @@ static void vnc_connection_xcursor(VncConnection *conn, int x, int y, int width,
         guint8 *pixbuf = NULL;
         guint8 *data, *mask, *datap, *maskp;
         guint32 *pixp;
-        int rowlen;
+        guint rowlen;
         int x1, y1;
         guint8 fgrgb[3], bgrgb[3];
         guint32 fg, bg;
@@ -3059,6 +3111,16 @@ static void vnc_connection_xcursor(VncConnection *conn, int x, int y, int width,
         g_free(data);
         g_free(mask);
 
+        /* Some broken VNC servers send hot-pixel outside
+         * bounds of the cursor. We could disconnect and
+         * report an error, but it is more user friendly
+         * to just clamp the hot pixel coords
+         */
+        if (x >= width)
+            x = width - 1;
+        if (y >= height)
+            y = height - 1;
+
         priv->cursor = vnc_cursor_new(pixbuf, x, y, width, height);
     }
 
@@ -3076,22 +3138,6 @@ static void vnc_connection_ext_key_event(VncConnection *conn)
 
     VNC_DEBUG("Keyboard mode extended");
     priv->has_ext_key_event = TRUE;
-}
-
-
-static gboolean vnc_connection_validate_boundary(VncConnection *conn,
-                                                 guint16 x, guint16 y,
-                                                 guint16 width, guint16 height)
-{
-    VncConnectionPrivate *priv = conn->priv;
-
-    if ((x + width) > priv->width || (y + height) > priv->height) {
-        vnc_connection_set_error(conn, "Framebuffer update %dx%d at %d,%d "
-                                 "outside boundary %dx%d",
-                                 width, height, x, y, priv->width, priv->height);
-    }
-
-    return !vnc_connection_has_error(conn);
 }
 
 
@@ -3324,14 +3370,24 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
         VncColorMap *map;
         int i;
 
+        if (priv->fmt.true_color_flag) {
+            vnc_connection_set_error(conn, "Got color map entries in true-color pix format");
+            break;
+        }
+
         vnc_connection_read(conn, pad, 1);
         first_color = vnc_connection_read_u16(conn);
         n_colors = vnc_connection_read_u16(conn);
 
         VNC_DEBUG("Colour map from %d with %d entries",
                   first_color, n_colors);
-        map = vnc_color_map_new(first_color, n_colors);
 
+        if (first_color > (65536 - n_colors)) {
+            vnc_connection_set_error(conn, "Colormap start %d out of range %d", first_color, 65536 - n_colors);
+            break;
+        }
+
+        map = vnc_color_map_new(first_color, n_colors);
         for (i = 0; i < n_colors; i++) {
             guint16 red, green, blue;
 
@@ -3339,9 +3395,14 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
             green = vnc_connection_read_u16(conn);
             blue = vnc_connection_read_u16(conn);
 
-            vnc_color_map_set(map,
-                              i + first_color,
-                              red, green, blue);
+            if (!vnc_color_map_set(map,
+                                   i + first_color,
+                                   red, green, blue)) {
+                /* Should not be reachable given earlier range check */
+                vnc_connection_set_error(conn, "Colormap index %d out of range %d,%d",
+                                         i + first_color, first_color, 65536 - n_colors);
+                break;
+            }
         }
 
         vnc_framebuffer_set_color_map(priv->fb, map);
@@ -5000,6 +5061,7 @@ static void vnc_connection_close(VncConnection *conn)
 
     if (priv->tls_session) {
         gnutls_bye(priv->tls_session, GNUTLS_SHUT_RDWR);
+        gnutls_deinit(priv->tls_session);
         priv->tls_session = NULL;
     }
 #ifdef HAVE_SASL
@@ -5192,16 +5254,66 @@ static gboolean vnc_connection_after_version (VncConnection *conn, int major, in
 static gboolean vnc_connection_initialize(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
-    int ret, i;
+    int ret, i, want;
     char version[13];
     guint32 n_name;
+    gboolean partialGreeting = FALSE;
+    guint timeout;
 
     priv->absPointer = TRUE;
 
-    vnc_connection_read(conn, version, 12);
-    if (vnc_connection_has_error(conn)) {
-        VNC_DEBUG("Error while reading server version");
-        goto fail;
+    timeout = g_timeout_add_seconds(2, vnc_connection_timeout, &priv->wait);
+    want = 12;
+    while (want > 0) {
+        priv->wait_interruptable = 1;
+        ret = vnc_connection_read(conn, version + (12 - want), want);
+        priv->wait_interruptable = 0;
+        if (vnc_connection_has_error(conn)) {
+            VNC_DEBUG("Error while reading server version");
+            goto fail;
+        }
+        if (ret >= 0) {
+            want -= ret;
+            if (ret != 12)  {
+                timeout = 0;
+            }
+        } else {
+            if (ret == -EAGAIN) {
+                /*
+                 * We didn't see any RFB greeting before our
+                 * timeout. We might have mistakenly connected
+                 * to a SPICE server, in which case we might
+                 * wait forever, since SPICE expects the client
+                 * to send first.
+                 *
+                 * We'll proactively send the 'RFB ' bytes to the
+                 * sever. If we've just got a slow VNC server, it'll
+                 * be harmless, but if we've got a SPICE server, this
+                 * should trigger it to close the connection, avoiding
+                 * us waiting foever.
+                 *
+                 * NB, while we could just send the "RFB " bytes
+                 * immediately, the libvncserver code does something
+                 * really crazy. When it sees a client connection, it
+                 * waits 100ms for an HTTP GET request to indicate
+                 * use of websockets proxy. If it sees the RFB bytes
+                 * it doesn't run a normal VNC connection, it just kills
+                 * the connection :-(
+                 */
+                VNC_DEBUG("No server greeting, sending partial client greeting");
+                vnc_connection_write(conn, "RFB ", 4);
+                vnc_connection_flush(conn);
+                partialGreeting = TRUE;
+                timeout = 0;
+            } else {
+                VNC_DEBUG("Unexpected read error during greeting");
+                goto fail;
+            }
+        }
+    }
+
+    if (timeout != 0) {
+        g_source_remove(timeout);
     }
 
     version[12] = 0;
@@ -5226,8 +5338,16 @@ static gboolean vnc_connection_initialize(VncConnection *conn)
         priv->minor = 8;
     }
 
-    snprintf(version, 13, "RFB %03d.%03d\n", priv->major, priv->minor);
-    vnc_connection_write(conn, version, 12);
+    if (partialGreeting) {
+        VNC_DEBUG("Sending rest of greeting");
+        snprintf(version, 13, "%03d.%03d\n", priv->major, priv->minor);
+        want = 8;
+    } else {
+        VNC_DEBUG("Sending full greeting");
+        snprintf(version, 13, "RFB %03d.%03d\n", priv->major, priv->minor);
+        want = 12;
+    }
+    vnc_connection_write(conn, version, want);
     vnc_connection_flush(conn);
     VNC_DEBUG("Using version: %d.%d", priv->major, priv->minor);
 
@@ -5293,15 +5413,6 @@ static gboolean vnc_connection_open_fd_internal(VncConnection *conn)
     return !vnc_connection_has_error(conn);
 }
 
-static gboolean connect_timeout(gpointer data)
-{
-    struct wait_queue *wait = data;
-
-    g_io_wakeup(wait);
-
-    return FALSE;
-}
-
 static GSocket *vnc_connection_connect_socket(struct wait_queue *wait,
                                               GSocketAddress *sockaddr,
                                               GError **error)
@@ -5314,7 +5425,7 @@ static GSocket *vnc_connection_connect_socket(struct wait_queue *wait,
     if (!sock)
         return NULL;
 
-    guint timeout = g_timeout_add_seconds(10, connect_timeout, wait);
+    guint timeout = g_timeout_add_seconds(10, vnc_connection_timeout, wait);
 
     g_socket_set_blocking(sock, FALSE);
     if (!g_socket_connect(sock, sockaddr, NULL, error)) {
@@ -5323,6 +5434,7 @@ static GSocket *vnc_connection_connect_socket(struct wait_queue *wait,
             *error = NULL;
             VNC_DEBUG("Socket pending");
             if (!g_io_wait_interruptable(wait, sock, G_IO_OUT|G_IO_ERR|G_IO_HUP)) {
+                g_set_error(error, GTK_VNC_ERROR, 0, "%s", "Connection timed out");
                 VNC_DEBUG("connect interrupted");
                 timeout = 0;
                 goto timeout;
@@ -5360,13 +5472,13 @@ static gboolean vnc_connection_open_addr_internal(VncConnection *conn)
     VNC_DEBUG("Connecting with addr %p", priv->addr);
 
     sock = vnc_connection_connect_socket(&priv->wait, priv->addr, &conn_error);
-    vnc_connection_set_error(conn, "Unable to connect: %s",
-                             conn_error->message);
-    g_clear_error(&conn_error);
     if (sock) {
         priv->sock = sock;
         return TRUE;
     }
+    vnc_connection_set_error(conn, "Unable to connect: %s",
+                             conn_error ? conn_error->message : "Unknown problem");
+    g_clear_error(&conn_error);
     return FALSE;
 }
 
@@ -5382,6 +5494,8 @@ static gboolean vnc_connection_open_host_internal(VncConnection *conn)
     int port = atoi(priv->port);
 
     VNC_DEBUG("Resolving host %s %s", priv->host, priv->port);
+
+    g_return_val_if_fail((priv->host != NULL) && (port != 0), FALSE);
 
     addr = g_network_address_new(priv->host, port);
 
@@ -5401,8 +5515,9 @@ static gboolean vnc_connection_open_host_internal(VncConnection *conn)
     }
     g_object_unref(enumerator);
     if (!sock) {
-        vnc_connection_set_error(conn, "Unable to connect: %s",
-                                 conn_error->message);
+        vnc_connection_set_error(conn, "Unable to connect to %s:%s: %s",
+                                 priv->host, priv->port,
+                                 conn_error ? conn_error->message : "Unknown problem");
     }
     g_clear_error(&conn_error);
     if (sock) {

@@ -109,7 +109,7 @@ sc_copyright_format:
 prev_version_file = /dev/null
 
 
-exclude_file_name_regexp--sc_bindtextdomain = ^examples/
+exclude_file_name_regexp--sc_bindtextdomain = ^examples/|src/.*test.c
 
 exclude_file_name_regexp--sc_preprocessor_indentation = ^*/*.[ch]
 

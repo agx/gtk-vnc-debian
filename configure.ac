@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.6.0],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.7.1],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -364,12 +364,13 @@ AC_SUBST(GTHREAD_LIBS)
 AC_DEFINE_UNQUOTED([WITH_UCONTEXT],[$WITH_UCONTEXT], [Whether to use ucontext coroutine impl])
 AM_CONDITIONAL(WITH_UCONTEXT, [test "$WITH_UCONTEXT" != "0"])
 
+# Needed for keycodemap generator
+AM_PATH_PYTHON
+
 if test "$WITH_PYTHON" = "yes"; then
   PKG_CHECK_MODULES(PYGTK, pygtk-2.0 >= $PYGTK_REQUIRED)
   AC_SUBST(PYGTK_CFLAGS)
   AC_SUBST(PYGTK_LIBS)
-
-  AM_PATH_PYTHON
 
   AC_MSG_CHECKING([whether $PYTHON version >= $PYTHON_REQUIRED])
   HAVE_PYTHON_REQUIRED=no
@@ -434,17 +435,6 @@ if test "x$found_introspection" = "xyes" ; then
         fi
 fi
 AM_CONDITIONAL([WITH_VALA], [test "x$enable_vala" = "xyes"])
-
-AC_MSG_CHECKING([for Text::CSV Perl module])
-perl -MText::CSV -e "" >/dev/null 2>&1
-if test $? -ne 0 ; then
-  AC_MSG_RESULT([not found])
-  if test ! -e "$srcdir/src/vncdisplaykeymap_osx2rfb.c"; then
-    AC_MSG_ERROR([Text::CSV Perl module is required to compile this package])
-  fi
-else
-  AC_MSG_RESULT([found])
-fi
 
 AC_CONFIG_FILES(
   Makefile

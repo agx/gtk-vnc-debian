@@ -1,3 +1,11 @@
+gtk-vnc (0.7.1-1~1.gbpe30ac9) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @e30ac9b14a1c846c4abd9b5d9e036fbfff5deef0 **
+
+  * [a223999] New upstream version 0.7.1
+
+ -- Guido Günther <agx@sigxcpu.org>  Tue, 01 Aug 2017 11:28:26 -0300
+
 gtk-vnc (0.6.0-3) unstable; urgency=medium
 
   * [b8d9918] CVE-2017-5884: Fix bounds checking for RRE, hextile & copyrect

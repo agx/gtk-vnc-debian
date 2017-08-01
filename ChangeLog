@@ -1,3 +1,252 @@
+2017-05-19  Daniel P. Berrange  <berrange@redhat.com>
+
+	Bump to 0.7.1 for new release
+
+2017-04-12  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix incompatibility with libvncserver websockets handling
+	The previous commit:
+
+	  commit 7f4f2fe8da72ed9fef5dd4319e19feb2b4f3d62e
+	  Author: Daniel P. Berrange <berrange@redhat.com>
+	  Date:   Thu Jan 26 09:31:40 2017 +0000
+
+	    Add workaround to avoid hangs when connecting to SPICE
+
+	changed the code so that it would send the bytes "RFB " to the
+	server before we received its own greeting. This works fine for
+	VNC servers which follow the RFB protocol spec exclusively. The
+	libvncserver code though tries to implement websockets tunnelling
+	support on the same port as the normal RFB service. The way it
+	does this is by waiting 100ms after the client connects to see
+	if the client sends any data. If the client sends data, then it
+	tries to interpret this as an HTTP GET request to initiate the
+	websockets connection. This breaks when it sees our "RFB " bytes
+	being sent. Ideally the libvncserver would have just run a normal
+	RFB connection in this case, but that's not what happens, and
+	given the libvncserver code is in the wild we need a workaround.
+
+	So instead of immediately sending the 'RFB ' bytes to the VNC
+	server, we introduce a 2 second wait. ie, we'll wait for the
+	normal VNC server greeting and if it doesn't arrive after 2 seconds,
+	we'll send our 'RFB ' bytes proactively, and continue waiting. If we
+	are on a real VNC server, we'll get our connection initialized
+	eventually. If connecting to a SPICE server by mistake, we'll get a
+	clean disconnect, and we'll avoid upsetting libvncserver, because its
+	100ms wait for HTTP GET will have long since finished.
+
+	Report a proper error message if hitting connection timeout
+
+	Fix crash when no error is set after connection failure
+
+	Fix crash when opening connection from a GSocketAddress
+
+	Avoid sign extension warnings from coverity
+	 src/vncconnection.c:3082: sign_extension:
+	 Suspicious implicit sign extension: "height" with type "unsigned short"
+	 (16 bits, unsigned) is promoted in "rowlen * height" to type "int"
+	 (32 bits, signed), then sign-extended to type "unsigned long"
+	 (64 bits, unsigned). If "rowlen * height" is greater than 0x7FFFFFFF,
+	 the upper bits of the result will all be 1.
+
+	The 'rowlen' variable is initialization from the unsigned width
+	variable, so should have used uint instead of int.
+
+	Fix inverted args when creating framebuffer for test suite
+	The local & remote format args were inverted in the test
+	suite. This is currently harmless since we are not trying
+	to validate the rendered framebuffer content.
+
+	Restore correct size of reserved data
+	A previous commit
+
+	  commit 7a9271620c894931cc22d6587d58e46c5996dac3
+	  Author: Lei Li <lilei@linux.vnet.ibm.com>
+	  Date:   Mon May 20 11:45:59 2013 +0100
+
+	    Add support for LED state extension to gvnc
+
+	removed 4 elements from the reserved data field, when adding
+	one pointer. This is because it mistakenly thought the reserved
+	elements were 1 byte in length, when they are in fact one pointer
+	in size.
+
+	The original change was technically an ABI incompatible change,
+	as is this fix. In practice, however, GObject classes are never
+	instantiated statically at compile time. Instead a call to
+	g_type_register_static is made at runtime. So this change in the
+	class size won't have a negative effect unless someone has
+	subclassed the VncConnectionClass type. Even if subclassing, this
+	should be harmless as we've merely increased the memory allocation
+	by 3 words.
+
+2017-03-05  Fabio Tomat  <f.t.public@gmail.com>
+
+	Add Friulian translation
+
+2017-02-22  Rafael Fontenelle  <rafaelff@gnome.org>
+
+	Fix path for keymap-gen when doing VPATH builds
+
+2017-02-16  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix some deps in spec file & new URL & missing group tags
+
+2017-02-15  Daniel P. Berrange  <berrange@redhat.com>
+
+	Switch to use keycodemapdb submodule
+
+2017-02-14  Guido Günther  <agx@sigxcpu.org>
+
+	Link against GIO_LIBS explicitly
+	to avoid
+
+	libtool: link: gcc -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -g -O2 -fdebug-prefix-map=/build/gtk-vnc-0.6.0=. -fstack-protector-strong -Wformat -Werror=format-security -Wl,-z -Wl,relro
+	 -Wl,-z -Wl,now -o .libs/vncconnectiontest vncconnectiontest-vncconnectiontest.o  ./.libs/libgvnc-1.0.so -lz -pthread
+	/usr/bin/ld: vncconnectiontest-vncconnectiontest.o: undefined reference to symbol 'g_io_stream_get_output_stream'
+	//usr/lib/x86_64-linux-gnu/libgio-2.0.so.0: error adding symbols: DSO missing from command line
+
+	Also make the use of *_CFLAGS and *_LIBS match.
+
+2017-02-09  Daniel P. Berrange  <berrange@redhat.com>
+
+	Bump to 0.7.0 for new release
+
+2017-02-08  Daniel P. Berrange  <berrange@redhat.com>
+
+	Clamp cursor hot-pixel to be within cursor region
+	Some broken VNC servers send hot-pixel outside bounds of the
+	cursor. We could disconnect and report an error, but it is
+	more user friendly to just clamp the hot pixel coords
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=775394
+
+2017-02-08  Eric R. Schulz  <eric@ers35.com>
+
+	Fix memory leaks
+	Call gnutls_deinit() after gnutls_bye().
+	Call g_free() in finalize().
+	Call g_free() in vnc_grab_sequence_free().
+
+2017-02-08  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix some misc warnings & mem leak in test case
+
+2017-02-08  Christophe Fergeau  <cfergeau@redhat.com>
+
+	README: Update URL to home page
+	The old page no longer seems to exist in GNOME's wiki.
+
+	Add preconditions to VncDisplay public methods
+	This should catch invalid arguments being passed to these. This required
+	moving the VncDisplayPrivate *priv = display->priv; assignment as the
+	VNC_IS_DISPLAY(display) check is also a NULL check which we want to
+	happen before dereferencing it.
+
+	Avoid crash if attempt to connect to an invalid host or port
+	If vnc_display_open_host() is called with a NULL port or host,
+	vnc_connection_open_host_internal() will eventually crash.
+	This commits adds runtime checks to return early with
+	g_return_val_if_fail() when this happens rather than
+	crashing
+
+	 #0  0x00007ffff37de3d3 in __strchr_sse2 () at ../sysdeps/x86_64/strchr.S:32
+	 #1  0x00007ffff4661a17 in g_inet_socket_address_new_from_string (address=0x0, port=0)
+	     at ginetsocketaddress.c:416
+	 #2  0x00007ffff466b784 in g_network_address_parse_sockaddr (addr=addr@entry=0x969f50 [GNetworkAddress])
+	     at gnetworkaddress.c:245
+	 #3  0x00007ffff466ba94 in g_network_address_address_enumerator_next (enumerator=0x972ca0 [GNetworkAddressAddressEnumerator], cancellable=0x0, error=<optimized out>) at gnetworkaddress.c:919
+	 #4  0x00007ffff727130b in vnc_connection_open_host_internal (conn=0x99bbf0 [VncConnection])
+	     at vncconnection.c:5395
+	 #5  0x00007ffff7271523 in vnc_connection_coroutine (opaque=0x99bbf0) at vncconnection.c:5448
+	 #6  0x00007ffff7272e54 in coroutine_trampoline (cc=0x998080) at coroutine_ucontext.c:55
+	 #7  0x00007ffff7272b65 in continuation_trampoline (i0=10059904, i1=0) at continuation.c:43
+	 #8  0x00007ffff379dc00 in __start_context () at /lib64/libc.so.6
+	 #9  0x0000000000998448 in  ()
+	 #10 0x0000000000000000 in  ()
+
+2017-02-08  Rico Tzschichholz  <ricotz@t-online.de>
+
+	Add missing vala .deps files for gvnc & gvncpulse
+	https://bugzilla.gnome.org/show_bug.cgi?id=772322
+
+2017-02-07  Daniel P. Berrange  <berrange@redhat.com>
+
+	Correctly validate color map range indexes
+	The color map index could wrap around to zero causing negative
+	array index accesses.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=778050
+
+	CVE-2017-5885
+
+	Don't accept color map entries for true-color pixel format
+	The color map entries should only be sent by the server
+	when true-color flag is false.
+
+	Fix bounds checking for RRE, hextile & copyrect encodings
+	While the client would bounds check the overall update
+	region, it failed to bounds check the payload data
+	parameters.
+
+	Add a test case to validate bounds checking.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=778048
+
+	CVE-2017-5884
+
+2017-01-26  Daniel P. Berrange  <berrange@redhat.com>
+
+	Add workaround to avoid hangs when connecting to SPICE
+	When used with QEMU at least, both SPICE and VNC live in the same port
+	range (5900+). It is thus not entirely uncommon for a user to mistakenly
+	connect to a SPICE server with a VNC client, or vica-verca.
+
+	When connecting to VNC server with a SPICE client, you quickly get an
+	error. This is because the VNC server sends its short greeting and then
+	sees the RedLinkMess from the SPICE client, realizes its garbage and
+	drops the connection.
+
+	When connecting to a SPICE server with a VNC client though, you get an
+	indefinite hang. The VNC client is waiting for the VNC greeting, which
+	the SPICE server will never send. The SPICE server is waiting for the
+	RedLinkMess which the VNC client will never send.
+
+	In VNC the protocol starts with the follow data sent:
+
+	 Server: "RFB 003.008\n"
+	 Client: "RFB 003.008\n"
+
+	This can be tweaked so the client proactively sends the first four
+	bytes
+
+	 Client: "RFB "
+	 Server: "RFB 003.008\n"
+	 Client: "003.008\n"
+
+	From the VNC server POV, it'll still be receiving the same 12 bytes from
+	the client - it just happens that 4 of them might arrive a tiny bit
+	earlier than the other 8 of them. IOW nothing should break in the VNC
+	server from this change.
+
+	The SPICE server, waiting for its RedLinkMess message will see these
+	four bytes "RFB " and interpret them as the SPICE magic number. This
+	will be invalid and so the SPICE server will drop the connection.
+	This avoids the VNC client hanging forever when connecting to a SPICE
+	server by mistake.
+
+2016-10-26  Felix E. Klee  <felix.klee@inka.de>
+
+	Added menu option for smooth scaling
+
+	Added option for smooth scaling
+	Smooth scaling can now be turned off by setting the option "smoothing"
+	to false.
+
+2016-08-18  Piotr Drąg  <piotrdrag@gmail.com>
+
+	Updated Polish translation
+
 2016-08-18  Daniel P. Berrange  <berrange@redhat.com>
 
 	Update for 0.6.0 release

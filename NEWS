@@ -1,6 +1,37 @@
     GTK VNC News
     ============
 
+May 19, 2017: Release 0.7.1
+===========================
+
+ o Explicitly link to GIO instead of relying
+   on implicit linkage
+ o Switch to use new keycodemap database module
+ o Fix size of reserved data in class struct
+ o Fix inverted framebuffer args in test case
+ o Avoid sign extension in integer arithmetic
+ o Avoid crash when opening a GSocketAddress
+ o Fix crash if server connection times out
+ o Fix incompatibility with libvncserver
+
+Feb  9, 2017: Release 0.7.0
+===========================
+
+ o CVE-2017-5884 - fix bounds checking for RRE, hextile and
+   copyrect encodings
+ o CVE-2017-5885 - fix color map index bounds checking
+ o Add API to allow smooth scaling to be disabled
+ o Workaround to help SPICE servers quickly drop VNC clients
+   which mistakenly connect, by sending "RFB " signature bytes
+   early
+ o Don't accept color map entries for true-color pixel formats
+ o Add missing vala .deps files for gvnc & gvncpulse
+ o Avoid crash if host/port is NULL
+ o Add precondition checks to some public APIs
+ o Fix link to home page in README file
+ o Fix misc memory leaks
+ o Clamp cursor hot-pixel to within cursor region
+
 Aug 18, 2016: Release 0.6.0
 ===========================
 

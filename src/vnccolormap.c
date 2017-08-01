@@ -119,7 +119,7 @@ gboolean vnc_color_map_set(VncColorMap *map,
                            guint16 green,
                            guint16 blue)
 {
-    if (idx >= (map->size + map->offset))
+    if (idx < map->offset || idx >= (map->size + map->offset))
         return FALSE;
 
     map->colors[idx - map->offset].red = red;
@@ -149,7 +149,7 @@ gboolean vnc_color_map_lookup(VncColorMap *map,
                               guint16 *green,
                               guint16 *blue)
 {
-    if (idx >= (map->size + map->offset))
+    if (idx < map->offset || idx >= (map->size + map->offset))
         return FALSE;
 
     *red = map->colors[idx - map->offset].red;

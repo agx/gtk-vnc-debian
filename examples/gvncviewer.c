@@ -382,6 +382,14 @@ static void do_scaling(GtkWidget *menu, GtkWidget *vncdisplay)
         vnc_display_set_scaling(VNC_DISPLAY(vncdisplay), FALSE);
 }
 
+static void do_smoothing(GtkWidget *menu, GtkWidget *vncdisplay)
+{
+    if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu)))
+        vnc_display_set_smoothing(VNC_DISPLAY(vncdisplay), TRUE);
+    else
+        vnc_display_set_smoothing(VNC_DISPLAY(vncdisplay), FALSE);
+}
+
 static void dialog_update_keysyms(GtkWidget *window, guint *keysyms, guint numsyms)
 {
     gchar *keys;
@@ -672,6 +680,7 @@ int main(int argc, char **argv)
     GtkWidget *cab;
     GtkWidget *fullscreen;
     GtkWidget *scaling;
+    GtkWidget *smoothing;
     GtkWidget *showgrabkeydlg;
     const char *help_msg = "Run 'gvncviewer --help' to see a full list of available command line options";
     GSList *accels;
@@ -749,9 +758,12 @@ int main(int argc, char **argv)
 
     fullscreen = gtk_check_menu_item_new_with_mnemonic("_Full Screen");
     scaling = gtk_check_menu_item_new_with_mnemonic("Scaled display");
+    smoothing = gtk_check_menu_item_new_with_mnemonic("Smooth scaling");
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(smoothing), TRUE);
 
     gtk_menu_shell_append(GTK_MENU_SHELL(submenu), fullscreen);
     gtk_menu_shell_append(GTK_MENU_SHELL(submenu), scaling);
+    gtk_menu_shell_append(GTK_MENU_SHELL(submenu), smoothing);
 
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(view), submenu);
 
@@ -885,6 +897,8 @@ int main(int argc, char **argv)
                      G_CALLBACK(do_fullscreen), window);
     g_signal_connect(scaling, "toggled",
                      G_CALLBACK(do_scaling), vnc);
+    g_signal_connect(smoothing, "toggled",
+                     G_CALLBACK(do_smoothing), vnc);
 #if WITH_LIBVIEW
     g_signal_connect(window, "window-state-event",
                      G_CALLBACK(window_state_event), layout);
