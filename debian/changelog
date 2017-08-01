@@ -1,10 +1,14 @@
-gtk-vnc (0.7.1-1~1.gbpe30ac9) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @e30ac9b14a1c846c4abd9b5d9e036fbfff5deef0 **
+gtk-vnc (0.7.1-1) unstable; urgency=medium
 
   * [a223999] New upstream version 0.7.1
+  * [16c4865] Drop patches included in this release
+    security/Don-t-accept-color-map-entries-for-true-color-pixel-forma.patch
+    security/Correctly-validate-color-map-range-indexes.patch
+    security/Fix-bounds-checking-for-RRE-hextile-copyrect-encodings.patch
+    Link-against-GIO_LIBS-explicitly.patch
+  * [3b8e281] Add new symbols
 
- -- Guido Günther <agx@sigxcpu.org>  Tue, 01 Aug 2017 11:28:26 -0300
+ -- Guido Günther <agx@sigxcpu.org>  Tue, 01 Aug 2017 11:57:04 -0300
 
 gtk-vnc (0.6.0-3) unstable; urgency=medium
 
