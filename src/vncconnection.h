@@ -85,7 +85,7 @@ struct _VncConnectionClass
      * If adding fields to this struct, remove corresponding
      * amount of padding to avoid changing overall struct size
      */
-    gpointer _vnc_reserved[VNC_PADDING_LARGE - 5];
+    gpointer _vnc_reserved[VNC_PADDING_LARGE - 2];
 };
 
 

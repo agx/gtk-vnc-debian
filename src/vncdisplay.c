@@ -82,6 +82,7 @@ struct _VncDisplayPrivate
     gboolean allow_scaling;
     gboolean shared_flag;
     gboolean force_size;
+    gboolean smoothing;
 
     GSList *preferable_auths;
     GSList *preferable_vencrypt_subauths;
@@ -114,6 +115,7 @@ enum
     PROP_SCALING,
     PROP_SHARED_FLAG,
     PROP_FORCE_SIZE,
+    PROP_SMOOTHING,
     PROP_DEPTH,
     PROP_GRAB_KEYS,
     PROP_CONNECTION,
@@ -225,6 +227,9 @@ vnc_display_get_property (GObject    *object,
         case PROP_FORCE_SIZE:
             g_value_set_boolean (value, vnc->priv->force_size);
             break;
+        case PROP_SMOOTHING:
+            g_value_set_boolean (value, vnc->priv->smoothing);
+            break;
         case PROP_DEPTH:
             g_value_set_enum (value, vnc->priv->depth);
             break;
@@ -273,6 +278,9 @@ vnc_display_set_property (GObject      *object,
             break;
         case PROP_FORCE_SIZE:
             vnc_display_set_force_size (vnc, g_value_get_boolean (value));
+            break;
+        case PROP_SMOOTHING:
+            vnc_display_set_smoothing (vnc, g_value_get_boolean (value));
             break;
         case PROP_DEPTH:
             vnc_display_set_depth (vnc, g_value_get_enum (value));
@@ -423,6 +431,10 @@ static gboolean draw_event(GtkWidget *widget, cairo_t *cr)
                                      priv->fbCache,
                                      0,
                                      0);
+            if (!priv->smoothing) {
+                cairo_pattern_set_filter(cairo_get_source(cr),
+                                         CAIRO_FILTER_NEAREST);
+            }
         } else {
             cairo_set_source_surface(cr,
                                      priv->fbCache,
@@ -1766,8 +1778,11 @@ static void on_disconnected(VncConnection *conn G_GNUC_UNUSED,
  */
 gboolean vnc_display_open_fd(VncDisplay *obj, int fd)
 {
-    VncDisplayPrivate *priv = obj->priv;
+    VncDisplayPrivate *priv;
 
+    g_return_val_if_fail(VNC_IS_DISPLAY(obj), FALSE);
+
+    priv = obj->priv;
     if (vnc_connection_is_open(priv->conn))
         return FALSE;
 
@@ -1799,8 +1814,11 @@ gboolean vnc_display_open_fd(VncDisplay *obj, int fd)
  */
 gboolean vnc_display_open_fd_with_hostname(VncDisplay *obj, int fd, const char *hostname)
 {
-    VncDisplayPrivate *priv = obj->priv;
+    VncDisplayPrivate *priv;
 
+    g_return_val_if_fail(VNC_IS_DISPLAY(obj), FALSE);
+
+    priv = obj->priv;
     if (vnc_connection_is_open(priv->conn))
         return FALSE;
 
@@ -1837,8 +1855,12 @@ gboolean vnc_display_open_fd_with_hostname(VncDisplay *obj, int fd, const char *
  */
 gboolean vnc_display_open_addr(VncDisplay *obj, GSocketAddress *addr, const char *hostname)
 {
-    VncDisplayPrivate *priv = obj->priv;
+    VncDisplayPrivate *priv;
 
+    g_return_val_if_fail(VNC_IS_DISPLAY(obj), FALSE);
+    g_return_val_if_fail(addr != NULL, FALSE);
+
+    priv = obj->priv;
     if (vnc_connection_is_open(priv->conn))
         return FALSE;
 
@@ -1867,8 +1889,13 @@ gboolean vnc_display_open_addr(VncDisplay *obj, GSocketAddress *addr, const char
  */
 gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *port)
 {
-    VncDisplayPrivate *priv = obj->priv;
+    VncDisplayPrivate *priv;
 
+    g_return_val_if_fail(VNC_IS_DISPLAY(obj), FALSE);
+    g_return_val_if_fail(host != NULL, FALSE);
+    g_return_val_if_fail(port != NULL, FALSE);
+
+    priv = obj->priv;
     if (vnc_connection_is_open(priv->conn))
         return FALSE;
 
@@ -1894,9 +1921,9 @@ gboolean vnc_display_open_host(VncDisplay *obj, const char *host, const char *po
  */
 gboolean vnc_display_is_open(VncDisplay *obj)
 {
-    VncDisplayPrivate *priv = obj->priv;
+    g_return_val_if_fail(VNC_IS_DISPLAY(obj), FALSE);
 
-    return vnc_connection_is_open(priv->conn);
+    return vnc_connection_is_open(obj->priv->conn);
 }
 
 
@@ -1911,9 +1938,12 @@ gboolean vnc_display_is_open(VncDisplay *obj)
  */
 void vnc_display_close(VncDisplay *obj)
 {
-    VncDisplayPrivate *priv = obj->priv;
+    VncDisplayPrivate *priv;
     GtkWidget *widget = GTK_WIDGET(obj);
 
+    g_return_if_fail(VNC_IS_DISPLAY(obj));
+
+    priv = obj->priv;
     if (vnc_connection_is_open(priv->conn)) {
         VNC_DEBUG("Requesting graceful shutdown of connection");
         vnc_connection_shutdown(priv->conn);
@@ -1939,8 +1969,9 @@ void vnc_display_close(VncDisplay *obj)
  */
 VncConnection * vnc_display_get_connection(VncDisplay *obj)
 {
-    VncDisplayPrivate *priv = obj->priv;
-    return priv->conn;
+    g_return_val_if_fail(VNC_IS_DISPLAY(obj), NULL);
+
+    return obj->priv->conn;
 }
 
 
@@ -1958,6 +1989,8 @@ VncConnection * vnc_display_get_connection(VncDisplay *obj)
  */
 void vnc_display_send_keys(VncDisplay *obj, const guint *keyvals, int nkeyvals)
 {
+    g_return_if_fail(VNC_IS_DISPLAY(obj));
+
     vnc_display_send_keys_ex(obj, keyvals,
                              nkeyvals, VNC_DISPLAY_KEY_EVENT_CLICK);
 }
@@ -2001,6 +2034,8 @@ void vnc_display_send_keys_ex(VncDisplay *obj, const guint *keyvals,
 {
     int i;
 
+    g_return_if_fail(VNC_IS_DISPLAY(obj));
+
     if (obj->priv->conn == NULL || !vnc_connection_is_open(obj->priv->conn) || obj->priv->read_only)
         return;
 
@@ -2033,6 +2068,8 @@ void vnc_display_send_keys_ex(VncDisplay *obj, const guint *keyvals,
 void vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask)
 {
     VncDisplayPrivate *priv = obj->priv;
+
+    g_return_if_fail(VNC_IS_DISPLAY(obj));
 
     if (priv->conn == NULL || !vnc_connection_is_open(obj->priv->conn))
         return;
@@ -2088,6 +2125,11 @@ static void vnc_display_finalize (GObject *obj)
     if (priv->vncgrabseq) {
         vnc_grab_sequence_free(priv->vncgrabseq);
         priv->vncgrabseq = NULL;
+    }
+
+    if (priv->vncactiveseq) {
+        g_free(priv->vncactiveseq);
+        priv->vncactiveseq = NULL;
     }
 
     g_slist_free (priv->preferable_auths);
@@ -2244,6 +2286,18 @@ static void vnc_display_class_init(VncDisplayClass *klass)
                                      g_param_spec_boolean ( "force-size",
                                                             "Force widget size",
                                                             "Whether we should define the widget size",
+                                                            TRUE,
+                                                            G_PARAM_READWRITE |
+                                                            G_PARAM_CONSTRUCT |
+                                                            G_PARAM_STATIC_NAME |
+                                                            G_PARAM_STATIC_NICK |
+                                                            G_PARAM_STATIC_BLURB));
+
+    g_object_class_install_property (object_class,
+                                     PROP_SMOOTHING,
+                                     g_param_spec_boolean ( "smoothing",
+                                                            "Smooth scaling",
+                                                            "Whether we should smoothly interpolate when scaling",
                                                             TRUE,
                                                             G_PARAM_READWRITE |
                                                             G_PARAM_CONSTRUCT |
@@ -2490,6 +2544,7 @@ static void vnc_display_init(VncDisplay *display)
     priv->local_pointer = FALSE;
     priv->shared_flag = FALSE;
     priv->force_size = TRUE;
+    priv->smoothing = TRUE;
     priv->vncgrabseq = vnc_grab_sequence_new_from_string("Control_L+Alt_L");
     priv->vncactiveseq = g_new0(gboolean, priv->vncgrabseq->nkeysyms);
 
@@ -2934,6 +2989,33 @@ void vnc_display_set_force_size(VncDisplay *obj, gboolean enabled)
 
 
 /**
+ * vnc_display_smoothing:
+ * @obj: (transfer none): the VNC display widget
+ * @enabled: TRUE to enable smooth scaling, FALSE otherwise
+ *
+ * Set whether pixels are smoothly interpolated when scaling,
+ * to avoid aliasing.
+ */
+void vnc_display_set_smoothing(VncDisplay *obj, gboolean enabled)
+{
+    int ww, wh;
+
+    g_return_if_fail (VNC_IS_DISPLAY (obj));
+    obj->priv->smoothing = enabled;
+
+    if (obj->priv->fb != NULL) {
+        GdkWindow *window = gtk_widget_get_window(GTK_WIDGET(obj));
+
+        if (window != NULL) {
+            gdk_drawable_get_size(gtk_widget_get_window(GTK_WIDGET(obj)),
+                                  &ww, &wh);
+            gtk_widget_queue_draw_area(GTK_WIDGET(obj), 0, 0, ww, wh);
+        }
+    }
+}
+
+
+/**
  * vnc_display_set_depth:
  * @obj: (transfer none): the VNC display widget
  * @depth: the desired colour depth
@@ -2988,6 +3070,23 @@ gboolean vnc_display_get_force_size(VncDisplay *obj)
     g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
 
     return obj->priv->force_size;
+}
+
+
+/**
+ * vnc_display_get_smoothing:
+ * @obj: (transfer none): the VNC display widget
+ *
+ * Determine whether pixels are smoothly interpolated when
+ * scaling.
+ *
+ * Returns: TRUE if smoothing is enabled, FALSE otherwise
+ */
+gboolean vnc_display_get_smoothing(VncDisplay *obj)
+{
+    g_return_val_if_fail (VNC_IS_DISPLAY (obj), FALSE);
+
+    return obj->priv->smoothing;
 }
 
 

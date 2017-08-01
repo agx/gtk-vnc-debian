@@ -1,36 +1,32 @@
-# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Aviary.pl
-# Jeśli masz jakiekolwiek uwagi odnoszące się do tłumaczenia lub chcesz
-# pomóc w jego rozwijaniu i pielęgnowaniu, napisz do nas:
-# gnomepl@aviary.pl
-# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Polish translation for gtk-vnc.
+# Copyright © 2009-2012 the gtk-vnc authors.
+# This file is distributed under the same license as the gtk-vnc package.
 # Piotr Drąg <piotrdrag@gmail.com>, 2009-2012.
-# Aviary.pl <gnomepl@aviary.pl>, 2009-2012.
+# Aviary.pl <community-poland@mozilla.org>, 2009-2012.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: gtk-vnc\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-04 15:45+0200\n"
+"POT-Creation-Date: 2016-08-18 22:11+0200\n"
 "PO-Revision-Date: 2012-09-04 15:48+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
-"Language-Team: Polish <gnomepl@aviary.pl>\n"
+"Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Poedit-Language: Polish\n"
-"X-Poedit-Country: Poland\n"
 
-#: ../src/vncdisplay.c:166
+#: ../src/vncdisplay.c:180
 msgid "Enables debug output"
 msgstr "Włącza wyjście debugowania"
 
-#: ../src/vncdisplay.c:2473
+#: ../src/vncdisplay.c:3142
 msgid "GTK-VNC Options:"
 msgstr "Opcje biblioteki GTK-VNC:"
 
-#: ../src/vncdisplay.c:2473
+#: ../src/vncdisplay.c:3142
 msgid "Show GTK-VNC Options"
 msgstr "Wyświetla opcje biblioteki GTK-VNC"

@@ -36,7 +36,7 @@ License: LGPLv2+
 Group: Development/Libraries
 Source: http://ftp.gnome.org/pub/GNOME/sources/%{name}/0.5/%{name}-%{version}.tar.xz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-URL: http://live.gnome.org/gtk-vnc
+URL: https://wiki.gnome.org/Projects/gtk-vnc
 Requires: gvnc = %{version}-%{release}
 BuildRequires: gtk2-devel >= 2.14
 BuildRequires: pygtk2-devel python-devel zlib-devel
@@ -73,7 +73,7 @@ Libraries, includes, etc. to compile with the gtk-vnc library
 %package python
 Summary: Python bindings for the gtk-vnc library
 Group: Development/Libraries
-Requires: %{name} = %{version}
+Requires: %{name} = %{version}-%{release}
 
 %description python
 gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
@@ -83,6 +83,7 @@ A module allowing use of the GTK-VNC widget from python
 
 %package -n gvnc
 Summary: A GObject for VNC connections
+Group: Development/Libraries
 
 %description -n gvnc
 gvnc is a GObject for managing a VNC connection. It provides all the
@@ -104,6 +105,8 @@ Libraries, includes, etc. to compile with the gvnc library
 
 %package -n gvncpulse
 Summary: A Pulse Audio bridge for VNC connections
+Group: Development/Libraries
+Requires: gvnc = %{version}-%{release}
 
 %description -n gvncpulse
 gvncpulse is a bridge to the Pulse Audio system for VNC.
@@ -126,6 +129,7 @@ Libraries, includes, etc. to compile with the gvnc library
 %package -n gvnc-tools
 Summary: Command line VNC tools
 Group: Applications/Internet
+Requires: gvnc = %{version}-%{release}
 
 %description -n gvnc-tools
 Provides useful command line utilities for interacting with
@@ -255,6 +259,7 @@ rm -fr %{buildroot}
 %{_libdir}/girepository-1.0/GVnc-1.0.typelib
 %endif
 %if %{with_vala}
+%{_datadir}/vala/vapi/gvnc-1.0.deps
 %{_datadir}/vala/vapi/gvnc-1.0.vapi
 %endif
 
@@ -275,6 +280,7 @@ rm -fr %{buildroot}
 %{_libdir}/girepository-1.0/GVncPulse-1.0.typelib
 %endif
 %if %{with_vala}
+%{_datadir}/vala/vapi/gvncpulse-1.0.deps
 %{_datadir}/vala/vapi/gvncpulse-1.0.vapi
 %endif
 

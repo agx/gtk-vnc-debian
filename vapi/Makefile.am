@@ -5,12 +5,15 @@ vapidir = $(datadir)/vala/vapi
 vapi_DATA =					\
 	gtk-vnc-$(GTK_VNC_API_VERSION).deps	\
 	gtk-vnc-$(GTK_VNC_API_VERSION).vapi	\
+	gvnc-1.0.deps				\
 	gvnc-1.0.vapi				\
 	$(NULL)
 
 if HAVE_PULSEAUDIO
 vapi_DATA += \
-	gvncpulse-1.0.vapi
+	gvncpulse-1.0.deps			\
+	gvncpulse-1.0.vapi			\
+	$(NULL)
 endif
 
 gvnc-1.0.vapi: $(top_builddir)/src/GVnc-1.0.gir
@@ -19,6 +22,9 @@ gvnc-1.0.vapi: $(top_builddir)/src/GVnc-1.0.gir
 		--pkg gio-2.0			\
 		--library gvnc-1.0		\
 		$<
+
+gvnc-1.0.deps: gvnc-1.0.vapi
+	@echo "gio-2.0" > $@
 
 if HAVE_PULSEAUDIO
 gvncpulse-1.0.vapi: $(top_builddir)/src/GVncPulse-1.0.gir gvnc-1.0.vapi
@@ -30,6 +36,10 @@ gvncpulse-1.0.vapi: $(top_builddir)/src/GVncPulse-1.0.gir gvnc-1.0.vapi
 		--library gvncpulse-1.0		\
 		--girdir=$(top_builddir)/src	\
 		$<
+
+gvncpulse-1.0.deps: gvnc-1.0.vapi
+	@echo "gio-2.0" > $@
+	@echo "gvnc-1.0" >> $@
 endif
 
 gtk-vnc-$(GTK_VNC_API_VERSION).vapi: $(top_builddir)/src/GtkVnc-$(GTK_VNC_API_VERSION).gir gvnc-1.0.vapi

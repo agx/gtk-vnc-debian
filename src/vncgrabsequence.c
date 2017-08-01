@@ -134,6 +134,7 @@ VncGrabSequence *vnc_grab_sequence_copy(VncGrabSequence *sequence)
  */
 void vnc_grab_sequence_free(VncGrabSequence *sequence)
 {
+    g_free(sequence->keysyms);
     g_slice_free(VncGrabSequence, sequence);
 }
 

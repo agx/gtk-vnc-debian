@@ -1,6 +1,10 @@
 
 EXTRA_DIST = libgvnc_sym.version libgvncpulse_sym.version libgtk-vnc_sym.version vncmarshal.txt
 
+TESTS = vncconnectiontest
+
+noinst_PROGRAMS = $(TESTS)
+
 lib_LTLIBRARIES = libgvnc-1.0.la
 
 BUILT_SOURCES =
@@ -197,9 +201,10 @@ nodist_libgtk_vnc_2_0_la_SOURCES = $(nodist_gtk_vnc_SOURCES)
 nodist_libgtk_vnc_2_0_la_HEADERS = $(nodist_gtk_vnc_HDRS)
 endif
 
-EXTRA_DIST += keymap-gen.pl keymaps.csv
+KEYMAP_GEN = keycodemapdb/tools/keymap-gen
+KEYMAP_CSV = keycodemapdb/data/keymaps.csv
 
-KEYMAP_GEN = $(srcdir)/keymap-gen.pl
+EXTRA_DIST += $(KEYMAP_CSV) $(KEYMAP_GEN)
 
 KEYMAPS = \
 	vncdisplaykeymap_xorgevdev2rfb.c \
@@ -210,35 +215,32 @@ KEYMAPS = \
 	vncdisplaykeymap_win322rfb.c \
 	vncdisplaykeymap_x112rfb.c
 
-$(KEYMAPS): $(KEYMAP_GEN) keymaps.csv
+$(KEYMAPS): $(srcdir)/$(KEYMAP_GEN) $(srcdir)/$(KEYMAP_CSV)
 BUILT_SOURCES += $(KEYMAPS)
-
-# Avoid need for perl(Text::CSV) by end users
-EXTRA_DIST += $(KEYMAPS)
-MAINTAINERCLEANFILES = $(KEYMAPS)
+CLEANFILES = $(KEYMAPS)
 
 vncdisplaykeymap.c: $(KEYMAPS)
 
 vncdisplaykeymap_xorgevdev2rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgevdev rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgevdev2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgevdev rfb > $@ || rm $@
 
 vncdisplaykeymap_xorgkbd2rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgkbd rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgkbd2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgkbd rfb > $@ || rm $@
 
 vncdisplaykeymap_xorgxquartz2rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgxquartz rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxquartz2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgxquartz rfb > $@ || rm $@
 
 vncdisplaykeymap_xorgxwin2rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv xorgxwin rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxwin2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgxwin rfb > $@ || rm $@
 
 vncdisplaykeymap_osx2rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv osx rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_osx2rfb code-map $(srcdir)/$(KEYMAP_CSV) osx rfb > $@ || rm $@
 
 vncdisplaykeymap_win322rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv win32 rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_win322rfb code-map $(srcdir)/$(KEYMAP_CSV) win32 rfb > $@ || rm $@
 
 vncdisplaykeymap_x112rfb.c:
-	$(AM_V_GEN)$(PERL) $(KEYMAP_GEN) $(srcdir)/keymaps.csv x11 rfb > $@ || rm $@
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_x112rfb code-map $(srcdir)/$(KEYMAP_CSV) x11 rfb > $@ || rm $@
 
 vncdisplayenums.c: vncdisplay.h
 	$(AM_V_GEN)glib-mkenums    --fhead "#include <glib-object.h>\n" \
@@ -310,7 +312,11 @@ ENUM_FILES = \
 
 BUILT_SOURCES += $(MARSHAL_FILES) $(ENUM_FILES)
 
-CLEANFILES = $(MARSHAL_FILES) $(ENUM_FILES)
+CLEANFILES += $(MARSHAL_FILES) $(ENUM_FILES)
+
+vncconnectiontest_SOURCES = vncconnectiontest.c
+vncconnectiontest_CFLAGS = $(GOBJECT_CFLAGS) $(GIO_CFLAGS)
+vncconnectiontest_LDADD = libgvnc-1.0.la $(GOBJECT_LIBS) $(GIO_LIBS)
 
 if WITH_PYTHON
 pyexec_LTLIBRARIES = gtkvnc.la
@@ -395,7 +401,7 @@ if HAVE_PULSEAUDIO
 GVncPulse-1.0.gir: libgvncpulse-1.0.la GVnc-1.0.gir
 GVncPulse_1_0_gir_INCLUDES = GObject-2.0
 GVncPulse_1_0_gir_PACKAGES = gobject-2.0 libpulse-simple
-GVncPulse_1_0_gir_EXPORT_PACKAGES = gvnc-1.0
+GVncPulse_1_0_gir_EXPORT_PACKAGES = gvncpulse-1.0
 GVncPulse_1_0_gir_LIBS = libgvnc-1.0.la libgvncpulse-1.0.la
 GVncPulse_1_0_gir_FILES = $(GVNCPULSE_INTROSPECTION_SRCS)
 GVncPulse_1_0_gir_CFLAGS = $(libgvnc_1_0_la_CFLAGS) $(libgvncpulse_1_0_la_CFLAGS) -I$(srcdir)
