@@ -49,9 +49,9 @@ override_dh_install:
                   --sourcedir=debian/gtk2
 
 override_dh_strip:
-	dh_strip -plibgvnc-1.0-0 --dbg-package=libgvnc-1.0-0-dbg
-	dh_strip -plibgtk-vnc-1.0-0 --dbg-package=libgtk-vnc-1.0-0-dbg
-	dh_strip -plibgtk-vnc-2.0-0 --dbg-package=libgtk-vnc-2.0-0-dbg
+	dh_strip -plibgvnc-1.0-0
+	dh_strip -plibgtk-vnc-1.0-0
+	dh_strip -plibgtk-vnc-2.0-0
 	dh_strip -pgvncviewer -ppython-gtk-vnc
 
 override_dh_python2:

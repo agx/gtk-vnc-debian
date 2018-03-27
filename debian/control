@@ -55,30 +55,6 @@ Description: VNC GObject wrapper (runtime libraries)
  .
  This package contains the shared library.
 
-Package: libgvnc-1.0-0-dbg
-Architecture: any
-Multi-Arch: same
-Section: debug
-Depends:
- libgvnc-1.0-0 (=${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Breaks:
- libgtk-vnc-1.0-0-dbg (<< 0.4.3-2),
-Replaces:
- libgtk-vnc-1.0-0-dbg (<< 0.4.3-2),
-Priority: extra
-Description: VNC GObject wrapper (debugging symbols)
- It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
- VeNCrypt authentication extension providing SSL/TLS encryption with x509
- certificate authentication.
- .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
- .
- This package contains the debugging symbols for libgvnc.
-
 Package: libgvnc-1.0-dev
 Architecture: any
 Section: libdevel
@@ -122,26 +98,6 @@ Description: VNC viewer widget for GTK+2 (runtime libraries)
  .
  This package contains the shared library built for GTK+2.
 
-Package: libgtk-vnc-1.0-0-dbg
-Architecture: any
-Multi-Arch: same
-Section: debug
-Depends:
- libgtk-vnc-1.0-0 (=${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Priority: extra
-Description: VNC viewer widget for GTK+2 (debugging symbols)
- It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
- VeNCrypt authentication extension providing SSL/TLS encryption with x509
- certificate authentication.
- .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
- .
- This package contains the debugging symbols for libgtk-vnc-1.0.
-
 Package: libgtk-vnc-1.0-dev
 Architecture: any
 Section: libdevel
@@ -180,26 +136,6 @@ Description: VNC viewer widget for GTK+3 (runtime libraries)
  available. The networking layer supports connections over both IPv4 and IPv6.
  .
  This package contains the shared library built for GTK+3.
-
-Package: libgtk-vnc-2.0-0-dbg
-Architecture: any
-Multi-Arch: same
-Section: debug
-Depends:
- libgtk-vnc-2.0-0 (=${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Priority: extra
-Description: VNC viewer widget for GTK+3 (debugging symbols)
- It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
- VeNCrypt authentication extension providing SSL/TLS encryption with x509
- certificate authentication.
- .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
- .
- This package contains the debugging symbols for libgtk-vnc-2.0.
 
 Package: libgtk-vnc-2.0-dev
 Architecture: any
