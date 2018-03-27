@@ -1,0 +1,32 @@
+# Dutch translation for gtk-vnc.
+# Copyright (C) 2015 gtk-vnc's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gtk-vnc package.
+# Nathan Follens <nthn@unseen.is>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gtk-vnc master\n"
+"Report-Msgid-Bugs-To: https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-"
+"vnc&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2017-07-13 16:10+0000\n"
+"PO-Revision-Date: 2015-05-26 21:17+0100\n"
+"Last-Translator: Nathan Follens <nthn@unseen.is>\n"
+"Language-Team: Dutch <gnome-nl-list@gnome.org>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: ../src/vncdisplay.c:182
+msgid "Enables debug output"
+msgstr "Schakelt debug-uitvoer in"
+
+#: ../src/vncdisplay.c:3242
+msgid "GTK-VNC Options:"
+msgstr "GTK-VNC-opties:"
+
+#: ../src/vncdisplay.c:3242
+msgid "Show GTK-VNC Options"
+msgstr "Toon GTK-VNC-opties"

@@ -1,6 +1,6 @@
 # -*- rpm-spec -*-
 
-# This spec file assumes you are building for Fedora 20 or newer,
+# This spec file assumes you are building for Fedora 26 or newer,
 # or for RHEL 6 or newer. It may need some tweaks for other distros.
 
 %global with_gir 0
@@ -18,29 +18,30 @@
 %global with_vala 1
 %endif
 
-%if 0%{?fedora} >= 25
+%global with_python 1
+%if 0%{?fedora} || 0%{?rhel} >= 8
+%global with_python 0
+%endif
+
+%if 0%{?fedora} || 0%{?rhel} >= 8
     %global tls_priority "@LIBVIRT,SYSTEM"
 %else
-    %if 0%{?fedora} >= 21
-        %global tls_priority "@SYSTEM"
-    %else
-        %global tls_priority "NORMAL"
-    %endif
+    %global tls_priority "NORMAL"
 %endif
 
 Summary: A GTK2 widget for VNC clients
 Name: gtk-vnc
-Version: 0.7.1
+Version: 0.7.2
 Release: 1%{?dist}%{?extra_release}
 License: LGPLv2+
-Group: Development/Libraries
 Source: http://ftp.gnome.org/pub/GNOME/sources/%{name}/0.5/%{name}-%{version}.tar.xz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: https://wiki.gnome.org/Projects/gtk-vnc
 Requires: gvnc = %{version}-%{release}
 BuildRequires: gtk2-devel >= 2.14
-BuildRequires: pygtk2-devel python-devel zlib-devel
-BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel intltool
+%if %{with_python}
+BuildRequires: pygtk2-devel python2-devel
+%endif
+BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel zlib-devel intltool
 %if %{with_gir}
 BuildRequires: gobject-introspection-devel
 %endif
@@ -59,7 +60,6 @@ allowing it to be completely asynchronous while remaining single threaded.
 
 %package devel
 Summary: Development files to build GTK2 applications with gtk-vnc
-Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig
 Requires: gtk2-devel
@@ -70,20 +70,25 @@ allowing it to be completely asynchronous while remaining single threaded.
 
 Libraries, includes, etc. to compile with the gtk-vnc library
 
-%package python
+%if %{with_python}
+%package -n python2-gtk-vnc
+%{?python_provide:%python_provide python2-gtk-vnc}
+# Remove before F30
+Provides: %{name}-python = %{version}-%{release}
+Provides: %{name}-python%{?_isa} = %{version}-%{release}
+Obsoletes: %{name}-python < %{version}-%{release}
 Summary: Python bindings for the gtk-vnc library
-Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 
-%description python
+%description -n python2-gtk-vnc
 gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
 allowing it to be completely asynchronous while remaining single threaded.
 
 A module allowing use of the GTK-VNC widget from python
+%endif
 
 %package -n gvnc
 Summary: A GObject for VNC connections
-Group: Development/Libraries
 
 %description -n gvnc
 gvnc is a GObject for managing a VNC connection. It provides all the
@@ -92,7 +97,6 @@ with the raw protocol itself.
 
 %package -n gvnc-devel
 Summary: Libraries, includes, etc. to compile with the gvnc library
-Group: Development/Libraries
 Requires: gvnc = %{version}-%{release}
 Requires: pkgconfig
 
@@ -105,7 +109,6 @@ Libraries, includes, etc. to compile with the gvnc library
 
 %package -n gvncpulse
 Summary: A Pulse Audio bridge for VNC connections
-Group: Development/Libraries
 Requires: gvnc = %{version}-%{release}
 
 %description -n gvncpulse
@@ -115,7 +118,6 @@ system
 
 %package -n gvncpulse-devel
 Summary: Libraries, includes, etc. to compile with the gvncpulse library
-Group: Development/Libraries
 Requires: gvncpulse = %{version}-%{release}
 Requires: pkgconfig
 
@@ -128,7 +130,6 @@ Libraries, includes, etc. to compile with the gvnc library
 
 %package -n gvnc-tools
 Summary: Command line VNC tools
-Group: Applications/Internet
 Requires: gvnc = %{version}-%{release}
 
 %description -n gvnc-tools
@@ -139,7 +140,6 @@ screenshots of a VNC desktop
 %if %{with_gtk3}
 %package -n gtk-vnc2
 Summary: A GTK3 widget for VNC clients
-Group: Applications/Internet
 Requires: gvnc = %{version}-%{release}
 
 %description -n gtk-vnc2
@@ -148,7 +148,6 @@ allowing it to be completely asynchronous while remaining single threaded.
 
 %package -n gtk-vnc2-devel
 Summary: Development files to build GTK3 applications with gtk-vnc
-Group: Development/Libraries
 Requires: gtk-vnc2 = %{version}-%{release}
 Requires: pkgconfig
 Requires: gtk3-devel
@@ -173,8 +172,14 @@ cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
 %define gir_arg --enable-introspection=no
 %endif
 
+%if %{with_python}
+%define py_arg --with-python
+%else
+%define py_arg --without-python
+%endif
+
 cd gtk-vnc-%{version}
-%configure --with-gtk=2.0 %{gir_arg} \
+%configure --with-gtk=2.0 %{gir_arg} %{py_arg} \
 	   --with-tls-priority=%{tls_priority}
 %__make %{?_smp_mflags} V=1
 chmod -x examples/*.pl examples/*.js examples/*.py
@@ -182,7 +187,8 @@ cd ..
 
 %if %{with_gtk3}
 cd gtk-vnc2-%{version}
-%configure --with-gtk=3.0 %{gir_arg} \
+
+%configure --with-gtk=3.0 %{gir_arg} %{py_arg} \
 	   --with-tls-priority=%{tls_priority}
 %__make %{?_smp_mflags} V=1
 chmod -x examples/*.pl examples/*.js examples/*.py
@@ -207,9 +213,6 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.a
 rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 
 %find_lang %{name}
-
-%clean
-rm -fr %{buildroot}
 
 %post -p /sbin/ldconfig
 
@@ -247,10 +250,12 @@ rm -fr %{buildroot}
 %{_datadir}/gir-1.0/GtkVnc-1.0.gir
 %endif
 
-%files python
+%if %{with_python}
+%files -n python2-gtk-vnc
 %defattr(-, root, root)
 %doc gtk-vnc-%{version}/examples/gvncviewer-bindings.py
 %{_libdir}/python*/site-packages/gtkvnc.so
+%endif
 
 %files -n gvnc -f %{name}.lang
 %defattr(-, root, root)

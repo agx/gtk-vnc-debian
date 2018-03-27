@@ -968,6 +968,14 @@ static gboolean check_for_grab_key(GtkWidget *widget, int type, int keyval)
 }
 
 
+/* Compatability code to allow build on Gtk2 and Gtk3 */
+#ifndef GDK_Tab
+#define GDK_Tab GDK_KEY_Tab
+#endif
+#ifndef GDK_ISO_Left_Tab
+#define GDK_ISO_Left_Tab GDK_KEY_ISO_Left_Tab
+#endif
+
 static gboolean key_event(GtkWidget *widget, GdkEventKey *key)
 {
     VncDisplayPrivate *priv = VNC_DISPLAY(widget)->priv;
@@ -997,7 +1005,13 @@ static gboolean key_event(GtkWidget *widget, GdkEventKey *key)
     }
 #endif
 
-    keyval = vnc_display_keyval_from_keycode(key->hardware_keycode, keyval);
+    /* VNC servers don't want to get an ISO_Left_Tab.
+     * They need the Tab key and will apply the
+     * Shift modifier themselves
+     */
+    if (keyval == GDK_ISO_Left_Tab) {
+        keyval = GDK_Tab;
+    }
 
     /*
      * Some VNC suckiness with key state & modifiers in particular
@@ -1684,6 +1698,7 @@ static void on_initialized(VncConnection *conn G_GNUC_UNUSED,
     gint32 encodings[] = {  VNC_CONNECTION_ENCODING_TIGHT_JPEG5,
                             VNC_CONNECTION_ENCODING_TIGHT,
                             VNC_CONNECTION_ENCODING_EXT_KEY_EVENT,
+                            VNC_CONNECTION_ENCODING_LED_STATE,
                             VNC_CONNECTION_ENCODING_DESKTOP_RESIZE,
                             VNC_CONNECTION_ENCODING_WMVi,
                             VNC_CONNECTION_ENCODING_AUDIO,
@@ -2135,8 +2150,6 @@ static void vnc_display_finalize (GObject *obj)
     g_slist_free (priv->preferable_auths);
     g_slist_free (priv->preferable_vencrypt_subauths);
 
-    vnc_display_keyval_free_entries();
-
     G_OBJECT_CLASS (vnc_display_parent_class)->finalize (obj);
 }
 
@@ -2505,8 +2518,6 @@ static void vnc_display_init(VncDisplay *display)
     VncDisplayPrivate *priv;
 
     gtk_widget_set_can_focus (widget, TRUE);
-
-    vnc_display_keyval_set_entries();
 
     gtk_widget_add_events(widget,
                           GDK_POINTER_MOTION_MASK |

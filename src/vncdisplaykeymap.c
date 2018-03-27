@@ -1,11 +1,22 @@
 /*
- * Copyright (C) 2008  Anthony Liguori <anthony@codemonkey.ws>
+ * GTK VNC Widget
+ *
  * Copyright (C) 2009-2010 Daniel P. Berrange <dan@berrange.com>
+ * Copyright (C) 2017 Red Hat, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License version 2 as
- * published by the Free Software Foundation.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.0 of the License, or (at your option) any later version.
  *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include <config.h>
@@ -17,46 +28,6 @@
 #include "vncdisplaykeymap.h"
 #include "vncutil.h"
 
-/*
- * This table is taken from QEMU x_keymap.c, under the terms:
- *
- * Copyright (c) 2003 Fabrice Bellard
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-
-/* Compatability code to allow build on Gtk2 and Gtk3 */
-#ifndef GDK_Tab
-#define GDK_Tab GDK_KEY_Tab
-#endif
-
-/* keycode translation for sending ISO_Left_Send
- * to vncserver
- */
-static struct {
-    GdkKeymapKey *keys;
-    gint n_keys;
-    guint keyval;
-} untranslated_keys[] = {{NULL, 0, GDK_Tab}};
-
-static unsigned int ref_count_for_untranslated_keys = 0;
 
 #ifdef GDK_WINDOWING_WAYLAND
 #include <gdk/gdkwayland.h>
@@ -202,11 +173,13 @@ const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
             VNC_DEBUG("Using xquartz keycode mapping");
             *maplen = G_N_ELEMENTS(keymap_xorgxquartz2rfb);
             return keymap_xorgxquartz2rfb;
-        } else if (keycodes && STRPREFIX(keycodes, "evdev")) {
+        } else if ((keycodes && STRPREFIX(keycodes, "evdev")) ||
+                   (XKeysymToKeycode(xdisplay, XK_Page_Up) == 0x70)) {
             VNC_DEBUG("Using evdev keycode mapping");
             *maplen = G_N_ELEMENTS(keymap_xorgevdev2rfb);
             return keymap_xorgevdev2rfb;
-        } else if (keycodes && STRPREFIX(keycodes, "xfree86")) {
+        } else if ((keycodes && STRPREFIX(keycodes, "xfree86")) ||
+                   (XKeysymToKeycode(xdisplay, XK_Page_Up) == 0x63)) {
             VNC_DEBUG("Using xfree86 keycode mapping");
             *maplen = G_N_ELEMENTS(keymap_xorgkbd2rfb);
             return keymap_xorgkbd2rfb;
@@ -281,46 +254,6 @@ guint16 vnc_display_keymap_gdk2rfb(const guint16 *keycode_map,
     return keycode_map[keycode];
 }
 
-/* Set the keymap entries */
-void vnc_display_keyval_set_entries(void)
-{
-    size_t i;
-    if (ref_count_for_untranslated_keys == 0)
-        for (i = 0; i < G_N_ELEMENTS(untranslated_keys); i++)
-            gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
-                                              untranslated_keys[i].keyval,
-                                              &untranslated_keys[i].keys,
-                                              &untranslated_keys[i].n_keys);
-    ref_count_for_untranslated_keys++;
-}
-
-/* Free the keymap entries */
-void vnc_display_keyval_free_entries(void)
-{
-    size_t i;
-
-    if (ref_count_for_untranslated_keys == 0)
-        return;
-
-    ref_count_for_untranslated_keys--;
-    if (ref_count_for_untranslated_keys == 0)
-        for (i = 0; i < G_N_ELEMENTS(untranslated_keys); i++)
-            g_free(untranslated_keys[i].keys);
-
-}
-
-/* Get the keyval from the keycode without the level. */
-guint vnc_display_keyval_from_keycode(guint keycode, guint keyval)
-{
-    size_t i;
-    for (i = 0; i < G_N_ELEMENTS(untranslated_keys); i++) {
-        if (keycode == untranslated_keys[i].keys[0].keycode) {
-            return untranslated_keys[i].keyval;
-        }
-    }
-
-    return keyval;
-}
 /*
  * Local variables:
  *  c-indent-level: 4

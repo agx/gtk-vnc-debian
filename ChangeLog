@@ -1,3 +1,112 @@
+2018-03-23  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Update NEWS for 0.7.2 release
+
+	rpm: disable python binding build on Fedora and future RHEL
+	The python binding only works for GTK2 and Python2, both of which are
+	slowly going away. It is still possible to access the library from
+	any Python using GObject introspection dynamic binding.
+
+	Explicitly deprecate python binding prior to deletion
+	The python binding only works with Python 2 and GTK 2, neither of which
+	should be used long term. Applications should switch to GObject
+	Introspection which works with Python 3 and GTK 3.
+
+	rpm: Cleanup TLS priority setting for newer distros
+
+	rpm: Rename sub-package from gtk-vnc-python to python2-gtk-vnc
+
+	rpm: Fix BR on python-devel to use python2-devel
+	This has been available from RHEL >= 6
+
+	rpm: remove obsolete %clean section
+	RPM handles this automatically since RHEL >= 6
+
+	rpm: remove obsolete Group tags
+	This is not required since RHEL >= 6 or equivalently new Fedora.
+
+	rpm: Remove obsolete BuildRoot tag
+
+	Update links to wiki site
+
+2018-03-21  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Add description to the doap file
+
+	Set programming language for doap file
+
+	Switch doap category to 'core' as 'desktop' is not permitted any longer
+
+	Remove Jonh from maintainers list, since he is no longer active.
+
+2018-03-13  gogo  <trebelnik2@gmail.com>
+
+	Add Croatian translation
+
+2018-03-13  Nathan Follens  <nathan@anche.no>
+
+	Add Dutch translation
+
+2018-03-13  Olivier Fourdan  <ofourdan@redhat.com>
+
+	Use scancode instead of keycode names
+	When running on Xwayland, the keycode mapping property is not available,
+	which causes unknown keycode mapping errors and the keyboard doesn't
+	work.
+
+	Check for a known scancode (“XK_Page_Up”) which differs to distinguish
+	between “xfree86” and “evdev” when the there is no keycode name.
+
+2018-01-31  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Explicitly track whether x509 creds have been set
+	If we want to use the system trust DB, we can't rely on cred_x509_cacert
+	field being non-NULL. We must explicitly record whether the client app
+	has set the x509 credentials. We allow cacert to be missing if we are
+	built against a new enough GNUTLS.
+
+	Add debug logs wrt credential gathering
+
+	Don't short-circuit request for TLS credentials
+	Although newer GNUTLS has a default system trust fallback for CA
+	certificates, we must still request certificates from the client app. If
+	we do not, then the VNC client will never be given the opportunity to
+	provide custom certs to override the system trust database.
+
+	Add debug message when getting a desktop resize request
+
+2017-08-08  Daniel P. Berrange  <berrange@redhat.com>
+
+	Fix license of the keymap conversion code
+	The vncdisplaykeymap.c file was mistakenly declared as
+	LGPL v2-only when first created. Since then it has been
+	almost completely rewritten. After the previous commit
+	removing the special Tab key handling, the remaining
+	logic was all written by my own or Red Hat copyright.
+	So changing the license to LGPLv2-or-later under that
+	basis.
+
+	Remove uneccessarily generic handling of shifted tab key
+
+	Remove obsolete copyright notice
+	The copyright notice referred to a table mapping scan codes that
+	was taken from QEMU source. This table was, however, deleted in
+
+	  commit e0910397d6ba1eca3d968c98a2105c1a7ead7fd7
+	  Author: Daniel P. Berrange <berrange@redhat.com>
+	  Date:   Fri Jul 9 19:30:54 2010 +0100
+
+	    Rewrite keymap code to work on more platforms
+
+	so the code that the copyright statement referenced no longer
+	exists.
+
+2017-07-13  Peter Korsgaard  <peter@korsgaard.com>
+
+	vncdisplay: on_initialized: send the led state notification encoding
+	So servers supporting this encoding will actually notify us and the
+	vnc-led-state signal will fire.
+
 2017-05-19  Daniel P. Berrange  <berrange@redhat.com>
 
 	Bump to 0.7.1 for new release
