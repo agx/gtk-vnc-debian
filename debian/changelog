@@ -1,10 +1,13 @@
-gtk-vnc (0.7.2-1~1.gbp1b21be) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @1b21bee0588cc8e64507411b1db421b187620f60 **
+gtk-vnc (0.7.2-1) unstable; urgency=medium
 
   * New upstream version 0.7.2
+  * [268c8ce] gbp.conf: use id-length to correlate git commits to changelog
+    entries
+  * [222b710] Bump standards version
+  * [4a63e15] Drop debug packages
+  * [f4213bf] d/watch: Use https
 
- -- Guido Günther <agx@sigxcpu.org>  Tue, 27 Mar 2018 19:31:42 +0200
+ -- Guido Günther <agx@sigxcpu.org>  Tue, 27 Mar 2018 20:19:31 +0200
 
 gtk-vnc (0.7.1-1) unstable; urgency=medium
 
