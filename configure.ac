@@ -2,7 +2,7 @@
 
 AC_PREREQ(2.63)
 
-AC_INIT([gtk-vnc],[0.7.1],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[http://live.gnome.org/gtk-vnc/])
+AC_INIT([gtk-vnc],[0.7.2],[https://bugzilla.gnome.org/enter_bug.cgi?product=gtk-vnc],[gtk-vnc],[https://wiki.gnome.org/Projects/gtk-vnc])
 AC_CONFIG_SRCDIR([src/vncconnection.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -468,3 +468,11 @@ Configure summary:
 	GTK+ version................:  ${GTK_API_VERSION}
 	TLS priority................:  ${with_tls_priority}
 "
+
+if test ${WITH_PYTHON} = "yes" ; then
+  echo "WARNING:"
+  echo "WARNING: The python2 binding will be deleted in the next release."
+  echo "WARNING: Please use the GObject Introspection dynamic bindings."
+  echo "WARNING:"
+  echo
+fi

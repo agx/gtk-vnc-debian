@@ -6,9 +6,8 @@ Release: 1%{?dist}%{?extra_release}
 Summary: MinGW Windows port of VNC client GTK widget
 
 License: LGPLv2+
-Group: Development/Libraries
 Source: http://ftp.gnome.org/pub/GNOME/sources/gtk-vnc/0.5/gtk-vnc-%{version}.tar.xz
-URL: http://live.gnome.org/gtk-vnc
+URL: https://wiki.gnome.org/Projects/gtk-vnc
 
 BuildArch: noarch
 
@@ -49,11 +48,9 @@ Summary: MinGW Windows port of VNC GObject
 
 %package -n mingw32-gvnc-tools
 Summary: Command line VNC tools
-Group: Applications/Internet
 
 %package -n mingw32-gtk-vnc2
 Summary: A GTK3 widget for VNC clients
-Group: Development/Libraries
 Requires: pkgconfig
 
 %description
@@ -88,11 +85,9 @@ Summary: MinGW Windows port of VNC GObject
 
 %package -n mingw64-gvnc-tools
 Summary: Command line VNC tools
-Group: Applications/Internet
 
 %package -n mingw64-gtk-vnc2
 Summary: A GTK3 widget for VNC clients
-Group: Development/Libraries
 Requires: pkgconfig
 
 %description

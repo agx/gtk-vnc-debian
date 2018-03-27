@@ -1,6 +1,19 @@
     GTK VNC News
     ============
 
+Mar 23, 2018: Release 0.7.2
+===========================
+
+ o Deprecated the manual python2 binding in favour of GObject
+   introspection. It will be deleted in the next release.
+ o Emit led state notification on connect
+ o Fix incorrect copyright notices
+ o Simplify shifted-tab key handling
+ o Don't short circuit TLS credential request
+ o Improve check for keymap under XWayland
+ o Update doap description of project
+ o Modernize RPM specfile
+
 May 19, 2017: Release 0.7.1
 ===========================
 

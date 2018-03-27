@@ -217,6 +217,7 @@ struct _VncConnectionPrivate
     char *cred_x509_cacrl;
     char *cred_x509_cert;
     char *cred_x509_key;
+    gboolean set_cred_x509;
     gboolean want_cred_username;
     gboolean want_cred_password;
     gboolean want_cred_x509;
@@ -2964,6 +2965,8 @@ static void vnc_connection_resize(VncConnection *conn, int width, int height)
     VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
 
+    VNC_DEBUG("Desktop resize w=%d h=%d", width, height);
+
     if (priv->coroutine_stop)
         return;
 
@@ -3528,22 +3531,16 @@ static gboolean vnc_connection_has_credentials(gpointer data)
         return FALSE;
     if (priv->want_cred_password && !priv->cred_password)
         return FALSE;
-    /*
-     * For x509 we require a minimum of the CA cert
-     * if using GNUTLS < 3.0. With newer GNUTLS we'll
-     * fallback to the system trust, so don't need to
-     * explicitly check for a CA cert.
-     */
-#if GNUTLS_VERSION_NUMBER < 0x030000
-    if (priv->want_cred_x509 && !priv->cred_x509_cacert)
+    if (priv->want_cred_x509 && !priv->set_cred_x509)
         return FALSE;
-#endif
     return TRUE;
 }
 
 static gboolean vnc_connection_gather_credentials(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
+
+    VNC_DEBUG("Checking if credentials are needed");
 
     if (priv->coroutine_stop)
         return FALSE;
@@ -3562,16 +3559,19 @@ static gboolean vnc_connection_gather_credentials(VncConnection *conn)
             g_value_init(&username, VNC_TYPE_CONNECTION_CREDENTIAL);
             g_value_set_enum(&username, VNC_CONNECTION_CREDENTIAL_USERNAME);
             authCred = g_value_array_append(authCred, &username);
+            VNC_DEBUG("Want a username");
         }
         if (priv->want_cred_password) {
             g_value_init(&password, VNC_TYPE_CONNECTION_CREDENTIAL);
             g_value_set_enum(&password, VNC_CONNECTION_CREDENTIAL_PASSWORD);
             authCred = g_value_array_append(authCred, &password);
+            VNC_DEBUG("Want a password");
         }
         if (priv->want_cred_x509) {
             g_value_init(&clientname, VNC_TYPE_CONNECTION_CREDENTIAL);
             g_value_set_enum(&clientname, VNC_CONNECTION_CREDENTIAL_CLIENTNAME);
             authCred = g_value_array_append(authCred, &clientname);
+            VNC_DEBUG("Want a TLS clientname");
         }
 
         sigdata.params.authCred = authCred;
@@ -3585,6 +3585,8 @@ static gboolean vnc_connection_gather_credentials(VncConnection *conn)
         VNC_DEBUG("Waiting for missing credentials");
         g_condition_wait(vnc_connection_has_credentials, conn);
         VNC_DEBUG("Got all credentials");
+    } else {
+        VNC_DEBUG("No credentials required");
     }
     return !vnc_connection_has_error(conn);
 }
@@ -5123,6 +5125,7 @@ static void vnc_connection_close(VncConnection *conn)
         priv->cred_password = NULL;
     }
 
+    priv->set_cred_x509 = FALSE;
     if (priv->cred_x509_cacert) {
         g_free(priv->cred_x509_cacert);
         priv->cred_x509_cacert = NULL;
@@ -5839,6 +5842,7 @@ static gboolean vnc_connection_set_credential_x509(VncConnection *conn,
 {
     VncConnectionPrivate *priv = conn->priv;
     char *sysdir = g_strdup_printf("%s/pki", SYSCONFDIR);
+    int ret;
 #ifndef WIN32
     struct passwd *pw;
 
@@ -5853,9 +5857,19 @@ static gboolean vnc_connection_set_credential_x509(VncConnection *conn,
     for (int i = 0 ; i < sizeof(dirs)/sizeof(dirs[0]) ; i++)
         VNC_DEBUG("Searching for certs in %s", dirs[i]);
 
-    if (vnc_connection_best_path(&priv->cred_x509_cacert, "CA", "cacert.pem",
-                                 dirs, sizeof(dirs)/sizeof(dirs[0])) < 0)
+    ret = vnc_connection_best_path(&priv->cred_x509_cacert, "CA", "cacert.pem",
+                                   dirs, sizeof(dirs)/sizeof(dirs[0]));
+    /* With modern GNUTLS we can just allow the global GNUTLS trust database
+     * to be used to validate CA certificates if no specific cert is set
+     */
+    if (ret < 0) {
+#if GNUTLS_VERSION_NUMBER < 0x030000
+        VNC_DEBUG("No CA certificate provided and no global fallback");
         return FALSE;
+#else
+        VNC_DEBUG("No CA certificate provided, using GNUTLS global trust");
+#endif
+    }
 
     /* Don't mind failures of CRL */
     vnc_connection_best_path(&priv->cred_x509_cacrl, "CA", "cacrl.pem",
@@ -5867,6 +5881,8 @@ static gboolean vnc_connection_set_credential_x509(VncConnection *conn,
                              dirs, sizeof(dirs)/sizeof(dirs[0]));
     vnc_connection_best_path(&priv->cred_x509_cert, name, "clientcert.pem",
                              dirs, sizeof(dirs)/sizeof(dirs[0]));
+
+    priv->set_cred_x509 = TRUE;
 
     return TRUE;
 }
