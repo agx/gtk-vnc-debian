@@ -80,7 +80,6 @@ nodist_libgvnc_1_0_la_HEADERS = \
 
 libgvnc_1_0_la_SOURCES = \
 			coroutine.h \
-			d3des.h d3des.c \
 			dh.h dh.c \
 			vncpixelformat.h vncpixelformat.c \
 			vncaudioformat.h vncaudioformat.c \
@@ -207,13 +206,13 @@ KEYMAP_CSV = keycodemapdb/data/keymaps.csv
 EXTRA_DIST += $(KEYMAP_CSV) $(KEYMAP_GEN)
 
 KEYMAPS = \
-	vncdisplaykeymap_xorgevdev2rfb.c \
-	vncdisplaykeymap_xorgkbd2rfb.c \
-	vncdisplaykeymap_xorgxquartz2rfb.c \
-	vncdisplaykeymap_xorgxwin2rfb.c \
-	vncdisplaykeymap_osx2rfb.c \
-	vncdisplaykeymap_win322rfb.c \
-	vncdisplaykeymap_x112rfb.c
+	vncdisplaykeymap_xorgevdev2qnum.c \
+	vncdisplaykeymap_xorgkbd2qnum.c \
+	vncdisplaykeymap_xorgxquartz2qnum.c \
+	vncdisplaykeymap_xorgxwin2qnum.c \
+	vncdisplaykeymap_osx2qnum.c \
+	vncdisplaykeymap_win322qnum.c \
+	vncdisplaykeymap_x112qnum.c
 
 $(KEYMAPS): $(srcdir)/$(KEYMAP_GEN) $(srcdir)/$(KEYMAP_CSV)
 BUILT_SOURCES += $(KEYMAPS)
@@ -221,26 +220,26 @@ CLEANFILES = $(KEYMAPS)
 
 vncdisplaykeymap.c: $(KEYMAPS)
 
-vncdisplaykeymap_xorgevdev2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgevdev2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgevdev rfb > $@ || rm $@
+vncdisplaykeymap_xorgevdev2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgevdev2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgevdev qnum > $@ || rm $@
 
-vncdisplaykeymap_xorgkbd2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgkbd2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgkbd rfb > $@ || rm $@
+vncdisplaykeymap_xorgkbd2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgkbd2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgkbd qnum > $@ || rm $@
 
-vncdisplaykeymap_xorgxquartz2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxquartz2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgxquartz rfb > $@ || rm $@
+vncdisplaykeymap_xorgxquartz2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxquartz2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgxquartz qnum > $@ || rm $@
 
-vncdisplaykeymap_xorgxwin2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxwin2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgxwin rfb > $@ || rm $@
+vncdisplaykeymap_xorgxwin2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxwin2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgxwin qnum > $@ || rm $@
 
-vncdisplaykeymap_osx2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_osx2rfb code-map $(srcdir)/$(KEYMAP_CSV) osx rfb > $@ || rm $@
+vncdisplaykeymap_osx2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_osx2qnum code-map $(srcdir)/$(KEYMAP_CSV) osx qnum > $@ || rm $@
 
-vncdisplaykeymap_win322rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_win322rfb code-map $(srcdir)/$(KEYMAP_CSV) win32 rfb > $@ || rm $@
+vncdisplaykeymap_win322qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_win322qnum code-map $(srcdir)/$(KEYMAP_CSV) win32 qnum > $@ || rm $@
 
-vncdisplaykeymap_x112rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_x112rfb code-map $(srcdir)/$(KEYMAP_CSV) x11 rfb > $@ || rm $@
+vncdisplaykeymap_x112qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_x112qnum code-map $(srcdir)/$(KEYMAP_CSV) x11 qnum > $@ || rm $@
 
 vncdisplayenums.c: vncdisplay.h
 	$(AM_V_GEN)glib-mkenums    --fhead "#include <glib-object.h>\n" \
@@ -318,35 +317,6 @@ vncconnectiontest_SOURCES = vncconnectiontest.c
 vncconnectiontest_CFLAGS = $(GOBJECT_CFLAGS) $(GIO_CFLAGS)
 vncconnectiontest_LDADD = libgvnc-1.0.la $(GOBJECT_LIBS) $(GIO_LIBS)
 
-if WITH_PYTHON
-pyexec_LTLIBRARIES = gtkvnc.la
-
-gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la $(PYGTK_LIBS)
-gtkvnc_la_CFLAGS = $(GTK_CFLAGS) $(PYTHON_INCLUDES) \
-		   $(PYGTK_CFLAGS) $(WARN_PYTHON_CFLAGS)
-gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
-gtkvnc_la_SOURCES = vncmodule.c
-nodist_gtkvnc_la_SOURCES = vncmodule.defs.c
-BUILT_SOURCES += vncmodule.defs.c
-
-CODEGENDIR = $(shell pkg-config --variable=codegendir pygobject-2.0)
-DEFSDIR = $(shell pkg-config --variable=defsdir pygtk-2.0)
-
-vnc.defs: vncdisplay.h vncdisplayenums.h
-	$(AM_V_GEN)$(PYTHON) $(CODEGENDIR)/h2def.py $< > $@
-
-vncmodule.defs.c: vnc.override vnc.defs
-	$(AM_V_GEN)pygtk-codegen-2.0 --prefix gtkvnc \
-			  --register $(DEFSDIR)/gdk-types.defs \
-			  --register $(DEFSDIR)/gtk-types.defs \
-			  --override $(srcdir)/vnc.override vnc.defs > $@
-
-CLEANFILES += vnc.defs vncmodule.defs.c
-EXTRA_DIST += vnc.override
-
-else
-EXTRA_DIST += vnc.override vncmodule.c
-endif
 
 -include $(INTROSPECTION_MAKEFILE)
 INTROSPECTION_GIRS =

@@ -2571,6 +2571,7 @@ static void vnc_display_init(VncDisplay *display)
      * Then stackable auth types in order of preference
      */
     priv->preferable_auths = g_slist_append (priv->preferable_auths, GUINT_TO_POINTER (VNC_CONNECTION_AUTH_SASL));
+    priv->preferable_auths = g_slist_append (priv->preferable_auths, GUINT_TO_POINTER (VNC_CONNECTION_AUTH_MSLOGONII));
     priv->preferable_auths = g_slist_append (priv->preferable_auths, GUINT_TO_POINTER (VNC_CONNECTION_AUTH_MSLOGON));
     priv->preferable_auths = g_slist_append (priv->preferable_auths, GUINT_TO_POINTER (VNC_CONNECTION_AUTH_ARD));
     priv->preferable_auths = g_slist_append (priv->preferable_auths, GUINT_TO_POINTER (VNC_CONNECTION_AUTH_VNC));

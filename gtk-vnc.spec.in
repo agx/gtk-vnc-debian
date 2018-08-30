@@ -8,6 +8,11 @@
 %global with_gir 1
 %endif
 
+%global with_gtk2 1
+%if 0%{?rhel} >= 8
+%global with_gtk2 0
+%endif
+
 %global with_gtk3 0
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %global with_gtk3 1
@@ -16,11 +21,6 @@
 %global with_vala 0
 %if 0%{with_gtk3}
 %global with_vala 1
-%endif
-
-%global with_python 1
-%if 0%{?fedora} || 0%{?rhel} >= 8
-%global with_python 0
 %endif
 
 %if 0%{?fedora} || 0%{?rhel} >= 8
@@ -37,9 +37,17 @@ License: LGPLv2+
 Source: http://ftp.gnome.org/pub/GNOME/sources/%{name}/0.5/%{name}-%{version}.tar.xz
 URL: https://wiki.gnome.org/Projects/gtk-vnc
 Requires: gvnc = %{version}-%{release}
+%if %{with_gtk2}
 BuildRequires: gtk2-devel >= 2.14
-%if %{with_python}
-BuildRequires: pygtk2-devel python2-devel
+%endif
+%if 0%{?fedora}
+BuildRequires: python3
+%else
+%if 0%{?rhel} > 7
+BuildRequires: python3-devel
+%else
+BuildRequires: python
+%endif
 %endif
 BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel zlib-devel intltool
 %if %{with_gir}
@@ -58,6 +66,7 @@ BuildRequires: /usr/bin/pod2man
 gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
 allowing it to be completely asynchronous while remaining single threaded.
 
+%if %{with_gtk2}
 %package devel
 Summary: Development files to build GTK2 applications with gtk-vnc
 Requires: %{name} = %{version}-%{release}
@@ -69,22 +78,6 @@ gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
 allowing it to be completely asynchronous while remaining single threaded.
 
 Libraries, includes, etc. to compile with the gtk-vnc library
-
-%if %{with_python}
-%package -n python2-gtk-vnc
-%{?python_provide:%python_provide python2-gtk-vnc}
-# Remove before F30
-Provides: %{name}-python = %{version}-%{release}
-Provides: %{name}-python%{?_isa} = %{version}-%{release}
-Obsoletes: %{name}-python < %{version}-%{release}
-Summary: Python bindings for the gtk-vnc library
-Requires: %{name} = %{version}-%{release}
-
-%description -n python2-gtk-vnc
-gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
-allowing it to be completely asynchronous while remaining single threaded.
-
-A module allowing use of the GTK-VNC widget from python
 %endif
 
 %package -n gvnc
@@ -172,23 +165,19 @@ cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
 %define gir_arg --enable-introspection=no
 %endif
 
-%if %{with_python}
-%define py_arg --with-python
-%else
-%define py_arg --without-python
-%endif
-
+%if %{with_gtk2}
 cd gtk-vnc-%{version}
-%configure --with-gtk=2.0 %{gir_arg} %{py_arg} \
+%configure --with-gtk=2.0 %{gir_arg} \
 	   --with-tls-priority=%{tls_priority}
 %__make %{?_smp_mflags} V=1
 chmod -x examples/*.pl examples/*.js examples/*.py
 cd ..
+%endif
 
 %if %{with_gtk3}
 cd gtk-vnc2-%{version}
 
-%configure --with-gtk=3.0 %{gir_arg} %{py_arg} \
+%configure --with-gtk=3.0 %{gir_arg} \
 	   --with-tls-priority=%{tls_priority}
 %__make %{?_smp_mflags} V=1
 chmod -x examples/*.pl examples/*.js examples/*.py
@@ -197,9 +186,11 @@ cd ..
 
 %install
 rm -fr %{buildroot}
+%if %{with_gtk2}
 cd gtk-vnc-%{version}
 %__make install DESTDIR=%{buildroot}
 cd ..
+%endif
 
 %if %{with_gtk3}
 cd gtk-vnc2-%{version}
@@ -209,8 +200,6 @@ cd ..
 
 rm -f %{buildroot}%{_libdir}/*.a
 rm -f %{buildroot}%{_libdir}/*.la
-rm -f %{buildroot}%{_libdir}/python*/site-packages/*.a
-rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 
 %find_lang %{name}
 
@@ -232,15 +221,14 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %postun -n gtk-vnc2 -p /sbin/ldconfig
 %endif
 
+%if %{with_gtk2}
 %files
-%defattr(-, root, root)
 %{_libdir}/libgtk-vnc-1.0.so.*
 %if %{with_gir}
 %{_libdir}/girepository-1.0/GtkVnc-1.0.typelib
 %endif
 
 %files devel
-%defattr(-, root, root)
 %doc gtk-vnc-%{version}/examples/gvncviewer.c
 %{_libdir}/libgtk-vnc-1.0.so
 %dir %{_includedir}/%{name}-1.0/
@@ -249,16 +237,9 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %if %{with_gir}
 %{_datadir}/gir-1.0/GtkVnc-1.0.gir
 %endif
-
-%if %{with_python}
-%files -n python2-gtk-vnc
-%defattr(-, root, root)
-%doc gtk-vnc-%{version}/examples/gvncviewer-bindings.py
-%{_libdir}/python*/site-packages/gtkvnc.so
 %endif
 
 %files -n gvnc -f %{name}.lang
-%defattr(-, root, root)
 %{_libdir}/libgvnc-1.0.so.*
 %if %{with_gir}
 %{_libdir}/girepository-1.0/GVnc-1.0.typelib
@@ -269,7 +250,6 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %endif
 
 %files -n gvnc-devel
-%defattr(-, root, root)
 %{_libdir}/libgvnc-1.0.so
 %dir %{_includedir}/gvnc-1.0/
 %{_includedir}/gvnc-1.0/*.h
@@ -279,7 +259,6 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %endif
 
 %files -n gvncpulse -f %{name}.lang
-%defattr(-, root, root)
 %{_libdir}/libgvncpulse-1.0.so.*
 %if %{with_gir}
 %{_libdir}/girepository-1.0/GVncPulse-1.0.typelib
@@ -290,7 +269,6 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %endif
 
 %files -n gvncpulse-devel
-%defattr(-, root, root)
 %{_libdir}/libgvncpulse-1.0.so
 %dir %{_includedir}/gvncpulse-1.0/
 %{_includedir}/gvncpulse-1.0/*.h
@@ -300,7 +278,6 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %endif
 
 %files -n gvnc-tools
-%defattr(-, root, root)
 %doc gtk-vnc-%{version}/AUTHORS
 %doc gtk-vnc-%{version}/ChangeLog
 %doc gtk-vnc-%{version}/ChangeLog-old
@@ -312,7 +289,6 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 
 %if %{with_gtk3}
 %files -n gtk-vnc2
-%defattr(-, root, root)
 %{_libdir}/libgtk-vnc-2.0.so.*
 %if %{with_gir}
 %{_libdir}/girepository-1.0/GtkVnc-2.0.typelib
@@ -323,12 +299,11 @@ rm -f %{buildroot}%{_libdir}/python*/site-packages/*.la
 %endif
 
 %files -n gtk-vnc2-devel
-%defattr(-, root, root)
 %doc gtk-vnc2-%{version}/examples/gvncviewer.c
 %if %{with_gir}
 %doc gtk-vnc2-%{version}/examples/gvncviewer.js
 %doc gtk-vnc2-%{version}/examples/gvncviewer.pl
-%doc gtk-vnc2-%{version}/examples/gvncviewer-introspection.py
+%doc gtk-vnc2-%{version}/examples/gvncviewer.py
 %endif
 %{_libdir}/libgtk-vnc-2.0.so
 %dir %{_includedir}/%{name}-2.0/

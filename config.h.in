@@ -36,9 +36,6 @@
 /* Whether GIO UNIX is available */
 #undef HAVE_GIOUNIX
 
-/* whether gnutls uses gcrypt */
-#undef HAVE_GNUTLS_GCRYPT
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 

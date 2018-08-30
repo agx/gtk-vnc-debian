@@ -38,9 +38,9 @@
 #include <sys/stat.h>
 
 #include "coroutine.h"
-#include "d3des.h"
 
 #include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 #include <gnutls/x509.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
@@ -56,47 +56,7 @@
 
 #include "dh.h"
 
-#if GLIB_CHECK_VERSION(2, 31, 0)
-#define g_mutex_new() g_new0(GMutex, 1)
-#define g_mutex_free(m) g_free(m)
-#endif
-
-/*
- * When GNUTLS >= 2.12, we must not initialize gcrypt threading
- * because GNUTLS will do that itself, *provided* it is built
- * against gcrypt, and not nettle.
- * When GNUTLS < 2.12 we must always initialize gcrypt threading
- * When GNUTLS > 3.0 we must always initialize gcrypt threading
- *
- * But....
- *
- * When gcrypt >= 1.6.0 we must not initialize gcrypt threading
- * because gcrypt will do that itself.
- *
- * So we need to init grypt threading if
- *
- *   - gcrypt < 1.6.0
- *
- *   and either
- *
- *   - gnutls does not use gcrypt
- *
- *   or
- *
- *   - gnutls < 2.12
- */
-#ifndef GNUTLS_VERSION_NUMBER
-#ifndef LIBGNUTLS_VERSION_NUMBER
-#error "GNUTLS >= 2.2.0 required to build GTK-VNC"
-#else
-#define GNUTLS_VERSION_NUMBER LIBGNUTLS_VERSION_NUMBER
-#endif
-#endif
-
-#if ((!defined(HAVE_GNUTLS_GCRYPT) ||            \
-      (GNUTLS_VERSION_NUMBER < 0x020c00)) &&     \
-     (!defined(GCRYPT_VERSION_NUMBER) ||         \
-      (GCRYPT_VERSION_NUMBER < 0x010600)))
+#if GCRYPT_VERSION_NUMBER < 0x010600
 #define VNC_INIT_GCRYPT_THREADING
 #else
 #undef VNC_INIT_GCRYPT_THREADING
@@ -1263,7 +1223,7 @@ static void vnc_connection_debug_gnutls_log(int level, const char* str) {
 static int gvnc_tls_mutex_init (void **priv)
 {                                                                             \
     GMutex *lock = NULL;
-    lock = g_mutex_new();
+    lock = g_new0(GMutex, 1);
     *priv = lock;
     return 0;
 }
@@ -1271,7 +1231,7 @@ static int gvnc_tls_mutex_init (void **priv)
 static int gvnc_tls_mutex_destroy(void **priv)
 {
     GMutex *lock = *priv;
-    g_mutex_free(lock);
+    g_free(lock);
     return 0;
 }
 
@@ -1366,7 +1326,6 @@ static gnutls_certificate_credentials_t vnc_connection_tls_initialize_cert_cred(
             return NULL;
         }
     } else {
-#if GNUTLS_VERSION_NUMBER >= 0x030000
         VNC_DEBUG("No CA certificate provided; trying the system trust store instead");
 
         if ((ret = gnutls_certificate_set_x509_system_trust(x509_cred)) < 0) {
@@ -1375,10 +1334,6 @@ static gnutls_certificate_credentials_t vnc_connection_tls_initialize_cert_cred(
         }
 
         VNC_DEBUG("Using the system trust store and CRL");
-#else
-        VNC_DEBUG("No CA certificate provided and system trust not supported");
-        return NULL;
-#endif
     }
 
     if (priv->cred_x509_cert && priv->cred_x509_key) {
@@ -3631,12 +3586,27 @@ static gboolean vnc_connection_check_auth_result(VncConnection *conn)
     return FALSE;
 }
 
+static void
+vnc_munge_des_key(unsigned char *key, unsigned char *newkey)
+{
+    size_t i;
+    for (i = 0; i < 8; i++) {
+        unsigned char r = key[i];
+        r = (r & 0xf0) >> 4 | (r & 0x0f) << 4;
+        r = (r & 0xcc) >> 2 | (r & 0x33) << 2;
+        r = (r & 0xaa) >> 1 | (r & 0x55) << 1;
+        newkey[i] = r;
+    }
+}
+
 static gboolean vnc_connection_perform_auth_vnc(VncConnection *conn)
 {
     VncConnectionPrivate *priv = conn->priv;
     guint8 challenge[16];
     guint8 key[8];
     gsize keylen;
+    gcry_cipher_hd_t c;
+    gcry_error_t error;
 
     VNC_DEBUG("Do Challenge");
     priv->want_cred_password = TRUE;
@@ -3656,9 +3626,34 @@ static gboolean vnc_connection_perform_auth_vnc(VncConnection *conn)
         keylen = sizeof(key);
     memcpy(key, priv->cred_password, keylen);
 
-    deskey(key, EN0);
-    des(challenge, challenge);
-    des(challenge + 8, challenge + 8);
+    vnc_munge_des_key(key, key);
+
+    error = gcry_cipher_open(&c, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_ECB, 0);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_open error: %s\n", gcry_strerror(error));
+        return FALSE;
+    }
+
+    error = gcry_cipher_setkey(c, key, 8);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_setkey error: %s\n", gcry_strerror(error));
+        gcry_cipher_close(c);
+        return FALSE;
+    }
+
+    error = gcry_cipher_encrypt(c, challenge, 8, challenge, 8);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_encrypt error: %s\n", gcry_strerror(error));
+        gcry_cipher_close(c);
+        return FALSE;
+    }
+    error = gcry_cipher_encrypt(c, challenge + 8, 8, challenge + 8, 8);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_encrypt error: %s\n", gcry_strerror(error));
+        gcry_cipher_close(c);
+        return FALSE;
+    }
+    gcry_cipher_close(c);
 
     vnc_connection_write(conn, challenge, 16);
     vnc_connection_flush(conn);
@@ -3670,19 +3665,54 @@ static gboolean vnc_connection_perform_auth_vnc(VncConnection *conn)
  *   Encrypt bytes[length] in memory using key.
  *   Key has to be 8 bytes, length a multiple of 8 bytes.
  */
-static void
+static gboolean
 vncEncryptBytes2(unsigned char *where, const int length, unsigned char *key)
 {
+    gcry_cipher_hd_t c;
     int i, j;
-    deskey(key, EN0);
+    gboolean ret = FALSE;
+    gcry_error_t error;
+    unsigned char newkey[8];
+
+    vnc_munge_des_key(key, newkey);
+
+    error = gcry_cipher_open(&c, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_ECB, 0);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_open error: %s\n", gcry_strerror(error));
+        return FALSE;
+    }
+
+    error = gcry_cipher_setkey(c, newkey, 8);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_setkey error: %s\n", gcry_strerror(error));
+        goto cleanup;
+    }
+
     for (i = 0; i< 8; i++)
         where[i] ^= key[i];
-    des(where, where);
+
+    error = gcry_cipher_encrypt(c, where, 8, where, 8);
+    if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+        VNC_DEBUG("gcry_cipher_encrypt error: %s\n", gcry_strerror(error));
+        goto cleanup;
+    }
+
     for (i = 8; i < length; i += 8) {
         for (j = 0; j < 8; j++)
             where[i + j] ^= where[i + j - 8];
-        des(where + i, where + i);
+
+        error = gcry_cipher_encrypt(c, where + i, 8, where + i, 8);
+        if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
+            VNC_DEBUG("gcry_cipher_encrypt error: %s\n", gcry_strerror(error));
+            goto cleanup;
+        }
     }
+
+    ret = TRUE;
+
+ cleanup:
+    gcry_cipher_close(c);
+    return ret;
 }
 
 static gboolean vnc_connection_perform_auth_mslogon(VncConnection *conn)
@@ -3693,6 +3723,8 @@ static gboolean vnc_connection_perform_auth_mslogon(VncConnection *conn)
     gcry_mpi_t genmpi, modmpi, respmpi, pubmpi, keympi;
     guchar username[256], password[64];
     guint passwordLen, usernameLen;
+    gboolean allzeroes = TRUE;
+    int i;
 
     VNC_DEBUG("Do Challenge");
     priv->want_cred_password = TRUE;
@@ -3704,6 +3736,21 @@ static gboolean vnc_connection_perform_auth_mslogon(VncConnection *conn)
     vnc_connection_read(conn, gen, sizeof(gen));
     vnc_connection_read(conn, mod, sizeof(mod));
     vnc_connection_read(conn, resp, sizeof(resp));
+
+    if (vnc_connection_has_error(conn))
+        return FALSE;
+
+    /* If 'mod' is bogus all-zeros when we get a divide by zero
+     * so sanity check that */
+    for (i = 0; i < 8; i++) {
+        if (mod[i])
+            allzeroes = FALSE;
+    }
+    if (allzeroes) {
+        vnc_connection_set_error(conn, "%s",
+                                 "Bad DH modulus value");
+        return FALSE;
+    }
 
     genmpi = vnc_bytes_to_mpi(gen,sizeof(gen));
     modmpi = vnc_bytes_to_mpi(mod,sizeof(mod));
@@ -3731,8 +3778,10 @@ static gboolean vnc_connection_perform_auth_mslogon(VncConnection *conn)
     memcpy(password, priv->cred_password, passwordLen);
     memcpy(username, priv->cred_username, usernameLen);
 
-    vncEncryptBytes2(username, sizeof(username), key);
-    vncEncryptBytes2(password, sizeof(password), key);
+    if (!vncEncryptBytes2(username, sizeof(username), key))
+        return FALSE;
+    if (!vncEncryptBytes2(password, sizeof(password), key))
+        return FALSE;
 
     vnc_connection_write(conn, username, sizeof(username));
     vnc_connection_write(conn, password, sizeof(password));
@@ -3857,6 +3906,7 @@ static gboolean vnc_connection_perform_auth_ard(VncConnection *conn)
         free(pub);
         free(resp);
         free(mod);
+        gcry_cipher_close(aes);
         return FALSE;
     }
     error=gcry_cipher_encrypt(aes, ciphertext, sizeof(ciphertext), userpass, sizeof(userpass));
@@ -3865,6 +3915,7 @@ static gboolean vnc_connection_perform_auth_ard(VncConnection *conn)
         free(pub);
         free(resp);
         free(mod);
+        gcry_cipher_close(aes);
         return FALSE;
     }
 
@@ -3876,6 +3927,7 @@ static gboolean vnc_connection_perform_auth_ard(VncConnection *conn)
     free(resp);
     free(pub);
     free(key);
+    gcry_cipher_close(aes);
     gcry_md_close(md5);
     gcry_mpi_release(genmpi);
     gcry_mpi_release(modmpi);
@@ -4768,6 +4820,7 @@ static gboolean vnc_connection_perform_auth(VncConnection *conn)
         return vnc_connection_perform_auth_sasl(conn);
 #endif
 
+    case VNC_CONNECTION_AUTH_MSLOGONII:
     case VNC_CONNECTION_AUTH_MSLOGON:
         return vnc_connection_perform_auth_mslogon(conn);
 
@@ -5766,6 +5819,7 @@ gboolean vnc_connection_set_auth_type(VncConnection *conn, unsigned int type)
     if (type != VNC_CONNECTION_AUTH_NONE &&
         type != VNC_CONNECTION_AUTH_VNC &&
         type != VNC_CONNECTION_AUTH_MSLOGON &&
+        type != VNC_CONNECTION_AUTH_MSLOGONII &&
         type != VNC_CONNECTION_AUTH_ARD &&
         type != VNC_CONNECTION_AUTH_TLS &&
         type != VNC_CONNECTION_AUTH_VENCRYPT &&
@@ -5863,12 +5917,7 @@ static gboolean vnc_connection_set_credential_x509(VncConnection *conn,
      * to be used to validate CA certificates if no specific cert is set
      */
     if (ret < 0) {
-#if GNUTLS_VERSION_NUMBER < 0x030000
-        VNC_DEBUG("No CA certificate provided and no global fallback");
-        return FALSE;
-#else
         VNC_DEBUG("No CA certificate provided, using GNUTLS global trust");
-#endif
     }
 
     /* Don't mind failures of CRL */

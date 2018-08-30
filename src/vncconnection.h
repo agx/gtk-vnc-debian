@@ -136,6 +136,7 @@ typedef enum {
     VNC_CONNECTION_AUTH_VENCRYPT = 19, /* Used by VeNCrypt and QEMU */
     VNC_CONNECTION_AUTH_SASL = 20, /* SASL type used by VINO and QEMU */
     VNC_CONNECTION_AUTH_ARD = 30, /* Apple remote desktop (screen sharing) */
+    VNC_CONNECTION_AUTH_MSLOGONII = 0x71, /* Used by UltraVNC */
     VNC_CONNECTION_AUTH_MSLOGON = 0xfffffffa, /* Used by UltraVNC */
 } VncConnectionAuth;
 

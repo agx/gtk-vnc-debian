@@ -166,7 +166,7 @@ static void BLT(VncBaseFramebufferPrivate *priv,
 #if SRC == 32
 static void RGB24_BLT(VncBaseFramebufferPrivate *priv,
                       guint8 *src, int rowstride,
-                      guint16 x, gint16 y,
+                      guint16 x, guint16 y,
                       guint16 width, guint16 height)
 {
     guint8 *dst = VNC_BASE_FRAMEBUFFER_AT(priv, x, y);

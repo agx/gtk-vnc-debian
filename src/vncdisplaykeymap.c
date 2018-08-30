@@ -39,7 +39,7 @@
 
 #if defined(GDK_WINDOWING_X11) || defined(GDK_WINDOWING_WAYLAND)
 /* Wayland or Xorg Linux + evdev (offset evdev keycodes) */
-#include "vncdisplaykeymap_xorgevdev2rfb.c"
+#include "vncdisplaykeymap_xorgevdev2qnum.c"
 #endif
 
 #ifdef GDK_WINDOWING_X11
@@ -49,11 +49,11 @@
 #include <string.h>
 
 /* Xorg Linux + kbd (offset + mangled XT keycodes) */
-#include "vncdisplaykeymap_xorgkbd2rfb.c"
+#include "vncdisplaykeymap_xorgkbd2qnum.c"
 /* Xorg OS-X aka XQuartz (offset OS-X keycodes) */
-#include "vncdisplaykeymap_xorgxquartz2rfb.c"
+#include "vncdisplaykeymap_xorgxquartz2qnum.c"
 /* Xorg Cygwin aka XWin (offset + mangled XT keycodes) */
-#include "vncdisplaykeymap_xorgxwin2rfb.c"
+#include "vncdisplaykeymap_xorgxwin2qnum.c"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_X11_DISPLAY
@@ -63,7 +63,7 @@
 
 #ifdef GDK_WINDOWING_WIN32
 /* Win32 native virtual keycodes */
-#include "vncdisplaykeymap_win322rfb.c"
+#include "vncdisplaykeymap_win322qnum.c"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_WIN32_DISPLAY
@@ -73,7 +73,7 @@
 
 #ifdef GDK_WINDOWING_BROADWAY
 /* X11 keysyms */
-#include "vncdisplaykeymap_x112rfb.c"
+#include "vncdisplaykeymap_x112qnum.c"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_BROADWAY_DISPLAY
@@ -84,7 +84,7 @@
 
 #ifdef GDK_WINDOWING_QUARTZ
 /* OS-X native keycodes */
-#include "vncdisplaykeymap_osx2rfb.c"
+#include "vncdisplaykeymap_osx2qnum.c"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_QUARTZ_DISPLAY
@@ -167,22 +167,22 @@ const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
 
         if (check_for_xwin(dpy)) {
             VNC_DEBUG("Using xwin keycode mapping");
-            *maplen = G_N_ELEMENTS(keymap_xorgxwin2rfb);
-            return keymap_xorgxwin2rfb;
+            *maplen = G_N_ELEMENTS(keymap_xorgxwin2qnum);
+            return keymap_xorgxwin2qnum;
         } else if (check_for_xquartz(dpy)) {
             VNC_DEBUG("Using xquartz keycode mapping");
-            *maplen = G_N_ELEMENTS(keymap_xorgxquartz2rfb);
-            return keymap_xorgxquartz2rfb;
+            *maplen = G_N_ELEMENTS(keymap_xorgxquartz2qnum);
+            return keymap_xorgxquartz2qnum;
         } else if ((keycodes && STRPREFIX(keycodes, "evdev")) ||
                    (XKeysymToKeycode(xdisplay, XK_Page_Up) == 0x70)) {
             VNC_DEBUG("Using evdev keycode mapping");
-            *maplen = G_N_ELEMENTS(keymap_xorgevdev2rfb);
-            return keymap_xorgevdev2rfb;
+            *maplen = G_N_ELEMENTS(keymap_xorgevdev2qnum);
+            return keymap_xorgevdev2qnum;
         } else if ((keycodes && STRPREFIX(keycodes, "xfree86")) ||
                    (XKeysymToKeycode(xdisplay, XK_Page_Up) == 0x63)) {
             VNC_DEBUG("Using xfree86 keycode mapping");
-            *maplen = G_N_ELEMENTS(keymap_xorgkbd2rfb);
-            return keymap_xorgkbd2rfb;
+            *maplen = G_N_ELEMENTS(keymap_xorgkbd2qnum);
+            return keymap_xorgkbd2qnum;
         } else {
             g_warning("Unknown X11 keycode mapping '%s'.\n"
                       "Please report to gtk-vnc-list@gnome.org\n"
@@ -202,24 +202,24 @@ const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
 #ifdef GDK_WINDOWING_WAYLAND
     if (GDK_IS_WAYLAND_DISPLAY(dpy)) {
         VNC_DEBUG("Using Wayland evdev virtual keycode mapping");
-        *maplen = G_N_ELEMENTS(keymap_xorgevdev2rfb);
-        return keymap_xorgevdev2rfb;
+        *maplen = G_N_ELEMENTS(keymap_xorgevdev2qnum);
+        return keymap_xorgevdev2qnum;
     }
 #endif
 
 #ifdef GDK_WINDOWING_WIN32
     if (GDK_IS_WIN32_DISPLAY(dpy)) {
         VNC_DEBUG("Using Win32 virtual keycode mapping");
-        *maplen = G_N_ELEMENTS(keymap_win322rfb);
-        return keymap_win322rfb;
+        *maplen = G_N_ELEMENTS(keymap_win322qnum);
+        return keymap_win322qnum;
     }
 #endif
 
 #ifdef GDK_WINDOWING_QUARTZ
     if (GDK_IS_QUARTZ_DISPLAY(dpy)) {
         VNC_DEBUG("Using OS-X virtual keycode mapping");
-        *maplen = G_N_ELEMENTS(keymap_osx2rfb);
-        return keymap_osx2rfb;
+        *maplen = G_N_ELEMENTS(keymap_osx2qnum);
+        return keymap_osx2qnum;
     }
 #endif
 
@@ -228,8 +228,8 @@ const guint16 *vnc_display_keymap_gdk2rfb_table(size_t *maplen)
         g_warning("experimental: using broadway, x11 virtual keysym \n"
                   "mapping - with very limited support. See also \n"
                   "https://bugzilla.gnome.org/show_bug.cgi?id=700105");
-        *maplen = G_N_ELEMENTS(keymap_x112rfb);
-        return keymap_x112rfb;
+        *maplen = G_N_ELEMENTS(keymap_x112qnum);
+        return keymap_x112qnum;
     }
 #endif
 

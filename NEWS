@@ -1,6 +1,29 @@
     GTK VNC News
     ============
 
+Aug 17, 2018: Release 0.9.0
+===========================
+
+Note that the next release (1.0.0) will drop support for GTK-2
+
+ o Requires gnutls >= 3.1.18
+ o Requires libgcrypt >= 1.5.0
+ o Requires glib2 >= 2.42.0
+ o Use libgcrypt for DES routines
+ o Add missing cipher close calls in ARD auth
+ o Check for errors after reading mslogon params
+ o Support newer UltraVNC mslogon auth type code
+ o Avoid divide by zero in mslogin auth from bogus params
+ o Re-allow python2 accidentally blocked when removing
+   python binding
+
+Aug  1, 2018: Release 0.8.0
+===========================
+
+ o Deleted the python2 binding in favour of GObject introspection
+ o Pull in latest keycodemapdb content
+ o Disable/fix -Wcast-function-type warnings
+
 Mar 23, 2018: Release 0.7.2
 ===========================
 

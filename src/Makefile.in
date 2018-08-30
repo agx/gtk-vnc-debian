@@ -105,18 +105,14 @@ noinst_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_GTK_2_FALSE@am__append_8 = vncimageframebuffer.h vncimageframebuffer.c
 @HAVE_GTK_2_TRUE@am__append_9 = libgtk-vnc-1.0.la
 @HAVE_GTK_2_FALSE@am__append_10 = libgtk-vnc-2.0.la
-@WITH_PYTHON_TRUE@am__append_11 = vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_12 = vnc.defs vncmodule.defs.c
-@WITH_PYTHON_TRUE@am__append_13 = vnc.override
-@WITH_PYTHON_FALSE@am__append_14 = vnc.override vncmodule.c
-@HAVE_GTK_2_TRUE@@HAVE_INTROSPECTION_TRUE@am__append_15 = \
+@HAVE_GTK_2_TRUE@@HAVE_INTROSPECTION_TRUE@am__append_11 = \
 @HAVE_GTK_2_TRUE@@HAVE_INTROSPECTION_TRUE@			$(srcdir)/vncimageframebuffer.h $(srcdir)/vncimageframebuffer.c
 
-@HAVE_INTROSPECTION_TRUE@am__append_16 = GVnc-1.0.gir
-@HAVE_INTROSPECTION_TRUE@@HAVE_PULSEAUDIO_TRUE@am__append_17 = GVncPulse-1.0.gir
-@HAVE_GTK_2_TRUE@@HAVE_INTROSPECTION_TRUE@am__append_18 = GtkVnc-1.0.gir
-@HAVE_GTK_2_FALSE@@HAVE_INTROSPECTION_TRUE@am__append_19 = GtkVnc-2.0.gir
-@HAVE_INTROSPECTION_TRUE@am__append_20 = $(gir_DATA) $(typelibs_DATA)
+@HAVE_INTROSPECTION_TRUE@am__append_12 = GVnc-1.0.gir
+@HAVE_INTROSPECTION_TRUE@@HAVE_PULSEAUDIO_TRUE@am__append_13 = GVncPulse-1.0.gir
+@HAVE_GTK_2_TRUE@@HAVE_INTROSPECTION_TRUE@am__append_14 = GtkVnc-1.0.gir
+@HAVE_GTK_2_FALSE@@HAVE_INTROSPECTION_TRUE@am__append_15 = GtkVnc-2.0.gir
+@HAVE_INTROSPECTION_TRUE@am__append_16 = $(gir_DATA) $(typelibs_DATA)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/gtk-vnc-warnings.m4 \
@@ -163,34 +159,16 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" \
-	"$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibsdir)" \
-	"$(DESTDIR)$(gvncpulse_includedir)" \
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(girdir)" \
+	"$(DESTDIR)$(typelibsdir)" "$(DESTDIR)$(gvncpulse_includedir)" \
 	"$(DESTDIR)$(libgtk_vnc_1_0_ladir)" \
 	"$(DESTDIR)$(libgtk_vnc_2_0_ladir)" \
 	"$(DESTDIR)$(libgvnc_1_0_ladir)" \
 	"$(DESTDIR)$(libgtk_vnc_1_0_ladir)" \
 	"$(DESTDIR)$(libgtk_vnc_2_0_ladir)" \
 	"$(DESTDIR)$(libgvnc_1_0_ladir)"
-LTLIBRARIES = $(lib_LTLIBRARIES) $(pyexec_LTLIBRARIES)
+LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-@WITH_PYTHON_TRUE@gtkvnc_la_DEPENDENCIES =  \
-@WITH_PYTHON_TRUE@	libgtk-vnc-$(GTK_VNC_API_VERSION).la \
-@WITH_PYTHON_TRUE@	$(am__DEPENDENCIES_1)
-am__gtkvnc_la_SOURCES_DIST = vncmodule.c
-@WITH_PYTHON_TRUE@am_gtkvnc_la_OBJECTS = gtkvnc_la-vncmodule.lo
-@WITH_PYTHON_TRUE@nodist_gtkvnc_la_OBJECTS =  \
-@WITH_PYTHON_TRUE@	gtkvnc_la-vncmodule.defs.lo
-gtkvnc_la_OBJECTS = $(am_gtkvnc_la_OBJECTS) \
-	$(nodist_gtkvnc_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
-gtkvnc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(gtkvnc_la_CFLAGS) \
-	$(CFLAGS) $(gtkvnc_la_LDFLAGS) $(LDFLAGS) -o $@
-@WITH_PYTHON_TRUE@am_gtkvnc_la_rpath = -rpath $(pyexecdir)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	libgvnc-1.0.la
 @HAVE_GTK_2_TRUE@libgtk_vnc_1_0_la_DEPENDENCIES =  \
@@ -212,6 +190,10 @@ am__objects_3 = libgtk_vnc_1_0_la-vncdisplayenums.lo
 @HAVE_GTK_2_TRUE@nodist_libgtk_vnc_1_0_la_OBJECTS = $(am__objects_3)
 libgtk_vnc_1_0_la_OBJECTS = $(am_libgtk_vnc_1_0_la_OBJECTS) \
 	$(nodist_libgtk_vnc_1_0_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 libgtk_vnc_1_0_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) \
@@ -245,8 +227,8 @@ libgvnc_1_0_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h d3des.h d3des.c dh.h \
-	dh.c vncpixelformat.h vncpixelformat.c vncaudioformat.h \
+am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h dh.h dh.c \
+	vncpixelformat.h vncpixelformat.c vncaudioformat.h \
 	vncaudioformat.c vncaudiosample.h vncaudiosample.c vncaudio.h \
 	vncaudio.c vncbaseaudio.h vncbaseaudio.c vncframebuffer.h \
 	vncframebuffer.c vncbaseframebufferblt.h vncbaseframebuffer.h \
@@ -259,8 +241,8 @@ am__libgvnc_1_0_la_SOURCES_DIST = coroutine.h d3des.h d3des.c dh.h \
 @WITH_UCONTEXT_TRUE@	libgvnc_1_0_la-coroutine_ucontext.lo
 @WITH_UCONTEXT_FALSE@am__objects_8 =  \
 @WITH_UCONTEXT_FALSE@	libgvnc_1_0_la-coroutine_gthread.lo
-am_libgvnc_1_0_la_OBJECTS = libgvnc_1_0_la-d3des.lo \
-	libgvnc_1_0_la-dh.lo libgvnc_1_0_la-vncpixelformat.lo \
+am_libgvnc_1_0_la_OBJECTS = libgvnc_1_0_la-dh.lo \
+	libgvnc_1_0_la-vncpixelformat.lo \
 	libgvnc_1_0_la-vncaudioformat.lo \
 	libgvnc_1_0_la-vncaudiosample.lo libgvnc_1_0_la-vncaudio.lo \
 	libgvnc_1_0_la-vncbaseaudio.lo \
@@ -333,15 +315,13 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(gtkvnc_la_SOURCES) $(nodist_gtkvnc_la_SOURCES) \
-	$(libgtk_vnc_1_0_la_SOURCES) \
+SOURCES = $(libgtk_vnc_1_0_la_SOURCES) \
 	$(nodist_libgtk_vnc_1_0_la_SOURCES) \
 	$(libgtk_vnc_2_0_la_SOURCES) \
 	$(nodist_libgtk_vnc_2_0_la_SOURCES) $(libgvnc_1_0_la_SOURCES) \
 	$(nodist_libgvnc_1_0_la_SOURCES) \
 	$(libgvncpulse_1_0_la_SOURCES) $(vncconnectiontest_SOURCES)
-DIST_SOURCES = $(am__gtkvnc_la_SOURCES_DIST) \
-	$(am__libgtk_vnc_1_0_la_SOURCES_DIST) \
+DIST_SOURCES = $(am__libgtk_vnc_1_0_la_SOURCES_DIST) \
 	$(am__libgtk_vnc_2_0_la_SOURCES_DIST) \
 	$(am__libgvnc_1_0_la_SOURCES_DIST) \
 	$(am__libgvncpulse_1_0_la_SOURCES_DIST) \
@@ -604,7 +584,7 @@ GIOUNIX_CFLAGS = @GIOUNIX_CFLAGS@
 GIOUNIX_LIBS = @GIOUNIX_LIBS@
 GIO_CFLAGS = @GIO_CFLAGS@
 GIO_LIBS = @GIO_LIBS@
-GIO_REQUIRED = @GIO_REQUIRED@
+GLIB_REQUIRED = @GLIB_REQUIRED@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
 GNUTLS_CFLAGS = @GNUTLS_CFLAGS@
@@ -612,7 +592,6 @@ GNUTLS_LIBS = @GNUTLS_LIBS@
 GNUTLS_REQUIRED = @GNUTLS_REQUIRED@
 GOBJECT_CFLAGS = @GOBJECT_CFLAGS@
 GOBJECT_LIBS = @GOBJECT_LIBS@
-GOBJECT_REQUIRED = @GOBJECT_REQUIRED@
 GREP = @GREP@
 GTHREAD_CFLAGS = @GTHREAD_CFLAGS@
 GTHREAD_LIBS = @GTHREAD_LIBS@
@@ -690,11 +669,8 @@ PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 PULSEAUDIO_CFLAGS = @PULSEAUDIO_CFLAGS@
 PULSEAUDIO_LIBS = @PULSEAUDIO_LIBS@
-PYGTK_CFLAGS = @PYGTK_CFLAGS@
-PYGTK_LIBS = @PYGTK_LIBS@
 PYTHON = @PYTHON@
 PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
-PYTHON_INCLUDES = @PYTHON_INCLUDES@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
@@ -777,12 +753,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = libgvnc_sym.version libgvncpulse_sym.version \
 	libgtk-vnc_sym.version vncmarshal.txt $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(KEYMAP_CSV) $(KEYMAP_GEN) \
-	$(am__append_13) $(am__append_14)
+	$(am__append_6) $(am__append_8) $(KEYMAP_CSV) $(KEYMAP_GEN)
 lib_LTLIBRARIES = libgvnc-1.0.la $(am__append_2) $(am__append_9) \
 	$(am__append_10)
 BUILT_SOURCES = $(am__append_1) $(KEYMAPS) $(MARSHAL_FILES) \
-	$(ENUM_FILES) $(am__append_11)
+	$(ENUM_FILES)
 @USE_VERSION_DEFS_FALSE@GVNC_VERSION_FILE = $(srcdir)/libgvnc_sym.version
 @USE_VERSION_DEFS_TRUE@GVNC_VERSION_FILE = $(builddir)/libgvnc_sym.def
 @USE_VERSION_DEFS_FALSE@GVNCPULSE_VERSION_FILE = $(srcdir)/libgvncpulse_sym.version
@@ -835,10 +810,10 @@ nodist_libgvnc_1_0_la_HEADERS = \
 			vncconnectionenums.h \
 			$(NULL)
 
-libgvnc_1_0_la_SOURCES = coroutine.h d3des.h d3des.c dh.h dh.c \
-	vncpixelformat.h vncpixelformat.c vncaudioformat.h \
-	vncaudioformat.c vncaudiosample.h vncaudiosample.c vncaudio.h \
-	vncaudio.c vncbaseaudio.h vncbaseaudio.c vncframebuffer.h \
+libgvnc_1_0_la_SOURCES = coroutine.h dh.h dh.c vncpixelformat.h \
+	vncpixelformat.c vncaudioformat.h vncaudioformat.c \
+	vncaudiosample.h vncaudiosample.c vncaudio.h vncaudio.c \
+	vncbaseaudio.h vncbaseaudio.c vncframebuffer.h \
 	vncframebuffer.c vncbaseframebufferblt.h vncbaseframebuffer.h \
 	vncbaseframebuffer.c vnccursor.h vnccursor.c vnccolormap.h \
 	vnccolormap.c vncconnection.h vncconnection.c \
@@ -928,16 +903,16 @@ gtk_vnc_LDFLAGS = \
 KEYMAP_GEN = keycodemapdb/tools/keymap-gen
 KEYMAP_CSV = keycodemapdb/data/keymaps.csv
 KEYMAPS = \
-	vncdisplaykeymap_xorgevdev2rfb.c \
-	vncdisplaykeymap_xorgkbd2rfb.c \
-	vncdisplaykeymap_xorgxquartz2rfb.c \
-	vncdisplaykeymap_xorgxwin2rfb.c \
-	vncdisplaykeymap_osx2rfb.c \
-	vncdisplaykeymap_win322rfb.c \
-	vncdisplaykeymap_x112rfb.c
+	vncdisplaykeymap_xorgevdev2qnum.c \
+	vncdisplaykeymap_xorgkbd2qnum.c \
+	vncdisplaykeymap_xorgxquartz2qnum.c \
+	vncdisplaykeymap_xorgxwin2qnum.c \
+	vncdisplaykeymap_osx2qnum.c \
+	vncdisplaykeymap_win322qnum.c \
+	vncdisplaykeymap_x112qnum.c
 
 CLEANFILES = $(KEYMAPS) $(MARSHAL_FILES) $(ENUM_FILES) \
-	$(am__append_12) $(am__append_20)
+	$(am__append_16)
 MARSHAL_FILES = vncmarshal.c vncmarshal.h
 ENUM_FILES = \
 	vncdisplayenums.h vncdisplayenums.c \
@@ -946,18 +921,8 @@ ENUM_FILES = \
 vncconnectiontest_SOURCES = vncconnectiontest.c
 vncconnectiontest_CFLAGS = $(GOBJECT_CFLAGS) $(GIO_CFLAGS)
 vncconnectiontest_LDADD = libgvnc-1.0.la $(GOBJECT_LIBS) $(GIO_LIBS)
-@WITH_PYTHON_TRUE@pyexec_LTLIBRARIES = gtkvnc.la
-@WITH_PYTHON_TRUE@gtkvnc_la_LIBADD = libgtk-vnc-$(GTK_VNC_API_VERSION).la $(PYGTK_LIBS)
-@WITH_PYTHON_TRUE@gtkvnc_la_CFLAGS = $(GTK_CFLAGS) $(PYTHON_INCLUDES) \
-@WITH_PYTHON_TRUE@		   $(PYGTK_CFLAGS) $(WARN_PYTHON_CFLAGS)
-
-@WITH_PYTHON_TRUE@gtkvnc_la_LDFLAGS = -module -avoid-version -fPIC
-@WITH_PYTHON_TRUE@gtkvnc_la_SOURCES = vncmodule.c
-@WITH_PYTHON_TRUE@nodist_gtkvnc_la_SOURCES = vncmodule.defs.c
-@WITH_PYTHON_TRUE@CODEGENDIR = $(shell pkg-config --variable=codegendir pygobject-2.0)
-@WITH_PYTHON_TRUE@DEFSDIR = $(shell pkg-config --variable=defsdir pygtk-2.0)
-INTROSPECTION_GIRS = $(am__append_16) $(am__append_17) \
-	$(am__append_18) $(am__append_19)
+INTROSPECTION_GIRS = $(am__append_12) $(am__append_13) \
+	$(am__append_14) $(am__append_15)
 INTROSPECTION_SCANNER_ARGS = --symbol-prefix=vnc --warn-all \
 			--identifier-prefix=Vnc \
 			--add-include-path=$(top_srcdir) \
@@ -993,7 +958,7 @@ INTROSPECTION_COMPILER_ARGS = --includedir=$(top_srcdir) \
 @HAVE_INTROSPECTION_TRUE@	$(srcdir)/vncgrabsequence.c \
 @HAVE_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.h \
 @HAVE_INTROSPECTION_TRUE@	$(builddir)/vncdisplayenums.c \
-@HAVE_INTROSPECTION_TRUE@	$(am__append_15)
+@HAVE_INTROSPECTION_TRUE@	$(am__append_11)
 @HAVE_INTROSPECTION_TRUE@GVnc_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
 @HAVE_INTROSPECTION_TRUE@GVnc_1_0_gir_PACKAGES = gobject-2.0 gio-2.0
 @HAVE_INTROSPECTION_TRUE@GVnc_1_0_gir_EXPORT_PACKAGES = gvnc-1.0
@@ -1102,44 +1067,6 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-install-pyexecLTLIBRARIES: $(pyexec_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	@list='$(pyexec_LTLIBRARIES)'; test -n "$(pyexecdir)" || list=; \
-	list2=; for p in $$list; do \
-	  if test -f $$p; then \
-	    list2="$$list2 $$p"; \
-	  else :; fi; \
-	done; \
-	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(pyexecdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(pyexecdir)" || exit 1; \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(pyexecdir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(pyexecdir)"; \
-	}
-
-uninstall-pyexecLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(pyexec_LTLIBRARIES)'; test -n "$(pyexecdir)" || list=; \
-	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(pyexecdir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(pyexecdir)/$$f"; \
-	done
-
-clean-pyexecLTLIBRARIES:
-	-test -z "$(pyexec_LTLIBRARIES)" || rm -f $(pyexec_LTLIBRARIES)
-	@list='$(pyexec_LTLIBRARIES)'; \
-	locs=`for p in $$list; do echo $$p; done | \
-	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
-	      sort -u`; \
-	test -z "$$locs" || { \
-	  echo rm -f $${locs}; \
-	  rm -f $${locs}; \
-	}
-
-gtkvnc.la: $(gtkvnc_la_OBJECTS) $(gtkvnc_la_DEPENDENCIES) $(EXTRA_gtkvnc_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(gtkvnc_la_LINK) $(am_gtkvnc_la_rpath) $(gtkvnc_la_OBJECTS) $(gtkvnc_la_LIBADD) $(LIBS)
-
 libgtk-vnc-1.0.la: $(libgtk_vnc_1_0_la_OBJECTS) $(libgtk_vnc_1_0_la_DEPENDENCIES) $(EXTRA_libgtk_vnc_1_0_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libgtk_vnc_1_0_la_LINK) $(am_libgtk_vnc_1_0_la_rpath) $(libgtk_vnc_1_0_la_OBJECTS) $(libgtk_vnc_1_0_la_LIBADD) $(LIBS)
 
@@ -1171,8 +1098,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkvnc_la-vncmodule.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkvnc_la-vncmodule.defs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vnccairoframebuffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncdisplay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgtk_vnc_1_0_la-vncdisplayenums.Plo@am__quote@
@@ -1190,7 +1115,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-continuation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-coroutine_gthread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-coroutine_ucontext.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-d3des.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-dh.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncaudio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgvnc_1_0_la-vncaudioformat.Plo@am__quote@
@@ -1228,20 +1152,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
-
-gtkvnc_la-vncmodule.lo: vncmodule.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtkvnc_la_CFLAGS) $(CFLAGS) -MT gtkvnc_la-vncmodule.lo -MD -MP -MF $(DEPDIR)/gtkvnc_la-vncmodule.Tpo -c -o gtkvnc_la-vncmodule.lo `test -f 'vncmodule.c' || echo '$(srcdir)/'`vncmodule.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkvnc_la-vncmodule.Tpo $(DEPDIR)/gtkvnc_la-vncmodule.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='vncmodule.c' object='gtkvnc_la-vncmodule.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtkvnc_la_CFLAGS) $(CFLAGS) -c -o gtkvnc_la-vncmodule.lo `test -f 'vncmodule.c' || echo '$(srcdir)/'`vncmodule.c
-
-gtkvnc_la-vncmodule.defs.lo: vncmodule.defs.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtkvnc_la_CFLAGS) $(CFLAGS) -MT gtkvnc_la-vncmodule.defs.lo -MD -MP -MF $(DEPDIR)/gtkvnc_la-vncmodule.defs.Tpo -c -o gtkvnc_la-vncmodule.defs.lo `test -f 'vncmodule.defs.c' || echo '$(srcdir)/'`vncmodule.defs.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkvnc_la-vncmodule.defs.Tpo $(DEPDIR)/gtkvnc_la-vncmodule.defs.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='vncmodule.defs.c' object='gtkvnc_la-vncmodule.defs.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gtkvnc_la_CFLAGS) $(CFLAGS) -c -o gtkvnc_la-vncmodule.defs.lo `test -f 'vncmodule.defs.c' || echo '$(srcdir)/'`vncmodule.defs.c
 
 libgtk_vnc_1_0_la-vnccairoframebuffer.lo: vnccairoframebuffer.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgtk_vnc_1_0_la-vnccairoframebuffer.lo -MD -MP -MF $(DEPDIR)/libgtk_vnc_1_0_la-vnccairoframebuffer.Tpo -c -o libgtk_vnc_1_0_la-vnccairoframebuffer.lo `test -f 'vnccairoframebuffer.c' || echo '$(srcdir)/'`vnccairoframebuffer.c
@@ -1340,13 +1250,6 @@ libgtk_vnc_2_0_la-vncdisplayenums.lo: vncdisplayenums.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='vncdisplayenums.c' object='libgtk_vnc_2_0_la-vncdisplayenums.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgtk_vnc_2_0_la_CFLAGS) $(CFLAGS) -c -o libgtk_vnc_2_0_la-vncdisplayenums.lo `test -f 'vncdisplayenums.c' || echo '$(srcdir)/'`vncdisplayenums.c
-
-libgvnc_1_0_la-d3des.lo: d3des.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-d3des.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-d3des.Tpo -c -o libgvnc_1_0_la-d3des.lo `test -f 'd3des.c' || echo '$(srcdir)/'`d3des.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgvnc_1_0_la-d3des.Tpo $(DEPDIR)/libgvnc_1_0_la-d3des.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='d3des.c' object='libgvnc_1_0_la-d3des.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -c -o libgvnc_1_0_la-d3des.lo `test -f 'd3des.c' || echo '$(srcdir)/'`d3des.c
 
 libgvnc_1_0_la-dh.lo: dh.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgvnc_1_0_la_CFLAGS) $(CFLAGS) -MT libgvnc_1_0_la-dh.lo -MD -MP -MF $(DEPDIR)/libgvnc_1_0_la-dh.Tpo -c -o libgvnc_1_0_la-dh.lo `test -f 'dh.c' || echo '$(srcdir)/'`dh.c
@@ -1934,7 +1837,7 @@ check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" "$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibsdir)" "$(DESTDIR)$(gvncpulse_includedir)" "$(DESTDIR)$(libgtk_vnc_1_0_ladir)" "$(DESTDIR)$(libgtk_vnc_2_0_ladir)" "$(DESTDIR)$(libgvnc_1_0_ladir)" "$(DESTDIR)$(libgtk_vnc_1_0_ladir)" "$(DESTDIR)$(libgtk_vnc_2_0_ladir)" "$(DESTDIR)$(libgvnc_1_0_ladir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(girdir)" "$(DESTDIR)$(typelibsdir)" "$(DESTDIR)$(gvncpulse_includedir)" "$(DESTDIR)$(libgtk_vnc_1_0_ladir)" "$(DESTDIR)$(libgtk_vnc_2_0_ladir)" "$(DESTDIR)$(libgvnc_1_0_ladir)" "$(DESTDIR)$(libgtk_vnc_1_0_ladir)" "$(DESTDIR)$(libgtk_vnc_2_0_ladir)" "$(DESTDIR)$(libgvnc_1_0_ladir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -1976,7 +1879,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinstPROGRAMS clean-pyexecLTLIBRARIES mostlyclean-am
+	clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -2007,7 +1910,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLTLIBRARIES install-pyexecLTLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -2053,19 +1956,17 @@ uninstall-am: uninstall-girDATA uninstall-gvncpulse_includeHEADERS \
 	uninstall-libgvnc_1_0_laHEADERS \
 	uninstall-nodist_libgtk_vnc_1_0_laHEADERS \
 	uninstall-nodist_libgtk_vnc_2_0_laHEADERS \
-	uninstall-nodist_libgvnc_1_0_laHEADERS \
-	uninstall-pyexecLTLIBRARIES uninstall-typelibsDATA
+	uninstall-nodist_libgvnc_1_0_laHEADERS uninstall-typelibsDATA
 
 .MAKE: all check check-am install install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-TESTS check-am clean \
 	clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinstPROGRAMS clean-pyexecLTLIBRARIES cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-girDATA \
+	clean-noinstPROGRAMS cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-girDATA \
 	install-gvncpulse_includeHEADERS install-html install-html-am \
 	install-info install-info-am install-libLTLIBRARIES \
 	install-libgtk_vnc_1_0_laHEADERS \
@@ -2073,20 +1974,19 @@ uninstall-am: uninstall-girDATA uninstall-gvncpulse_includeHEADERS \
 	install-man install-nodist_libgtk_vnc_1_0_laHEADERS \
 	install-nodist_libgtk_vnc_2_0_laHEADERS \
 	install-nodist_libgvnc_1_0_laHEADERS install-pdf \
-	install-pdf-am install-ps install-ps-am \
-	install-pyexecLTLIBRARIES install-strip install-typelibsDATA \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	recheck tags tags-am uninstall uninstall-am uninstall-girDATA \
+	install-pdf-am install-ps install-ps-am install-strip \
+	install-typelibsDATA installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am recheck tags tags-am uninstall \
+	uninstall-am uninstall-girDATA \
 	uninstall-gvncpulse_includeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-libgtk_vnc_1_0_laHEADERS \
 	uninstall-libgtk_vnc_2_0_laHEADERS \
 	uninstall-libgvnc_1_0_laHEADERS \
 	uninstall-nodist_libgtk_vnc_1_0_laHEADERS \
 	uninstall-nodist_libgtk_vnc_2_0_laHEADERS \
-	uninstall-nodist_libgvnc_1_0_laHEADERS \
-	uninstall-pyexecLTLIBRARIES uninstall-typelibsDATA
+	uninstall-nodist_libgvnc_1_0_laHEADERS uninstall-typelibsDATA
 
 .PRECIOUS: Makefile
 
@@ -2108,26 +2008,26 @@ $(KEYMAPS): $(srcdir)/$(KEYMAP_GEN) $(srcdir)/$(KEYMAP_CSV)
 
 vncdisplaykeymap.c: $(KEYMAPS)
 
-vncdisplaykeymap_xorgevdev2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgevdev2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgevdev rfb > $@ || rm $@
+vncdisplaykeymap_xorgevdev2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgevdev2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgevdev qnum > $@ || rm $@
 
-vncdisplaykeymap_xorgkbd2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgkbd2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgkbd rfb > $@ || rm $@
+vncdisplaykeymap_xorgkbd2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgkbd2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgkbd qnum > $@ || rm $@
 
-vncdisplaykeymap_xorgxquartz2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxquartz2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgxquartz rfb > $@ || rm $@
+vncdisplaykeymap_xorgxquartz2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxquartz2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgxquartz qnum > $@ || rm $@
 
-vncdisplaykeymap_xorgxwin2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxwin2rfb code-map $(srcdir)/$(KEYMAP_CSV) xorgxwin rfb > $@ || rm $@
+vncdisplaykeymap_xorgxwin2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_xorgxwin2qnum code-map $(srcdir)/$(KEYMAP_CSV) xorgxwin qnum > $@ || rm $@
 
-vncdisplaykeymap_osx2rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_osx2rfb code-map $(srcdir)/$(KEYMAP_CSV) osx rfb > $@ || rm $@
+vncdisplaykeymap_osx2qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_osx2qnum code-map $(srcdir)/$(KEYMAP_CSV) osx qnum > $@ || rm $@
 
-vncdisplaykeymap_win322rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_win322rfb code-map $(srcdir)/$(KEYMAP_CSV) win32 rfb > $@ || rm $@
+vncdisplaykeymap_win322qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_win322qnum code-map $(srcdir)/$(KEYMAP_CSV) win32 qnum > $@ || rm $@
 
-vncdisplaykeymap_x112rfb.c:
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_x112rfb code-map $(srcdir)/$(KEYMAP_CSV) x11 rfb > $@ || rm $@
+vncdisplaykeymap_x112qnum.c:
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/$(KEYMAP_GEN) --lang glib2 --varname keymap_x112qnum code-map $(srcdir)/$(KEYMAP_CSV) x11 qnum > $@ || rm $@
 
 vncdisplayenums.c: vncdisplay.h
 	$(AM_V_GEN)glib-mkenums    --fhead "#include <glib-object.h>\n" \
@@ -2191,15 +2091,6 @@ vncmarshal.h: vncmarshal.txt
 vncdisplay.c:: vncmarshal.h vncdisplayenums.h
 
 vncconnection.c:: vncmarshal.h vncconnectionenums.h
-
-@WITH_PYTHON_TRUE@vnc.defs: vncdisplay.h vncdisplayenums.h
-@WITH_PYTHON_TRUE@	$(AM_V_GEN)$(PYTHON) $(CODEGENDIR)/h2def.py $< > $@
-
-@WITH_PYTHON_TRUE@vncmodule.defs.c: vnc.override vnc.defs
-@WITH_PYTHON_TRUE@	$(AM_V_GEN)pygtk-codegen-2.0 --prefix gtkvnc \
-@WITH_PYTHON_TRUE@			  --register $(DEFSDIR)/gdk-types.defs \
-@WITH_PYTHON_TRUE@			  --register $(DEFSDIR)/gtk-types.defs \
-@WITH_PYTHON_TRUE@			  --override $(srcdir)/vnc.override vnc.defs > $@
 
 -include $(INTROSPECTION_MAKEFILE)
 
