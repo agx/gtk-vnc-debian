@@ -8,7 +8,6 @@ Standards-Version: 4.1.3
 Build-Depends:
  debhelper (>= 10),
  dh-autoreconf,
- dh-python,
  gobject-introspection,
  intltool,
  libcairo2-dev,
@@ -22,13 +21,10 @@ Build-Depends:
  libsasl2-dev,
  libtext-csv-perl,
  libtool,
- python-dev,
- python-gtk2-dev (>= 2.0),
  valac (>= 0.20),
 Build-Conflicts:
  libffi4-dev,
  valac-0.12,
-X-Python-Version: >= 2.5
 Vcs-Git: https://anonscm.debian.org/git/pkg-libvirt/gtk-vnc.git
 Vcs-Browser: https://anonscm.debian.org/git/pkg-libvirt/gtk-vnc.git
 Homepage: https://wiki.gnome.org/Projects/gtk-vnc
@@ -50,8 +46,9 @@ Description: VNC GObject wrapper (runtime libraries)
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
  This package contains the shared library.
 
@@ -72,8 +69,9 @@ Description: VNC GObject wrapper (development files)
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
  This package contains the development headers for libgvnc-1.0 and
  Vala bindings.
@@ -93,8 +91,9 @@ Description: VNC viewer widget for GTK+2 (runtime libraries)
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
  This package contains the shared library built for GTK+2.
 
@@ -114,10 +113,12 @@ Description: VNC viewer widget for GTK+2 (development files)
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
- This package contains the development headers.
+ This package contains the development headers for programs built against
+ GTK+2.
 
 Package: libgtk-vnc-2.0-0
 Architecture: any
@@ -132,8 +133,9 @@ Description: VNC viewer widget for GTK+3 (runtime libraries)
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
  This package contains the shared library built for GTK+3.
 
@@ -154,8 +156,9 @@ Description: VNC viewer widget for GTK+3 (development files)
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
  This package contains the development headers for libgtk-vnc-2.0 and Vala
  bindings.
@@ -181,25 +184,6 @@ Description: GObject introspection data for GTK-VNC
  It can be used by packages using the GIRepository format to generate
  dynamic bindings.
 
-Package: python-gtk-vnc
-Architecture: any
-Section: python
-Depends:
- python-gtk2 (>= 2.0),
- ${misc:Depends},
- ${python:Depends},
- ${shlibs:Depends},
-Description: VNC viewer widget for GTK+2 (Python binding)
- It is built using coroutines, allowing it to be completely asynchronous while
- remaining single threaded. It supports RFB protocols 3.3 through 3.8 and the
- VeNCrypt authentication extension providing SSL/TLS encryption with x509
- certificate authentication.
- .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
- .
- This package contains the Python binding.
-
 Package: gvncviewer
 Architecture: any
 Section: x11
@@ -212,7 +196,8 @@ Description: VNC viewer using gtk-vnc
  VeNCrypt authentication extension providing SSL/TLS encryption with x509
  certificate authentication.
  .
- The core library is written in C and a binding for Python using PyGTK is
- available. The networking layer supports connections over both IPv4 and IPv6.
+ The core library is written in C and a bindings for other languages are
+ available via GObject introspection. The networking layer supports connections
+ over both IPv4 and IPv6.
  .
  This package contains the VNC viewer and VNC capture utility.
