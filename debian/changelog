@@ -1,10 +1,15 @@
-gtk-vnc (0.9.0-1~1.gbp3a104c) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @3a104ce71b1322c3d6721369770037b755b620f0 **
+gtk-vnc (0.9.0-1) unstable; urgency=medium
 
   * [ffcc52b] New upstream version 0.9.0
+  * [a4bcc35] Drop PyGTK specific bindings.
+    Use GObject introspection instead. (Closes: #885376)
+  * [4e767fd] Bump build-deps. Upstream requires newer versions.
+  * [1842f7f] d/copyright: drop copyright of now gone files
+  * [855b8e1] d/control: Use salsa URL
+  * [dbf297c] Rediff patches
+  * [511748f] gvnc-1.0.pc.in: Use GLIB_REQUIRED
 
- -- Guido Günther <agx@sigxcpu.org>  Thu, 30 Aug 2018 15:51:31 +0200
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 30 Aug 2018 18:17:21 +0200
 
 gtk-vnc (0.7.2-1) unstable; urgency=medium
 
