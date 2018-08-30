@@ -26,8 +26,8 @@ Build-Depends:
 Build-Conflicts:
  libffi4-dev,
  valac-0.12,
-Vcs-Git: https://anonscm.debian.org/git/pkg-libvirt/gtk-vnc.git
-Vcs-Browser: https://anonscm.debian.org/git/pkg-libvirt/gtk-vnc.git
+Vcs-Git: https://salsa.debian.org/libvirt-team/gtk-vnc.git
+Vcs-Browser: https://salsa.debian.org/libvirt-team/gtk-vnc
 Homepage: https://wiki.gnome.org/Projects/gtk-vnc
 
 Package: libgvnc-1.0-0
