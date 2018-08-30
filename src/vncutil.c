@@ -37,7 +37,6 @@ static gboolean debugFlag = FALSE;
  */
 void vnc_util_set_debug(gboolean enabled)
 {
-#if GLIB_CHECK_VERSION(2, 31, 0)
     if (enabled) {
         const gchar *doms = g_getenv("G_MESSAGES_DEBUG");
         if (!doms) {
@@ -48,7 +47,6 @@ void vnc_util_set_debug(gboolean enabled)
             g_free(newdoms);
         }
     }
-#endif
     debugFlag = enabled;
 }
 

@@ -1,3 +1,11 @@
+gtk-vnc (0.9.0-1~1.gbp3a104c) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @3a104ce71b1322c3d6721369770037b755b620f0 **
+
+  * [ffcc52b] New upstream version 0.9.0
+
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 30 Aug 2018 15:51:31 +0200
+
 gtk-vnc (0.7.2-1) unstable; urgency=medium
 
   * New upstream version 0.7.2

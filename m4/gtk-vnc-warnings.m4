@@ -114,6 +114,12 @@ AC_DEFUN([GTK_VNC_COMPILE_WARNINGS],[
     # replacement. As such we can't change & must ignore
     # the warnings
     gl_WARN_ADD([-Wno-deprecated-declarations])
+    # g_source_set_callback() can't be compatible with this warning.
+    # Its API doc states:
+    # "The exact type of func depends on the type of source;
+    # ie. you should not count on func being called with data as
+    # its first parameter."
+    gl_WARN_ADD([-Wno-cast-function-type])
 
     if test "$set_werror" = "yes"
     then

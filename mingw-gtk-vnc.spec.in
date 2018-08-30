@@ -123,13 +123,13 @@ cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
 
 %build
 cd gtk-vnc-%{version}
-%mingw_configure --without-python --with-examples --without-sasl --with-gtk=2.0
+%mingw_configure --with-examples --without-sasl --with-gtk=2.0
 rm build_win{32,64}/GNUmakefile
 %mingw_make %{?_smp_mflags} V=1
 cd ..
 
 cd gtk-vnc2-%{version}
-%mingw_configure --without-python --without-examples --without-sasl --with-gtk=3.0
+%mingw_configure --without-examples --without-sasl --with-gtk=3.0
 rm build_win{32,64}/GNUmakefile
 %mingw_make %{?_smp_mflags} V=1
 cd ..

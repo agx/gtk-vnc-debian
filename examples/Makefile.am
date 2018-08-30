@@ -19,7 +19,6 @@ gvncviewer_CFLAGS = $(GTK_CFLAGS) \
 		    $(WARN_CFLAGS) \
 		    $(VIEW_CFLAGS) -I$(top_srcdir)/src/
 
-EXTRA_DIST = gvncviewer-bindings.py gvncviewer-introspection.py \
-             gvncviewer.js gvncviewer.pl
+EXTRA_DIST = gvncviewer.py gvncviewer.js gvncviewer.pl
 
 -include $(top_srcdir)/git.mk

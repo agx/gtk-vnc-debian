@@ -1,3 +1,138 @@
+2018-08-17  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Update NEWS for 0.9.0 release
+
+	Bump next version to 0.9.0
+
+	Avoid uint8_t type as that's not always defined
+
+	Remove obsolete --without-python arg from mingw RPM
+
+	Reallow python2 usage
+	The keycodemapdb generator in fact works with python 2 or 3 so there is
+	no reason to force python 3 at this time.
+
+	Update bug tracker URL
+
+	Require glib2 >= 2.42.0
+	Based on targetted distros it is reasonable to require glib >= 2.42.0
+
+	   RHEL-7: 2.50.3
+	   Debian (Stretch): 2.50.3
+	   Debian (Jessie): 2.42.1
+	   OpenBSD (Ports): 2.54.3
+	   FreeBSD (Ports): 2.50.3
+	   OpenSUSE Leap 15: 2.54.3
+	   SLE12-SP2: 2.48.2
+	   Ubuntu (Xenial): 2.48.0
+	   macOS (Homebrew): 2.56.0
+
+	Require libgcrypt >= 1.5.0
+	libgcrypt 1.5.0 was released in 2011 and all the distros that are build
+	target platforms for GTK-VNC include it:
+
+	      RHEL-7: 1.5.3
+	      Debian (Stretch): 1.7.6
+	      Debian (Jessie): 1.6.3
+	      OpenBSD (ports): 1.8.2
+	      FreeBSD (ports): 1.8.3
+	      OpenSUSE Leap 15: 1.8.2
+	      Ubuntu (Xenial): 1.6.5
+	      macOS (Homebrew): 1.8.3
+
+	Based on this, it is reasonable to require libgcrypt >= 1.5.0 in QEMU
+	which allows for some conditional version checks in the code to be
+	removed.
+
+	Require gnutls >= 3.1.18
+	gnutls 3.0.0 was released in 2011 and all the distros that are build
+	target platforms for GTK-VNC include it:
+
+	      RHEL-7: 3.1.18
+	      Debian (Stretch): 3.5.8
+	      Debian (Jessie): 3.3.8
+	      OpenBSD (ports): 3.5.18
+	      FreeBSD (ports): 3.5.18
+	      OpenSUSE Leap 15: 3.6.2
+	      Ubuntu (Xenial): 3.4.10
+	      macOS (Homebrew): 3.5.19
+
+	Based on this, it is reasonable to require gnutls >= 3.1.18 in GTK-VNC
+	which allows for all conditional version checks in the code to be
+	removed.
+
+	Protect against divide by zero in MSLogon auth
+
+	Support new code for ultravnc mslogon auth type
+	The old AUTH_MSLOGON code is only used with vnc 3.3 protocol version.
+	The new auth type code functions in exactly the same way as the old
+	version.
+
+	Check for error after reading mslogon params
+
+	Add missing cipher close calls for ARD auth
+
+	Convert to use gcrypt for d3des routines
+	By munging the DES key we can use the standard APIs for DES
+
+2018-08-01  Piotr Drąg  <piotrdrag@gmail.com>
+
+	Add POTFILES.skip
+
+2018-08-01  Daniel P. Berrangé  <berrange@redhat.com>
+
+	rpm: remove obsolete defattr statements
+
+	rpm: skip gtk2-devel if gtk2 is not enabled
+
+	configure: post release version bump
+
+	README: update outdated notes about GTK/python
+
+	Update NEWS for 0.8.0 release
+
+	Pull in latest keycodemapdb content
+
+2018-07-23  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Remove unused variable from configure script
+
+	Allow gtk2 build to be disabled
+
+2018-07-16  Victor Toso  <me@victortoso.com>
+
+	build-sys: Disable -Wcast-function-type
+	Previous commit fixed one -Wcast-function-type but the remaining ones
+	are related to g_source_set_callback() which cannot be solved with
+	intermediate wrappers as the callback signature will vary depending on
+	the source it's called on.
+
+	This commit suppress the following:
+
+	 | vncconnection.c: In function 'g_io_wait':
+	 | vncconnection.c:343:32: warning: cast between incompatible function types from
+	 |  'gboolean (*)(GSocket *, GIOCondition,  void *)' ... to
+	 |  'gboolean (*)(void *)' ...
+	 |
+	 |    g_source_set_callback(src, (GSourceFunc)g_io_wait_helper, coroutine_self(), NULL);
+	 |                               ^
+	 |
+	 | vncconnection.c: In function 'g_io_wait_interruptable':
+	 | vncconnection.c:379:32: warning: cast between incompatible function types from
+	 |  'gboolean (*)(GSocket *, GIOCondition,  void *)' ... to
+	 |  'gboolean (*)(void *)' ...
+	 |
+	 |    g_source_set_callback(src, (GSourceFunc)g_io_wait_helper,
+	 |                               ^
+
+	Fix -Wcast-function-type on vnc_base_framebuffer_rgb24_blt_*
+	The y axis is uint16 on vnc_base_framebuffer_rgb24_blt_func()
+
+2018-07-16  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Delete old manual python binding
+	All applications should use the GObject Introspection dynamic binding
+
 2018-03-23  Daniel P. Berrangé  <berrange@redhat.com>
 
 	Update NEWS for 0.7.2 release
