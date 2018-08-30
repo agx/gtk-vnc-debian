@@ -1,2 +1,3 @@
 Remove-GNUmakefile-links.patch
 Add-I-m4-to-Makefile.am.patch
+gvnc-1.0.pc.in-Use-GLIB_REQUIRED.patch
