@@ -13,11 +13,6 @@ Copyright: 2003-2008 Free Software Foundation, Inc.
            2008-2011 Red Hat, Inc.
 License: GPL-3+
 
-Files: src/d3des.c
-       src/d3des.h
-Copyright: 1988-1992 Richard Outerbridge
-License: public-domain
-
 Files: src/dh.c
 Copyright: 2008  Red Hat, Inc.
 License: LGPL-2.1+
@@ -73,9 +68,6 @@ License: GPL-3+
  .
  On Debian systems, the complete text of the GNU General
  Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
-
-License: public-domain
- This file is under public domain.
 
 License: LGPL-2.1+
  This package is free software; you can redistribute it and/or
