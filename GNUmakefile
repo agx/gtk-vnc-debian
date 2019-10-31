@@ -1,11 +1,11 @@
-# Having a separate GNUmakefile lets me `include' the dynamically
+# Having a separate GNUmakefile lets me 'include' the dynamically
 # generated rules created via cfg.mk (package-local configuration)
 # as well as maint.mk (generic maintainer rules).
 # This makefile is used only if you run GNU Make.
 # It is necessary if you want to build targets usually of interest
 # only to the maintainer.
 
-# Copyright (C) 2001, 2003, 2006-2011 Free Software Foundation, Inc.
+# Copyright (C) 2001, 2003, 2006-2019 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,30 +18,16 @@
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Systems where /bin/sh is not the default shell need this.  The $(shell)
-# command below won't work with e.g. stock DOS/Windows shells.
-ifeq ($(wildcard /bin/s[h]),/bin/sh)
-SHELL = /bin/sh
-else
-# will be used only with the next shell-test line, then overwritten
-# by a configured-in value
-SHELL = sh
-endif
-
-# If the user runs GNU make but has not yet run ./configure,
-# give them a diagnostic.
-_have-Makefile := $(shell test -f Makefile && echo yes)
-ifeq ($(_have-Makefile),yes)
+srcdir = .
+top_srcdir = .
 
 # Make tar archive easier to reproduce.
 export TAR_OPTIONS = --owner=0 --group=0 --numeric-owner
 
 # Allow the user to add to this in the Makefile.
 ALL_RECURSIVE_TARGETS =
-
-include Makefile
 
 # Some projects override e.g., _autoreconf here.
 -include $(srcdir)/cfg.mk
@@ -94,25 +80,6 @@ _version:
 	cd $(srcdir) && rm -rf autom4te.cache .version && $(_autoreconf)
 	$(MAKE) $(AM_MAKEFLAGS) Makefile
 
-else
-
-.DEFAULT_GOAL := abort-due-to-no-makefile
-srcdir = .
-
-# The package can override .DEFAULT_GOAL to run actions like autoreconf.
--include ./cfg.mk
-include ./maint.mk
-
-ifeq ($(.DEFAULT_GOAL),abort-due-to-no-makefile)
-$(MAKECMDGOALS): abort-due-to-no-makefile
-endif
-
-abort-due-to-no-makefile:
-	@echo There seems to be no Makefile in this directory.   1>&2
-	@echo "You must run ./configure before running \`make'." 1>&2
-	@exit 1
-
-endif
 
 # Tell version 3.79 and up of GNU make to not build goals in this
 # directory in parallel, in case someone tries to build multiple

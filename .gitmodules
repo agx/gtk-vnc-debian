@@ -1,0 +1,3 @@
+[submodule "src/keycodemapdb"]
+	path = subprojects/keycodemapdb
+	url = https://gitlab.com/keycodemap/keycodemapdb.git

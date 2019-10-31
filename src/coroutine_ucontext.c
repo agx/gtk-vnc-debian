@@ -27,6 +27,11 @@
 #include <stdlib.h>
 #include "coroutine.h"
 
+/* Back compat for macOS 10.x https://gitlab.gnome.org/GNOME/gtk-vnc/issues/4 */
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 int coroutine_release(struct coroutine *co)
 {
     return cc_release(&co->cc);

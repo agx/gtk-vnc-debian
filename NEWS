@@ -1,6 +1,28 @@
     GTK VNC News
     ============
 
+Aug 7, 2019: Release 1.0.0
+==========================
+
+ o Autotools build system replaced with meson
+ o Support for GTK-2 is dropped. GTK-3 is mandatory
+ o Support for libview is dropped in example program
+ o Improvements to example demos
+ o Use MAP_ANON if MAP_ANONYMOUS doesn't exist to help
+   certai macOS versions
+ o Fix crash when connection attempt fails early
+ o Initialize gcrypt early in auth process
+ o Emit vnc-auth-failure signal when SASL auth fals
+ o Emit vnc-error signal when authentication fails
+ o Fix double free when failing to read certificates
+ o Run unit tests in RPM build
+ o Modernize RPM spec
+ o Fix race condition in unit tests
+ o Fix install of missing header for cairo framebuffer
+ o Fix typo in gir package name
+ o Add missing VncPixelFormat file to git data
+
+
 Aug 17, 2018: Release 0.9.0
 ===========================
 

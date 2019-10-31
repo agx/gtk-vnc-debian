@@ -39,7 +39,7 @@
 
 #if defined(GDK_WINDOWING_X11) || defined(GDK_WINDOWING_WAYLAND)
 /* Wayland or Xorg Linux + evdev (offset evdev keycodes) */
-#include "vncdisplaykeymap_xorgevdev2qnum.c"
+#include "vncdisplaykeymap_xorgevdev2qnum.h"
 #endif
 
 #ifdef GDK_WINDOWING_X11
@@ -49,11 +49,11 @@
 #include <string.h>
 
 /* Xorg Linux + kbd (offset + mangled XT keycodes) */
-#include "vncdisplaykeymap_xorgkbd2qnum.c"
+#include "vncdisplaykeymap_xorgkbd2qnum.h"
 /* Xorg OS-X aka XQuartz (offset OS-X keycodes) */
-#include "vncdisplaykeymap_xorgxquartz2qnum.c"
+#include "vncdisplaykeymap_xorgxquartz2qnum.h"
 /* Xorg Cygwin aka XWin (offset + mangled XT keycodes) */
-#include "vncdisplaykeymap_xorgxwin2qnum.c"
+#include "vncdisplaykeymap_xorgxwin2qnum.h"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_X11_DISPLAY
@@ -63,7 +63,7 @@
 
 #ifdef GDK_WINDOWING_WIN32
 /* Win32 native virtual keycodes */
-#include "vncdisplaykeymap_win322qnum.c"
+#include "vncdisplaykeymap_win322qnum.h"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_WIN32_DISPLAY
@@ -73,7 +73,7 @@
 
 #ifdef GDK_WINDOWING_BROADWAY
 /* X11 keysyms */
-#include "vncdisplaykeymap_x112qnum.c"
+#include "vncdisplaykeymap_x112qnum.h"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_BROADWAY_DISPLAY
@@ -84,7 +84,7 @@
 
 #ifdef GDK_WINDOWING_QUARTZ
 /* OS-X native keycodes */
-#include "vncdisplaykeymap_osx2qnum.c"
+#include "vncdisplaykeymap_osx2qnum.h"
 
 /* Gtk2 compat */
 #ifndef GDK_IS_QUARTZ_DISPLAY

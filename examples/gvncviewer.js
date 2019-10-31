@@ -1,10 +1,13 @@
 #!/usr/bin/gjs
 
+imports.gi.versions.Gtk = "3.0";
+imports.gi.versions.GtkVnc = "2.0";
+
 const Vnc = imports.gi.GtkVnc;
 const GVnc = imports.gi.GVnc;
 const Gtk = imports.gi.Gtk;
 
-Gtk.init(0, null);
+Gtk.init(null);
 
 GVnc.util_set_debug(true);
 

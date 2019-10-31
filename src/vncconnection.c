@@ -48,7 +48,7 @@
 #include <sasl/sasl.h>
 #endif
 
-#ifdef HAVE_PWD_H
+#ifndef G_OS_WIN32
 #include <pwd.h>
 #endif
 
@@ -124,6 +124,7 @@ static void vnc_connection_close(VncConnection *conn);
 static void vnc_connection_set_error(VncConnection *conn,
                                      const char *format,
                                      ...) G_GNUC_PRINTF(2, 3);
+static void vnc_connection_auth_failure(VncConnection *conn, const char *reason);
 
 /*
  * A special GSource impl which allows us to wait on a certain
@@ -319,7 +320,9 @@ static gboolean vnc_connection_timeout(gpointer data)
 {
     struct wait_queue *wait = data;
 
+    VNC_DEBUG("Connection timeout wakeup start %p", data);
     g_io_wakeup(wait);
+    VNC_DEBUG("Connection timeout wakeup done %p", data);
 
     return FALSE;
 }
@@ -658,6 +661,14 @@ static G_GNUC_PRINTF(2, 3) void vnc_connection_set_error(VncConnection *conn,
     vnc_connection_emit_main_context(conn, VNC_ERROR, &s);
 }
 
+static void vnc_connection_auth_failure(VncConnection *conn,
+                                        const char *reason)
+{
+    struct signal_data sigdata;
+
+    sigdata.params.authReason = reason;
+    vnc_connection_emit_main_context(conn, VNC_AUTH_FAILURE, &sigdata);
+}
 
 static gboolean vnc_connection_use_compression(VncConnection *conn)
 {
@@ -725,7 +736,7 @@ static int vnc_connection_read_wire(VncConnection *conn, void *data, size_t len)
 
  reread:
 
-    if (priv->coroutine_stop) return -EINVAL;
+    if (vnc_connection_has_error(conn)) return -EINVAL;
 
     if (priv->tls_session) {
         ret = gnutls_read(priv->tls_session, data, len);
@@ -874,7 +885,7 @@ static int vnc_connection_read(VncConnection *conn, void *data, size_t len)
     char *ptr = data;
     size_t offset = 0;
 
-    if (priv->coroutine_stop) return -EINVAL;
+    if (vnc_connection_has_error(conn)) return -EINVAL;
 
     while (offset < len) {
         size_t tmp;
@@ -930,7 +941,7 @@ static void vnc_connection_flush_wire(VncConnection *conn,
         int ret;
         gboolean blocking = FALSE;
 
-        if (priv->coroutine_stop) return;
+        if (vnc_connection_has_error(conn)) return;
 
         if (priv->tls_session) {
             ret = gnutls_write(priv->tls_session,
@@ -2867,10 +2878,9 @@ static void vnc_connection_tight_update(VncConnection *conn,
 
 static void vnc_connection_update(VncConnection *conn, int x, int y, int width, int height)
 {
-    VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     VNC_DEBUG("Notify update area (%dx%d) at location %d,%d", width, height, x, y);
@@ -2885,10 +2895,9 @@ static void vnc_connection_update(VncConnection *conn, int x, int y, int width, 
 
 static void vnc_connection_bell(VncConnection *conn)
 {
-    VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     VNC_DEBUG("Server beep");
@@ -2900,11 +2909,10 @@ static void vnc_connection_server_cut_text(VncConnection *conn,
                                            const void *data,
                                            size_t len)
 {
-    VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
     GString *text;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     text = g_string_new_len ((const gchar *)data, len);
@@ -2922,7 +2930,7 @@ static void vnc_connection_resize(VncConnection *conn, int width, int height)
 
     VNC_DEBUG("Desktop resize w=%d h=%d", width, height);
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     priv->width = width;
@@ -2938,7 +2946,7 @@ static void vnc_connection_pixel_format(VncConnection *conn)
     VncConnectionPrivate *priv = conn->priv;
     struct signal_data sigdata;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     sigdata.params.pixelFormat = &priv->fmt;
@@ -2956,7 +2964,7 @@ static void vnc_connection_pointer_type_change(VncConnection *conn, gboolean abs
         return;
     priv->absPointer = absPointer;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     sigdata.params.absPointer = absPointer;
@@ -3017,7 +3025,7 @@ static void vnc_connection_rich_cursor(VncConnection *conn, guint16 x, guint16 y
         priv->cursor = vnc_cursor_new(pixbuf, x, y, width, height);
     }
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     sigdata.params.cursor = priv->cursor;
@@ -3082,7 +3090,7 @@ static void vnc_connection_xcursor(VncConnection *conn, guint16 x, guint16 y, gu
         priv->cursor = vnc_cursor_new(pixbuf, x, y, width, height);
     }
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return;
 
     sigdata.params.cursor = priv->cursor;
@@ -3109,7 +3117,7 @@ static gboolean vnc_connection_framebuffer_update(VncConnection *conn, gint32 et
               etype, width, height, x, y);
 
     if (vnc_connection_has_error(conn))
-        return !vnc_connection_has_error(conn);
+        return FALSE;
 
     switch (etype) {
     case VNC_CONNECTION_ENCODING_RAW:
@@ -3281,7 +3289,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
     int ret;
 
     if (vnc_connection_has_error(conn))
-        return !vnc_connection_has_error(conn);
+        return FALSE;
 
     /* NB: make sure that all server message functions
        handle has_error appropriately */
@@ -3394,7 +3402,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
 
         n_type = vnc_connection_read_u8(conn);
 
-        if (priv->coroutine_stop)
+        if (vnc_connection_has_error(conn))
             break;
 
         switch (n_type) {
@@ -3412,7 +3420,7 @@ static gboolean vnc_connection_server_message(VncConnection *conn)
                                              n_length, 1024 * 1024);
                     break;
                 }
-                if (priv->coroutine_stop)
+                if (vnc_connection_has_error(conn))
                     break;
 
                 if (!priv->audio) {
@@ -3480,7 +3488,7 @@ static gboolean vnc_connection_has_credentials(gpointer data)
     VncConnection *conn = data;
     VncConnectionPrivate *priv = conn->priv;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return TRUE;
     if (priv->want_cred_username && !priv->cred_username)
         return FALSE;
@@ -3497,7 +3505,7 @@ static gboolean vnc_connection_gather_credentials(VncConnection *conn)
 
     VNC_DEBUG("Checking if credentials are needed");
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     if (!vnc_connection_has_credentials(conn)) {
@@ -3535,7 +3543,7 @@ static gboolean vnc_connection_gather_credentials(VncConnection *conn)
 
         g_value_array_free(authCred);
 
-        if (priv->coroutine_stop)
+        if (vnc_connection_has_error(conn))
             return FALSE;
         VNC_DEBUG("Waiting for missing credentials");
         g_condition_wait(vnc_connection_has_credentials, conn);
@@ -3568,19 +3576,15 @@ static gboolean vnc_connection_check_auth_result(VncConnection *conn)
         vnc_connection_read(conn, reason, len);
         reason[len] = '\0';
         VNC_DEBUG("Fail %s", reason);
-        if (!priv->coroutine_stop) {
-            struct signal_data sigdata;
-            sigdata.params.authReason = reason;
+        if (!vnc_connection_has_error(conn)) {
             vnc_connection_set_error(conn, "%s", reason);
-            vnc_connection_emit_main_context(conn, VNC_AUTH_FAILURE, &sigdata);
+            vnc_connection_auth_failure(conn, reason);
         }
     } else {
         VNC_DEBUG("Fail auth no result");
-        if (!priv->coroutine_stop) {
-            struct signal_data sigdata;
-            sigdata.params.authReason = "Unknown authentication failure";
+        if (!vnc_connection_has_error(conn)) {
             vnc_connection_set_error(conn, "%s", "Unknown authentication failure");
-            vnc_connection_emit_main_context(conn, VNC_AUTH_FAILURE, &sigdata);
+            vnc_connection_auth_failure(conn, "Unknown authentication failure");
         }
     }
     return FALSE;
@@ -3631,33 +3635,38 @@ static gboolean vnc_connection_perform_auth_vnc(VncConnection *conn)
     error = gcry_cipher_open(&c, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_ECB, 0);
     if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
         VNC_DEBUG("gcry_cipher_open error: %s\n", gcry_strerror(error));
-        return FALSE;
+        goto error;
     }
 
     error = gcry_cipher_setkey(c, key, 8);
     if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
         VNC_DEBUG("gcry_cipher_setkey error: %s\n", gcry_strerror(error));
         gcry_cipher_close(c);
-        return FALSE;
+        goto error;
     }
 
     error = gcry_cipher_encrypt(c, challenge, 8, challenge, 8);
     if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
         VNC_DEBUG("gcry_cipher_encrypt error: %s\n", gcry_strerror(error));
         gcry_cipher_close(c);
-        return FALSE;
+        goto error;
     }
     error = gcry_cipher_encrypt(c, challenge + 8, 8, challenge + 8, 8);
     if (gcry_err_code (error) != GPG_ERR_NO_ERROR) {
         VNC_DEBUG("gcry_cipher_encrypt error: %s\n", gcry_strerror(error));
         gcry_cipher_close(c);
-        return FALSE;
+        goto error;
     }
     gcry_cipher_close(c);
 
     vnc_connection_write(conn, challenge, 16);
     vnc_connection_flush(conn);
     return vnc_connection_check_auth_result(conn);
+
+error:
+    vnc_connection_set_error(conn, "%s: %s", "Unknown authentication failure: %s",
+                             gcry_strerror(error));
+    return FALSE;
 }
 
 /*
@@ -4185,7 +4194,7 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
 
     /* Get the supported mechanisms from the server */
     mechlistlen = vnc_connection_read_u32(conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         goto error;
     if (mechlistlen > SASL_MAX_MECHLIST_LEN) {
         vnc_connection_set_error(conn,
@@ -4197,7 +4206,7 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
     mechlist = g_malloc(mechlistlen+1);
     vnc_connection_read(conn, mechlist, mechlistlen);
     mechlist[mechlistlen] = '\0';
-    if (priv->coroutine_stop) {
+    if (vnc_connection_has_error(conn)) {
         g_free(mechlist);
         mechlist = NULL;
         goto error;
@@ -4254,14 +4263,14 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
         vnc_connection_write_u32(conn, 0);
     }
     vnc_connection_flush(conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         goto error;
 
 
     VNC_DEBUG("%s", "Getting sever start negotiation reply");
     /* Read the 'START' message reply from server */
     serverinlen = vnc_connection_read_u32(conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         goto error;
     if (serverinlen > SASL_MAX_DATA_LEN) {
         vnc_connection_set_error(conn,
@@ -4280,7 +4289,7 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
         serverin = NULL;
     }
     complete = vnc_connection_read_u8(conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         goto error;
 
     VNC_DEBUG("Client start result complete: %d. Data %u bytes %p '%s'",
@@ -4342,13 +4351,13 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
             vnc_connection_write_u32(conn, 0);
         }
         vnc_connection_flush(conn);
-        if (priv->coroutine_stop)
+        if (vnc_connection_has_error(conn))
             goto error;
 
         VNC_DEBUG("Server step with %u bytes %p", clientoutlen, clientout);
 
         serverinlen = vnc_connection_read_u32(conn);
-        if (priv->coroutine_stop)
+        if (vnc_connection_has_error(conn))
             goto error;
         if (serverinlen > SASL_MAX_DATA_LEN) {
             vnc_connection_set_error(conn,
@@ -4367,7 +4376,7 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
             serverin = NULL;
         }
         complete = vnc_connection_read_u8(conn);
-        if (priv->coroutine_stop)
+        if (vnc_connection_has_error(conn))
             goto error;
 
         VNC_DEBUG("Client step result complete: %d. Data %u bytes %p '%s'",
@@ -4412,6 +4421,7 @@ static gboolean vnc_connection_perform_auth_sasl(VncConnection *conn)
  error:
     if (saslconn)
         sasl_dispose(&saslconn);
+    vnc_connection_auth_failure(conn, "Unknown authentication failure");
     return FALSE;
 }
 #endif /* HAVE_SASL */
@@ -4424,10 +4434,6 @@ static gboolean vnc_connection_start_tls(VncConnection *conn, int anonTLS)
     int ret;
 
     VNC_DEBUG("Do TLS handshake");
-    if (vnc_connection_tls_initialize() < 0) {
-        vnc_connection_set_error(conn, "%s", "Failed to init TLS");
-        return FALSE;
-    }
     if (priv->tls_session == NULL) {
         if (gnutls_init(&priv->tls_session, GNUTLS_CLIENT) < 0) {
             vnc_connection_set_error(conn, "%s", "Failed to allocate client session");
@@ -4435,22 +4441,19 @@ static gboolean vnc_connection_start_tls(VncConnection *conn, int anonTLS)
         }
 
         if (gnutls_priority_set_direct(priv->tls_session, priority, NULL) < 0) {
-            gnutls_deinit(priv->tls_session);
             vnc_connection_set_error(conn, "%s", "Failed to set priority");
-            return FALSE;
+            goto deinit;
         }
 
         if (anonTLS) {
             gnutls_anon_client_credentials anon_cred = vnc_connection_tls_initialize_anon_cred();
             if (!anon_cred) {
-                gnutls_deinit(priv->tls_session);
                 vnc_connection_set_error(conn, "%s", "Failed to allocate credentials");
-                return FALSE;
+                goto deinit;
             }
             if (gnutls_credentials_set(priv->tls_session, GNUTLS_CRD_ANON, anon_cred) < 0) {
-                gnutls_deinit(priv->tls_session);
                 vnc_connection_set_error(conn, "%s", "Failed to initialize credentials");
-                return FALSE;
+                goto deinit;
             }
         } else {
             priv->want_cred_password = FALSE;
@@ -4461,14 +4464,12 @@ static gboolean vnc_connection_start_tls(VncConnection *conn, int anonTLS)
 
             gnutls_certificate_credentials_t x509_cred = vnc_connection_tls_initialize_cert_cred(conn);
             if (!x509_cred) {
-                gnutls_deinit(priv->tls_session);
                 vnc_connection_set_error(conn, "%s", "Failed to allocate credentials");
-                return FALSE;
+                goto deinit;
             }
             if (gnutls_credentials_set(priv->tls_session, GNUTLS_CRD_CERTIFICATE, x509_cred) < 0) {
-                gnutls_deinit(priv->tls_session);
                 vnc_connection_set_error(conn, "%s", "Failed to initialize credentials");
-                return FALSE;
+                goto deinit;
             }
         }
 
@@ -4504,6 +4505,11 @@ static gboolean vnc_connection_start_tls(VncConnection *conn, int anonTLS)
         }
         return TRUE;
     }
+
+ deinit:
+    gnutls_deinit(priv->tls_session);
+    priv->tls_session = NULL;
+    return FALSE;
 }
 
 static gboolean vnc_connection_has_auth_subtype(gpointer data)
@@ -4511,7 +4517,7 @@ static gboolean vnc_connection_has_auth_subtype(gpointer data)
     VncConnection *conn = data;
     VncConnectionPrivate *priv = conn->priv;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return TRUE;
     if (priv->auth_subtype == VNC_CONNECTION_AUTH_INVALID)
         return FALSE;
@@ -4584,15 +4590,15 @@ static gboolean vnc_connection_perform_auth_tls(VncConnection *conn)
         VNC_DEBUG("Possible TLS sub-auth %u", auth[i]);
     }
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
     vnc_connection_choose_auth(conn, VNC_AUTH_CHOOSE_SUBTYPE, nauth, auth);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     VNC_DEBUG("Waiting for TLS auth subtype");
     g_condition_wait(vnc_connection_has_auth_subtype, conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     VNC_DEBUG("Choose auth %u", priv->auth_subtype);
@@ -4659,15 +4665,15 @@ static gboolean vnc_connection_perform_auth_vencrypt(VncConnection *conn)
         VNC_DEBUG("Possible VeNCrypt sub-auth %u", auth[i]);
     }
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
     vnc_connection_choose_auth(conn, VNC_AUTH_CHOOSE_SUBTYPE, nauth, auth);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     VNC_DEBUG("Waiting for VeNCrypt auth subtype");
     g_condition_wait(vnc_connection_has_auth_subtype, conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     VNC_DEBUG("Choose auth %u", priv->auth_subtype);
@@ -4740,7 +4746,7 @@ static gboolean vnc_connection_has_auth_type(gpointer data)
     VncConnection *conn = data;
     VncConnectionPrivate *priv = conn->priv;
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return TRUE;
     if (priv->auth_type == VNC_CONNECTION_AUTH_INVALID)
         return FALSE;
@@ -4752,6 +4758,11 @@ static gboolean vnc_connection_perform_auth(VncConnection *conn)
     VncConnectionPrivate *priv = conn->priv;
     unsigned int nauth, i;
     unsigned int auth[10];
+
+    if (vnc_connection_tls_initialize() < 0) {
+        vnc_connection_set_error(conn, "%s", "Failed to init TLS");
+        return FALSE;
+    }
 
     if (priv->minor <= 6) {
         nauth = 1;
@@ -4777,15 +4788,15 @@ static gboolean vnc_connection_perform_auth(VncConnection *conn)
         VNC_DEBUG("Possible auth %u", auth[i]);
     }
 
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
     vnc_connection_choose_auth(conn, VNC_AUTH_CHOOSE_TYPE, nauth, auth);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     VNC_DEBUG("Waiting for auth type");
     g_condition_wait(vnc_connection_has_auth_type, conn);
-    if (priv->coroutine_stop)
+    if (vnc_connection_has_error(conn))
         return FALSE;
 
     VNC_DEBUG("Choose auth %u", priv->auth_type);
@@ -5318,6 +5329,7 @@ static gboolean vnc_connection_initialize(VncConnection *conn)
 
     priv->absPointer = TRUE;
 
+    VNC_DEBUG("Schedule greeting timeout %p", &priv->wait);
     timeout = g_timeout_add_seconds(2, vnc_connection_timeout, &priv->wait);
     want = 12;
     while (want > 0) {
@@ -5369,7 +5381,9 @@ static gboolean vnc_connection_initialize(VncConnection *conn)
     }
 
     if (timeout != 0) {
+        VNC_DEBUG("Remove timeout %p", &priv->wait);
         g_source_remove(timeout);
+        timeout = 0;
     }
 
     version[12] = 0;
@@ -5449,6 +5463,11 @@ static gboolean vnc_connection_initialize(VncConnection *conn)
     return !vnc_connection_has_error(conn);
 
  fail:
+    if (timeout != 0) {
+        VNC_DEBUG("Remove timeout %p", &priv->wait);
+        g_source_remove(timeout);
+        timeout = 0;
+    }
     return !vnc_connection_has_error(conn);
 }
 
@@ -5481,6 +5500,7 @@ static GSocket *vnc_connection_connect_socket(struct wait_queue *wait,
     if (!sock)
         return NULL;
 
+    VNC_DEBUG("Schedule socket timeout %p", wait);
     guint timeout = g_timeout_add_seconds(10, vnc_connection_timeout, wait);
 
     g_socket_set_blocking(sock, FALSE);
@@ -5513,8 +5533,10 @@ timeout:
     sock = NULL;
 
 end:
-    if (timeout != 0)
+    if (timeout != 0) {
+        VNC_DEBUG("Remove timeout %p", wait);
         g_source_remove(timeout);
+    }
 
     return sock;
 }
@@ -5814,7 +5836,7 @@ gboolean vnc_connection_set_auth_type(VncConnection *conn, unsigned int type)
     VNC_DEBUG("Thinking about auth type %u", type);
     if (priv->auth_type != VNC_CONNECTION_AUTH_INVALID) {
         vnc_connection_set_error(conn, "%s", "Auth type has already been set");
-        return !vnc_connection_has_error(conn);
+        return FALSE;
     }
     if (type != VNC_CONNECTION_AUTH_NONE &&
         type != VNC_CONNECTION_AUTH_VNC &&
@@ -5827,7 +5849,7 @@ gboolean vnc_connection_set_auth_type(VncConnection *conn, unsigned int type)
         vnc_connection_set_error(conn, "Auth type %u is not supported",
                                  type);
         g_signal_emit(conn, VNC_AUTH_UNSUPPORTED, 0, type);
-        return !vnc_connection_has_error(conn);
+        return FALSE;
     }
     VNC_DEBUG("Decided on auth type %u", type);
     priv->auth_type = type;
@@ -5856,11 +5878,11 @@ gboolean vnc_connection_set_auth_subtype(VncConnection *conn, unsigned int type)
         priv->auth_type != VNC_CONNECTION_AUTH_TLS) {
         vnc_connection_set_error(conn, "Auth type %u does not support subauth",
                                  priv->auth_type);
-        return !vnc_connection_has_error(conn);
+        return FALSE;
     }
     if (priv->auth_subtype != VNC_CONNECTION_AUTH_INVALID) {
         vnc_connection_set_error(conn, "%s", "Auth subtype has already been set");
-        return !vnc_connection_has_error(conn);
+        return FALSE;
     }
     priv->auth_subtype = type;
 
@@ -5897,7 +5919,7 @@ static gboolean vnc_connection_set_credential_x509(VncConnection *conn,
     VncConnectionPrivate *priv = conn->priv;
     char *sysdir = g_strdup_printf("%s/pki", SYSCONFDIR);
     int ret;
-#ifndef WIN32
+#ifndef G_OS_WIN32
     struct passwd *pw;
 
     if (!(pw = getpwuid(getuid())))
