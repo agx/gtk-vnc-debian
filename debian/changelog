@@ -1,10 +1,12 @@
-gtk-vnc (1.0.0-1~1.gbp8d83a0) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @8d83a06f1b0e126d53fc8af26c8e59d0ca1613b8 **
+gtk-vnc (1.0.0-1) unstable; urgency=medium
 
   * [4a01f76] New upstream version 1.0.0
+  * [50647d2] Drop gtk2 and switch to meson
+  * [f8b078f] Bump standards version
+  * [1254e9e] Bump debhelper compat level to 12
+  * [06d4971] Add salsa-ci pipeline
 
- -- Guido Günther <agx@sigxcpu.org>  Thu, 31 Oct 2019 17:06:24 +0100
+ -- Guido Günther <agx@sigxcpu.org>  Thu, 31 Oct 2019 19:40:21 +0100
 
 gtk-vnc (0.9.0-1) unstable; urgency=medium
 
