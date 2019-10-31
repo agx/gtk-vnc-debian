@@ -89,7 +89,8 @@ vinagre(1)
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_TERMIOS_H
+#include <glib.h>
+#ifndef G_OS_WIN32
 #include <termios.h>
 #endif
 #include <unistd.h>
@@ -136,7 +137,7 @@ static const guint preferable_auths[] = {
 };
 
 
-#ifdef HAVE_TERMIOS_H
+#ifndef G_OS_WIN32
 static gchar *
 do_vnc_get_credential(const gchar *prompt, gboolean doecho)
 {

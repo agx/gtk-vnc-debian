@@ -13,107 +13,108 @@ GTK VNC is currently maintained by
 
 Patches have been received from
 
-A S Alam <aalam@users.sf.net>
-Adam Jackson <ajax@redhat.com>
-Akom Chotiphantawanon <knight2000@gmail.com>
-Alban Browaeys <prahal@yahoo.com>
-Alexandre Rostovtsev <tetromino@gentoo.org>
-Algimantas Margevičius <gymka@mail.ru>
-Andika Triwidada <andika@gmail.com>
-Andre Klapper <a9016009@gmx.de>
-Anthony Liguori <anthony@codemonkey.ws>
-António Lima <amrlima@gmail.com>
-Artem Rusanov <artem.rusanov@gmail.com>
-Atsushi SAKAI <sakaia@jp.fujitsu.com>
-Aurimas Černius <aurisc4@gmail.com>
-Bruce Cowan <bcowan@fastmail.co.uk>
-Carles Ferrando <carles.ferrando@gmail.com>
-Chao-Hsiung Liao <j_h_liau@yahoo.com.tw>
-Christophe Fergeau <cfergeau@redhat.com>
-Claude Paroz <claude@2xlibre.net>
-Cole Robinson <crobinso@redhat.com>
-Cédric Valmary <cvalmary@yahoo.fr>
-Daniel Korostil <ted.korostiled@gmail.com>
-Daniel Nylander <po@danielnylander.se>
-Daniel P. Berrange <dan@berrange.com>
-Daniel P. Berrangé <dan@berrange.com>
-Doug Goldstein <cardoe@cardoe.com>
-Emilio Pozuelo Monfort <pochu27@gmail.com>
-Enrico Nicoletto <enriconlto@src.gnome.org>
-Eric R. Schulz <eric@ers35.com>
-Fabiano Fidêncio <fabiano@fidencio.org>
-Fabiano Fidêncio <fidencio@redhat.com>
-Fabio Tomat <f.t.public@gmail.com>
-Federico Mena Quintero <federico@gnome.org>
-Felix E. Klee <felix.klee@inka.de>
-Fran Diéguez <fran.dieguez@glug.es>
-Gabor Kelemen <kelemeng@gnome.hu>
-George Stefanakis <george.stefanakis@gmail.com>
-Gil Forcada <gforcada@gnome.org>
-Guido Günther <agx@sigxcpu.org>
-GunChleoc <fios@foramnagaidhlig.net>
-Halton Huo <halton.huo@sun.com>
-Henrique P. Machado <zehrique@gmail.com>
-Hiroyuki Kaguchi <fj7025cf@aa.jp.fujitsu.com>
-Håkon Enger <hakon.enger@gmail.com>
-Inaki Larranaga <dooteo@zundan.com>
-John Haxby <john.haxby@oracle.com>
-Jonh Wendell <jwendell@gnome.org>
-Jorge González <jorgegonz@svn.gnome.org>
-Kenneth Nielsen <k.nielsen81@gmail.com>
-Kjartan Maraas <kmaraas@gnome.org>
-Koop Mast <kwm@rainbow-runner.nl>
-Kris Thomsen <lakristho@gmail.com>
-Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>
-Lei Li <lilei@linux.vnet.ibm.com>
-Leonid Kanter <leon@asplinux.ru>
-Luca Ferretti <elle.uca@libero.it>
-Lucian Adrian Grijincu <lucian.grijincu@gmail.com>
-Lyper Lai <lyp069@gmail.com>
-Marc-André Lureau <marcandre.lureau@gmail.com>
-Marek Černocký <marek@manet.cz>
-Mario Blättermann <mariobl@gnome.org>
-Marton Balint <cus@fazekas.hu>
-Matej Urbančič <mateju@svn.gnome.org>
-Michael Ramírez <radical_michael@hotmail.com>
-Michal Novotny <minovotn@redhat.com>
-Michal Suchanek <hramrach@centrum.cz>
-Muhammet Kara <muhammet.k@gmail.com>
-Nathan Follens <nathan@anche.no>
-Nils-Christoph Fiedler <ncfiedler@gnome.org>
-Olivier Fourdan <ofourdan@redhat.com>
-Pavel Grunt <pgrunt@redhat.com>
-Pavlos Tournaris <p.tournaris@gmail.com>
-Pedro Albuquerque <palbuquerque73@gmail.com>
-Peter Korsgaard <peter@korsgaard.com>
-Philip Withnall <philip@tecnocode.co.uk>
-Piotr Drąg <piotrdrag@gmail.com>
-Praveen Illa <mail2ipn@gmail.com>
-Rafael Fontenelle <rafaelff@gnome.org>
-Richard W.M. Jones <rjones@redhat.com>
-Rico Tzschichholz <ricotz@t-online.de>
-Rūdolfs Mazurs <rudolfsm@src.gnome.org>
-Samir Ribic <samir.ribic@etf.unsa.ba>
-Saori Fukuta <fukuta.saori@jp.fujitsu.com>
-Sasi Bhushan <sasi@swecha.net>
-Sasi Bhushan Boddepalli <sasi@swecha.net>
-Seong-ho, Cho <darkcircle.0426@gmail.com>
-Shushi Kurose <md81bird@hitaki.net>
-Simos Xenitellis <simos@gnome.org>
-Sjoerd Simons <sjoerd.simons@collabora.co.uk>
-Stanislav Petrek <stanislav.petrek@gmail.com>
-Stefano Stabellini <stefano.stabellini@eu.citrix.com>
-Steven Carr <Steven.Carr@scaa-usa.com>
-Sébastien Granjoux <seb.sfo@free.fr>
-Takeshi AIHANA <takeshi.aihana@gmail.com>
-Victor Ibragimov <victor.ibragimov@gmail.com>
-Victor Toso <me@victortoso.com>
-Yaron Shahrabani <sh.yaron@gmail.com>
-Zeeshan Ali (Khattak) <zeeshanak@gnome.org>
-anthony@rhesus <anthony@codemonkey.ws>
-anthony@squirrel <anthony@codemonkey.ws>
-gogo <trebelnik2@gmail.com>
-Мирослав Николић <miroslavnikolic@rocketmail.com>
+   Adam Jackson <ajax@redhat.com>
+   Akom Chotiphantawanon <knight2000@gmail.com>
+   Alban Browaeys <prahal@yahoo.com>
+   Alexandre Rostovtsev <tetromino@gentoo.org>
+   Algimantas Margevičius <gymka@mail.ru>
+   Andika Triwidada <andika@gmail.com>
+   Andre Klapper <a9016009@gmx.de>
+   Anthony Liguori <anthony@codemonkey.ws>
+   anthony@rhesus <anthony@codemonkey.ws>
+   anthony@squirrel <anthony@codemonkey.ws>
+   António Lima <amrlima@gmail.com>
+   Artem Rusanov <artem.rusanov@gmail.com>
+   A S Alam <aalam@users.sf.net>
+   Atsushi SAKAI <sakaia@jp.fujitsu.com>
+   Aurimas Černius <aurisc4@gmail.com>
+   Bruce Cowan <bcowan@fastmail.co.uk>
+   Carles Ferrando <carles.ferrando@gmail.com>
+   Cédric Valmary <cvalmary@yahoo.fr>
+   Chao-Hsiung Liao <j_h_liau@yahoo.com.tw>
+   Christophe Fergeau <cfergeau@redhat.com>
+   Claude Paroz <claude@2xlibre.net>
+   Cole Robinson <crobinso@redhat.com>
+   Daniel Korostil <ted.korostiled@gmail.com>
+   Daniel Nylander <po@danielnylander.se>
+   Daniel P. Berrange <dan@berrange.com>
+   Daniel P. Berrangé <dan@berrange.com>
+   Doug Goldstein <cardoe@cardoe.com>
+   Emilio Pozuelo Monfort <pochu27@gmail.com>
+   Enrico Nicoletto <enriconlto@src.gnome.org>
+   Eric R. Schulz <eric@ers35.com>
+   Fabiano Fidêncio <fabiano@fidencio.org>
+   Fabiano Fidêncio <fidencio@redhat.com>
+   Fabio Tomat <f.t.public@gmail.com>
+   Federico Mena Quintero <federico@gnome.org>
+   Felix E. Klee <felix.klee@inka.de>
+   Fran Diéguez <fran.dieguez@glug.es>
+   Gabor Kelemen <kelemeng@gnome.hu>
+   George Stefanakis <george.stefanakis@gmail.com>
+   Gil Forcada <gforcada@gnome.org>
+   gogo <trebelnik2@gmail.com>
+   Guido Günther <agx@sigxcpu.org>
+   GunChleoc <fios@foramnagaidhlig.net>
+   Håkon Enger <hakon.enger@gmail.com>
+   Halton Huo <halton.huo@sun.com>
+   Henrique P. Machado <zehrique@gmail.com>
+   Hiroyuki Kaguchi <fj7025cf@aa.jp.fujitsu.com>
+   Inaki Larranaga <dooteo@zundan.com>
+   Ján Tomko <jtomko@redhat.com>
+   John Haxby <john.haxby@oracle.com>
+   Jonh Wendell <jwendell@gnome.org>
+   Jorge González <jorgegonz@svn.gnome.org>
+   Kenneth Nielsen <k.nielsen81@gmail.com>
+   Kjartan Maraas <kmaraas@gnome.org>
+   Koop Mast <kwm@rainbow-runner.nl>
+   Kris Thomsen <lakristho@gmail.com>
+   Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>
+   Lei Li <lilei@linux.vnet.ibm.com>
+   Leonid Kanter <leon@asplinux.ru>
+   Luca Ferretti <elle.uca@libero.it>
+   Lucian Adrian Grijincu <lucian.grijincu@gmail.com>
+   Lyper Lai <lyp069@gmail.com>
+   Marc-André Lureau <marcandre.lureau@gmail.com>
+   Marek Černocký <marek@manet.cz>
+   Mario Blättermann <mariobl@gnome.org>
+   Marton Balint <cus@fazekas.hu>
+   Matej Urbančič <mateju@svn.gnome.org>
+   Michael Ramírez <radical_michael@hotmail.com>
+   Michal Novotny <minovotn@redhat.com>
+   Michal Suchanek <hramrach@centrum.cz>
+   Muhammet Kara <muhammet.k@gmail.com>
+   Nathan Follens <nathan@anche.no>
+   Nils-Christoph Fiedler <ncfiedler@gnome.org>
+   Olivier Fourdan <ofourdan@redhat.com>
+   Pavel Grunt <pgrunt@redhat.com>
+   Pavlos Tournaris <p.tournaris@gmail.com>
+   Pedro Albuquerque <palbuquerque73@gmail.com>
+   Peter Korsgaard <peter@korsgaard.com>
+   Philip Withnall <philip@tecnocode.co.uk>
+   Piotr Drąg <piotrdrag@gmail.com>
+   Praveen Illa <mail2ipn@gmail.com>
+   Rafael Fontenelle <rafaelff@gnome.org>
+   Richard W.M. Jones <rjones@redhat.com>
+   Rico Tzschichholz <ricotz@t-online.de>
+   Rūdolfs Mazurs <rudolfsm@src.gnome.org>
+   Samir Ribic <samir.ribic@etf.unsa.ba>
+   Saori Fukuta <fukuta.saori@jp.fujitsu.com>
+   Sasi Bhushan Boddepalli <sasi@swecha.net>
+   Sasi Bhushan <sasi@swecha.net>
+   Sébastien Granjoux <seb.sfo@free.fr>
+   Seong-ho, Cho <darkcircle.0426@gmail.com>
+   Shushi Kurose <md81bird@hitaki.net>
+   Simos Xenitellis <simos@gnome.org>
+   Sjoerd Simons <sjoerd.simons@collabora.co.uk>
+   Stanislav Petrek <stanislav.petrek@gmail.com>
+   Stefano Stabellini <stefano.stabellini@eu.citrix.com>
+   Steven Carr <Steven.Carr@scaa-usa.com>
+   Takeshi AIHANA <takeshi.aihana@gmail.com>
+   Victor Ibragimov <victor.ibragimov@gmail.com>
+   Victor Toso <me@victortoso.com>
+   Yaron Shahrabani <sh.yaron@gmail.com>
+   Zeeshan Ali (Khattak) <zeeshanak@gnome.org>
+   Мирослав Николић <miroslavnikolic@rocketmail.com>
 
     ...send patches to get your name here...
 

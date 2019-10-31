@@ -24,9 +24,6 @@
 #include <vncdisplayenums.h>
 #include <vncdisplay.h>
 #include <vncgrabsequence.h>
-#if !GTK_CHECK_VERSION(3,0,0)
-#include <vncimageframebuffer.h>
-#endif
 
 #endif
 /*

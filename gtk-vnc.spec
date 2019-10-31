@@ -1,27 +1,7 @@
 # -*- rpm-spec -*-
 
 # This spec file assumes you are building for Fedora 26 or newer,
-# or for RHEL 6 or newer. It may need some tweaks for other distros.
-
-%global with_gir 0
-%if 0%{?fedora} || 0%{?rhel} >= 7
-%global with_gir 1
-%endif
-
-%global with_gtk2 1
-%if 0%{?rhel} >= 8
-%global with_gtk2 0
-%endif
-
-%global with_gtk3 0
-%if 0%{?fedora} || 0%{?rhel} >= 7
-%global with_gtk3 1
-%endif
-
-%global with_vala 0
-%if 0%{with_gtk3}
-%global with_vala 1
-%endif
+# or for RHEL 7 or newer. It may need some tweaks for other distros.
 
 %if 0%{?fedora} || 0%{?rhel} >= 8
     %global tls_priority "@LIBVIRT,SYSTEM"
@@ -29,17 +9,14 @@
     %global tls_priority "NORMAL"
 %endif
 
-Summary: A GTK2 widget for VNC clients
+Summary: A GTK widget for VNC clients
 Name: gtk-vnc
-Version: 0.9.0
-Release: 1%{?dist}%{?extra_release}
+Version: 1.0.0
+Release: 1%{?dist}
 License: LGPLv2+
 Source: http://ftp.gnome.org/pub/GNOME/sources/%{name}/0.5/%{name}-%{version}.tar.xz
 URL: https://wiki.gnome.org/Projects/gtk-vnc
 Requires: gvnc = %{version}-%{release}
-%if %{with_gtk2}
-BuildRequires: gtk2-devel >= 2.14
-%endif
 %if 0%{?fedora}
 BuildRequires: python3
 %else
@@ -49,36 +26,17 @@ BuildRequires: python3-devel
 BuildRequires: python
 %endif
 %endif
-BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel zlib-devel intltool
-%if %{with_gir}
+BuildRequires: gnutls-devel libgcrypt-devel cyrus-sasl-devel zlib-devel
 BuildRequires: gobject-introspection-devel
-%endif
-%if %{with_gtk3}
 BuildRequires: gtk3-devel
-%endif
-%if %{with_vala}
 BuildRequires: vala-tools
-%endif
 BuildRequires: pulseaudio-libs-devel
 BuildRequires: /usr/bin/pod2man
+BuildRequires: meson
 
 %description
-gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
+gtk-vnc is a VNC viewer widget for GTK. It is built using coroutines
 allowing it to be completely asynchronous while remaining single threaded.
-
-%if %{with_gtk2}
-%package devel
-Summary: Development files to build GTK2 applications with gtk-vnc
-Requires: %{name} = %{version}-%{release}
-Requires: pkgconfig
-Requires: gtk2-devel
-
-%description devel
-gtk-vnc is a VNC viewer widget for GTK2. It is built using coroutines
-allowing it to be completely asynchronous while remaining single threaded.
-
-Libraries, includes, etc. to compile with the gtk-vnc library
-%endif
 
 %package -n gvnc
 Summary: A GObject for VNC connections
@@ -130,10 +88,10 @@ Provides useful command line utilities for interacting with
 VNC servers. Includes the gvnccapture program for capturing
 screenshots of a VNC desktop
 
-%if %{with_gtk3}
 %package -n gtk-vnc2
 Summary: A GTK3 widget for VNC clients
 Requires: gvnc = %{version}-%{release}
+Obsoletes: gtk-vnc
 
 %description -n gtk-vnc2
 gtk-vnc is a VNC viewer widget for GTK3. It is built using coroutines
@@ -144,62 +102,24 @@ Summary: Development files to build GTK3 applications with gtk-vnc
 Requires: gtk-vnc2 = %{version}-%{release}
 Requires: pkgconfig
 Requires: gtk3-devel
+Obsoletes: gtk-vnc-devel
 
 %description -n gtk-vnc2-devel
 gtk-vnc is a VNC viewer widget for GTK3. It is built using coroutines
 allowing it to be completely asynchronous while remaining single threaded.
 
 Libraries, includes, etc. to compile with the gtk-vnc library
-%endif
 
 %prep
-%setup -q -n gtk-vnc-%{version} -c
-%if %{with_gtk3}
-cp -a gtk-vnc-%{version} gtk-vnc2-%{version}
-%endif
+%autosetup -n gtk-vnc-%{version}
 
 %build
-%if %{with_gir}
-%define gir_arg --enable-introspection=yes
-%else
-%define gir_arg --enable-introspection=no
-%endif
-
-%if %{with_gtk2}
-cd gtk-vnc-%{version}
-%configure --with-gtk=2.0 %{gir_arg} \
-	   --with-tls-priority=%{tls_priority}
-%__make %{?_smp_mflags} V=1
+%meson
+%meson_build
 chmod -x examples/*.pl examples/*.js examples/*.py
-cd ..
-%endif
-
-%if %{with_gtk3}
-cd gtk-vnc2-%{version}
-
-%configure --with-gtk=3.0 %{gir_arg} \
-	   --with-tls-priority=%{tls_priority}
-%__make %{?_smp_mflags} V=1
-chmod -x examples/*.pl examples/*.js examples/*.py
-cd ..
-%endif
 
 %install
-rm -fr %{buildroot}
-%if %{with_gtk2}
-cd gtk-vnc-%{version}
-%__make install DESTDIR=%{buildroot}
-cd ..
-%endif
-
-%if %{with_gtk3}
-cd gtk-vnc2-%{version}
-%__make install DESTDIR=%{buildroot}
-cd ..
-%endif
-
-rm -f %{buildroot}%{_libdir}/*.a
-rm -f %{buildroot}%{_libdir}/*.la
+%meson_install
 
 %find_lang %{name}
 
@@ -215,103 +135,65 @@ rm -f %{buildroot}%{_libdir}/*.la
 
 %postun -n gvncpulse -p /sbin/ldconfig
 
-%if %{with_gtk3}
 %post -n gtk-vnc2 -p /sbin/ldconfig
 
 %postun -n gtk-vnc2 -p /sbin/ldconfig
-%endif
 
-%if %{with_gtk2}
-%files
-%{_libdir}/libgtk-vnc-1.0.so.*
-%if %{with_gir}
-%{_libdir}/girepository-1.0/GtkVnc-1.0.typelib
-%endif
+%check
+%meson_test
 
-%files devel
-%doc gtk-vnc-%{version}/examples/gvncviewer.c
-%{_libdir}/libgtk-vnc-1.0.so
-%dir %{_includedir}/%{name}-1.0/
-%{_includedir}/%{name}-1.0/*.h
-%{_libdir}/pkgconfig/%{name}-1.0.pc
-%if %{with_gir}
-%{_datadir}/gir-1.0/GtkVnc-1.0.gir
-%endif
-%endif
 
 %files -n gvnc -f %{name}.lang
 %{_libdir}/libgvnc-1.0.so.*
-%if %{with_gir}
 %{_libdir}/girepository-1.0/GVnc-1.0.typelib
-%endif
-%if %{with_vala}
 %{_datadir}/vala/vapi/gvnc-1.0.deps
 %{_datadir}/vala/vapi/gvnc-1.0.vapi
-%endif
 
 %files -n gvnc-devel
 %{_libdir}/libgvnc-1.0.so
 %dir %{_includedir}/gvnc-1.0/
 %{_includedir}/gvnc-1.0/*.h
 %{_libdir}/pkgconfig/gvnc-1.0.pc
-%if %{with_gir}
 %{_datadir}/gir-1.0/GVnc-1.0.gir
-%endif
 
 %files -n gvncpulse -f %{name}.lang
 %{_libdir}/libgvncpulse-1.0.so.*
-%if %{with_gir}
 %{_libdir}/girepository-1.0/GVncPulse-1.0.typelib
-%endif
-%if %{with_vala}
 %{_datadir}/vala/vapi/gvncpulse-1.0.deps
 %{_datadir}/vala/vapi/gvncpulse-1.0.vapi
-%endif
 
 %files -n gvncpulse-devel
 %{_libdir}/libgvncpulse-1.0.so
 %dir %{_includedir}/gvncpulse-1.0/
 %{_includedir}/gvncpulse-1.0/*.h
 %{_libdir}/pkgconfig/gvncpulse-1.0.pc
-%if %{with_gir}
 %{_datadir}/gir-1.0/GVncPulse-1.0.gir
-%endif
 
 %files -n gvnc-tools
-%doc gtk-vnc-%{version}/AUTHORS
-%doc gtk-vnc-%{version}/ChangeLog
-%doc gtk-vnc-%{version}/ChangeLog-old
-%doc gtk-vnc-%{version}/NEWS
-%doc gtk-vnc-%{version}/README
-%doc gtk-vnc-%{version}/COPYING.LIB
+%doc AUTHORS
+%doc ChangeLog
+%doc ChangeLog-old
+%doc NEWS
+%doc README
+%doc COPYING.LIB
 %{_bindir}/gvnccapture
 %{_mandir}/man1/gvnccapture.1*
 
-%if %{with_gtk3}
 %files -n gtk-vnc2
 %{_libdir}/libgtk-vnc-2.0.so.*
-%if %{with_gir}
 %{_libdir}/girepository-1.0/GtkVnc-2.0.typelib
-%endif
-%if %{with_vala}
 %{_datadir}/vala/vapi/gtk-vnc-2.0.deps
 %{_datadir}/vala/vapi/gtk-vnc-2.0.vapi
-%endif
 
 %files -n gtk-vnc2-devel
-%doc gtk-vnc2-%{version}/examples/gvncviewer.c
-%if %{with_gir}
-%doc gtk-vnc2-%{version}/examples/gvncviewer.js
-%doc gtk-vnc2-%{version}/examples/gvncviewer.pl
-%doc gtk-vnc2-%{version}/examples/gvncviewer.py
-%endif
+%doc examples/gvncviewer.c
+%doc examples/gvncviewer.js
+%doc examples/gvncviewer.pl
+%doc examples/gvncviewer.py
 %{_libdir}/libgtk-vnc-2.0.so
 %dir %{_includedir}/%{name}-2.0/
 %{_includedir}/%{name}-2.0/*.h
 %{_libdir}/pkgconfig/%{name}-2.0.pc
-%if %{with_gir}
 %{_datadir}/gir-1.0/GtkVnc-2.0.gir
-%endif
-%endif
 
 %changelog

@@ -147,21 +147,6 @@ typedef enum
     } vnc_display_signals;
 
 
-/* Some compatibility defines to let us build on both Gtk2 and Gtk3 */
-#if GTK_CHECK_VERSION (2, 91, 0)
-
-static inline void gdk_drawable_get_size(GdkWindow *w, gint *ww, gint *wh)
-{
-    *ww = gdk_window_get_width(w);
-    *wh = gdk_window_get_height(w);
-}
-
-#define GtkObject GtkWidget
-#define GtkObjectClass GtkWidgetClass
-#define GTK_OBJECT_CLASS(c) GTK_WIDGET_CLASS(c)
-#define gdk_cursor_unref(c) g_object_unref(c)
-#endif
-
 
 static guint signals[LAST_SIGNAL] = { 0, 0, 0, 0,
                                       0, 0, 0, 0,
@@ -396,7 +381,8 @@ static gboolean draw_event(GtkWidget *widget, cairo_t *cr)
         setup_surface_cache(obj, cr, fbw, fbh);
     }
 
-    gdk_drawable_get_size(gtk_widget_get_window(widget), &ww, &wh);
+    ww = gdk_window_get_width(gtk_widget_get_window(widget));
+    wh = gdk_window_get_height(gtk_widget_get_window(widget));
 
     if (ww > fbw)
         mx = (ww - fbw) / 2;
@@ -448,65 +434,6 @@ static gboolean draw_event(GtkWidget *widget, cairo_t *cr)
 }
 
 
-#if !GTK_CHECK_VERSION (2, 91, 0)
-static gboolean expose_event(GtkWidget *widget, GdkEventExpose *expose)
-{
-    VncDisplay *obj = VNC_DISPLAY(widget);
-    cairo_t *cr;
-    gboolean ret;
-
-    cr = gdk_cairo_create(gtk_widget_get_window(GTK_WIDGET(obj)));
-    cairo_rectangle(cr,
-                    expose->area.x,
-                    expose->area.y,
-                    expose->area.width,
-                    expose->area.height);
-    cairo_clip(cr);
-
-    ret = draw_event(widget, cr);
-
-    cairo_destroy(cr);
-
-    return ret;
-}
-#endif
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
-static void do_keyboard_grab_all(GdkWindow *window)
-{
-    if (window == NULL)
-        return;
-
-    gdk_keyboard_grab(window,
-                      FALSE,
-                      GDK_CURRENT_TIME);
-}
-static void do_keyboard_ungrab_all(GdkWindow *window G_GNUC_UNUSED)
-{
-    gdk_keyboard_ungrab(GDK_CURRENT_TIME);
-}
-static void do_pointer_grab_all(GdkWindow *window,
-                                GdkCursor *cursor)
-{
-    if (window == NULL)
-        return;
-
-    gdk_pointer_grab(window,
-                     FALSE, /* All events to come to our window directly */
-                     GDK_POINTER_MOTION_MASK |
-                     GDK_BUTTON_PRESS_MASK |
-                     GDK_BUTTON_RELEASE_MASK |
-                     GDK_BUTTON_MOTION_MASK |
-                     GDK_SCROLL_MASK,
-                     NULL, /* Allow cursor to move over entire desktop */
-                     cursor,
-                     GDK_CURRENT_TIME);
-}
-static void do_pointer_ungrab_all(GdkWindow *window G_GNUC_UNUSED)
-{
-    gdk_pointer_ungrab(GDK_CURRENT_TIME);
-}
-#else
 static void do_keyboard_grab_all(GdkWindow *window)
 {
     GdkDeviceManager *mgr = gdk_display_get_device_manager(gdk_window_get_display(window));
@@ -581,7 +508,6 @@ static void do_pointer_ungrab_all(GdkWindow *window)
     }
     g_list_free(devices);
 }
-#endif
 
 static void do_keyboard_grab(VncDisplay *obj, gboolean quiet)
 {
@@ -813,7 +739,8 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
     if (priv->read_only)
         return FALSE;
 
-    gdk_drawable_get_size(gtk_widget_get_window(widget), &ww, &wh);
+    ww = gdk_window_get_width(gtk_widget_get_window(widget));
+    wh = gdk_window_get_height(gtk_widget_get_window(widget));
 
     /* First apply adjustments to the coords in the motion event */
     if (priv->allow_scaling) {
@@ -859,13 +786,8 @@ static gboolean motion_event(GtkWidget *widget, GdkEventMotion *motion)
         if (y >= (gdk_screen_get_height(screen) - 1)) y -= 200;
 
         if (x != (int)motion->x_root || y != (int)motion->y_root) {
-#if GTK_CHECK_VERSION(3, 0, 0)
             GdkDevice *dev = gdk_event_get_device((GdkEvent*)motion);
             gdk_device_warp(dev, screen, x, y);
-#else
-            GdkDisplay *display = gtk_widget_get_display(widget);
-            gdk_display_warp_pointer(display, screen, x, y);
-#endif
             priv->last_x = -1;
             priv->last_y = -1;
             return FALSE;
@@ -1221,7 +1143,8 @@ static void on_framebuffer_update(VncConnection *conn G_GNUC_UNUSED,
     fbw = vnc_framebuffer_get_width(VNC_FRAMEBUFFER(priv->fb));
     fbh = vnc_framebuffer_get_height(VNC_FRAMEBUFFER(priv->fb));
 
-    gdk_drawable_get_size(gtk_widget_get_window(widget), &ww, &wh);
+    ww = gdk_window_get_width(gtk_widget_get_window(widget));
+    wh = gdk_window_get_height(gtk_widget_get_window(widget));
 
     /* If we have a pixmap, update the region which changed.
      * If we don't have a pixmap, the entire thing will be
@@ -1428,11 +1351,7 @@ static gboolean vnc_display_set_preferred_pixel_format(VncDisplay *display)
         g_assert_not_reached ();
     }
 
-#if GTK_CHECK_VERSION (2, 21, 1)
     fmt.byte_order = gdk_visual_get_byte_order (v) == GDK_LSB_FIRST ? G_LITTLE_ENDIAN : G_BIG_ENDIAN;
-#else
-    fmt.byte_order = v->byte_order == GDK_LSB_FIRST ? G_LITTLE_ENDIAN : G_BIG_ENDIAN;
-#endif
 
     VNC_DEBUG ("Set depth color to %d (%d bpp)", fmt.depth, fmt.bits_per_pixel);
     if (!vnc_connection_set_pixel_format(priv->conn, &fmt))
@@ -1614,7 +1533,7 @@ static void on_cursor_changed(VncConnection *conn G_GNUC_UNUSED,
               cursor ? vnc_cursor_get_height(cursor) : -1);
 
     if (priv->remote_cursor) {
-        gdk_cursor_unref(priv->remote_cursor);
+        g_object_unref(priv->remote_cursor);
         priv->remote_cursor = NULL;
     }
 
@@ -1967,7 +1886,8 @@ void vnc_display_close(VncDisplay *obj)
     if (gtk_widget_get_window(widget)) {
         gint width, height;
 
-        gdk_drawable_get_size(gtk_widget_get_window(widget), &width, &height);
+        width = gdk_window_get_width(gtk_widget_get_window(widget));
+        height = gdk_window_get_height(gtk_widget_get_window(widget));
         gtk_widget_queue_draw_area(widget, 0, 0, width, height);
     }
 }
@@ -2097,12 +2017,12 @@ void vnc_display_send_pointer(VncDisplay *obj, gint x, gint y, int button_mask)
     }
 }
 
-static void vnc_display_destroy (GtkObject *obj)
+static void vnc_display_destroy (GtkWidget *obj)
 {
     VncDisplay *display = VNC_DISPLAY (obj);
     VNC_DEBUG("Display destroy, requesting that VNC connection close");
     vnc_display_close(display);
-    GTK_OBJECT_CLASS (vnc_display_parent_class)->destroy (obj);
+    GTK_WIDGET_CLASS (vnc_display_parent_class)->destroy (obj);
 }
 
 
@@ -2128,12 +2048,12 @@ static void vnc_display_finalize (GObject *obj)
     }
 
     if (priv->null_cursor) {
-        gdk_cursor_unref (priv->null_cursor);
+        g_object_unref (priv->null_cursor);
         priv->null_cursor = NULL;
     }
 
     if (priv->remote_cursor) {
-        gdk_cursor_unref(priv->remote_cursor);
+        g_object_unref(priv->remote_cursor);
         priv->remote_cursor = NULL;
     }
 
@@ -2156,14 +2076,9 @@ static void vnc_display_finalize (GObject *obj)
 static void vnc_display_class_init(VncDisplayClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    GtkObjectClass *gtkobject_class = GTK_OBJECT_CLASS (klass);
     GtkWidgetClass *gtkwidget_class = GTK_WIDGET_CLASS (klass);
 
-#if GTK_CHECK_VERSION (2, 91, 0)
     gtkwidget_class->draw = draw_event;
-#else
-    gtkwidget_class->expose_event = expose_event;
-#endif
     gtkwidget_class->motion_notify_event = motion_event;
     gtkwidget_class->button_press_event = button_event;
     gtkwidget_class->button_release_event = button_event;
@@ -2176,12 +2091,12 @@ static void vnc_display_class_init(VncDisplayClass *klass)
     gtkwidget_class->focus_out_event = focus_out_event;
     gtkwidget_class->grab_notify = grab_notify;
     gtkwidget_class->realize = realize_event;
+    gtkwidget_class->destroy = vnc_display_destroy;
 
     object_class->finalize = vnc_display_finalize;
     object_class->get_property = vnc_display_get_property;
     object_class->set_property = vnc_display_set_property;
 
-    gtkobject_class->destroy = vnc_display_destroy;
 
     g_object_class_install_property (object_class,
                                      PROP_POINTER_LOCAL,
@@ -2536,11 +2451,7 @@ static void vnc_display_init(VncDisplay *display)
      * double buffering to work around this until we
      * find a better idea.
      */
-#if GTK_CHECK_VERSION(3, 0, 0)
     gtk_widget_set_double_buffered(widget, TRUE);
-#else
-    gtk_widget_set_double_buffered(widget, FALSE);
-#endif
 
     priv = display->priv = VNC_DISPLAY_GET_PRIVATE(display);
     memset(priv, 0, sizeof(VncDisplayPrivate));
@@ -2972,8 +2883,8 @@ gboolean vnc_display_set_scaling(VncDisplay *obj,
         GdkWindow *window = gtk_widget_get_window(GTK_WIDGET(obj));
 
         if (window != NULL) {
-            gdk_drawable_get_size(gtk_widget_get_window(GTK_WIDGET(obj)),
-                                  &ww, &wh);
+            ww = gdk_window_get_width(gtk_widget_get_window(GTK_WIDGET(obj)));
+            wh = gdk_window_get_height(gtk_widget_get_window(GTK_WIDGET(obj)));
             gtk_widget_queue_draw_area(GTK_WIDGET(obj), 0, 0, ww, wh);
         }
     }
@@ -3019,8 +2930,8 @@ void vnc_display_set_smoothing(VncDisplay *obj, gboolean enabled)
         GdkWindow *window = gtk_widget_get_window(GTK_WIDGET(obj));
 
         if (window != NULL) {
-            gdk_drawable_get_size(gtk_widget_get_window(GTK_WIDGET(obj)),
-                                  &ww, &wh);
+            ww = gdk_window_get_width(gtk_widget_get_window(GTK_WIDGET(obj)));
+            wh = gdk_window_get_height(gtk_widget_get_window(GTK_WIDGET(obj)));
             gtk_widget_queue_draw_area(GTK_WIDGET(obj), 0, 0, ww, wh);
         }
     }

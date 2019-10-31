@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#if WITH_UCONTEXT
+#ifdef WITH_UCONTEXT
 #include "continuation.h"
 #else
 #include <glib.h>
@@ -42,7 +42,7 @@ struct coroutine
     struct coroutine *caller;
     void *data;
 
-#if WITH_UCONTEXT
+#ifdef WITH_UCONTEXT
     struct continuation cc;
 #else
     GThread *thread;

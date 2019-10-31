@@ -1,3 +1,235 @@
+2019-08-07  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Update NEWS for 1.0.0 release
+
+	rpm: make gtk3 sub-RPMs obsolete the gtk2 sub-RPMs
+	Adding Obsoletes: lines ensures the GTK2 version of gtk-vnc gets erased
+	during upgrade.
+
+2019-08-06  Piotr Drąg  <piotrdrag@gmail.com>
+
+	Update POTFILES.skip
+
+2019-08-06  Daniel P. Berrangé  <berrange@redhat.com>
+
+	build: drop autotools build recipes
+
+	build: switch to use meson for making releases
+
+	build: switch RPM spec builds to use meson instead of autotools
+
+	build: add initial meson build recipes
+
+2019-08-05  Daniel P. Berrangé  <berrange@redhat.com>
+
+	build: add missing vncpixelformat.c file to introspection
+
+	tests: annotate unused parameters
+
+	build: fix typo in gir package name
+
+	build: install the cairo header file
+
+	src: fix arg name consistency in gtk-doc comments
+
+	build: drop extra release tag from RPM specs
+
+	build: use #ifdef instead of #if for WITH_UCONTEXT check
+
+	build: remove checks for pwd.h and termios.h
+	Simply use a win32 platform check for these headers
+
+	build: rename included keycodemapdb files to have .h ext
+	These files are not headers, they are source that is included from other
+	source files.
+
+	build: remove long obsolete link-warning.h file
+
+	build: move keycodemapdb submodule
+	Move the submodule into the subprojects directory to match what meson
+	expects.
+
+	Drop support for libview in example program
+	The libview project is abandonware with no commit upstream since 2011
+	and no support for GTK3. Since we dropped GTK2 there's no reason to
+	keep libview support.
+
+2019-05-03  Daniel P. Berrangé  <berrange@redhat.com>
+
+	rpm: always build with vala enabled
+
+	rpm: always build with gir enabled
+
+	Delete support for GTK2
+
+	Refresh maint.mk from gnulib
+
+	Allow for writes to fail in server test
+	There is a race condition between the client and the server code. Once
+	the client has detected an error condition it might close the connection
+	before the server has finished writing its protocol message fully. Set a
+	flag to allow for some writes to fail.
+
+	Don't leak server object in tests
+
+2019-05-02  Daniel P. Berrangé  <berrange@redhat.com>
+
+	rpm: remove bogus mingw dep on iconv
+
+	rpm: switch to using autosetup macro
+
+	rpm: remove duplicate description entry
+
+	rpm: run make check during build
+
+2019-01-12  Ján Tomko  <jtomko@redhat.com>
+
+	configure: do not quote EXTRA_ARGS
+	Without this using ./autogen.sh --system results in a funny definition
+	of SYSCONFDIR:
+	Searching for certs in /usr --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib64/etc/pki
+
+	vnc_connection_start_tls: set tls_session to NULL after deinit
+	Avoid a double free in case of a failure, e.g. when vnc_connection_tls_initialize_cert_cred
+	fails to read the certificate:
+
+	==1154== Invalid read of size 4
+	==1154==    at 0x60870FB: gnutls_bye (record.c:288)
+	==1154==    by 0x4A46B73: vnc_connection_close (vncconnection.c:5120)
+	==1154==    by 0x4A4E6CA: vnc_connection_coroutine (vncconnection.c:5650)
+	==1154==    by 0x4A51BCE: coroutine_trampoline (coroutine_ucontext.c:55)
+	==1154==    by 0x5BD81FF: ??? (in /usr/lib64/libc-2.28.so)
+	==1154==    by 0x175DB277: ???
+	==1154==  Address 0x1847fcf0 is 384 bytes inside a block of size 6,496 free'd
+	==1154==    at 0x4839A0C: free (vg_replace_malloc.c:540)
+	==1154==    by 0x4A4B019: vnc_connection_start_tls (vncconnection.c:4466)
+	==1154==    by 0x4A4CBE8: vnc_connection_perform_auth_vencrypt (vncconnection.c:4708)
+	==1154==    by 0x4A4CBE8: vnc_connection_perform_auth (vncconnection.c:4818)
+	==1154==    by 0x4A4CBE8: vnc_connection_initialize (vncconnection.c:5415)
+	==1154==    by 0x4A4E50F: vnc_connection_coroutine (vncconnection.c:5639)
+	==1154==    by 0x4A51BCE: coroutine_trampoline (coroutine_ucontext.c:55)
+	==1154==    by 0x5BD81FF: ??? (in /usr/lib64/libc-2.28.so)
+	==1154==    by 0x175DB277: ???
+	==1154==  Block was alloc'd at
+	==1154==    at 0x483AB1A: calloc (vg_replace_malloc.c:762)
+	==1154==    by 0x60B6FDE: gnutls_init (state.c:465)
+	==1154==    by 0x4A4AB28: vnc_connection_start_tls (vncconnection.c:4434)
+	==1154==    by 0x4A4CBE8: vnc_connection_perform_auth_vencrypt (vncconnection.c:4708)
+	==1154==    by 0x4A4CBE8: vnc_connection_perform_auth (vncconnection.c:4818)
+	==1154==    by 0x4A4CBE8: vnc_connection_initialize (vncconnection.c:5415)
+	==1154==    by 0x4A4E50F: vnc_connection_coroutine (vncconnection.c:5639)
+	==1154==    by 0x4A51BCE: coroutine_trampoline (coroutine_ucontext.c:55)
+	==1154==    by 0x5BD81FF: ??? (in /usr/lib64/libc-2.28.so)
+	==1154==    by 0x175DB277: ???
+
+	vnc_connection_start_tls: add deinit label
+	Introduce a deinit label to unify cleanup paths which call gnutls_deinit.
+
+2019-01-12  Christophe Fergeau  <cfergeau@redhat.com>
+
+	conn: Use vnc_connection_has_error() extensively
+	It's better to call this helper rather than directly checking for
+	priv->coroutine_stop.
+
+	conn: Remove redundant vnc_connection_has_error() calls
+	No need to call it twice in:
+	if (vnc_connection_has_error(conn))
+	    return !vnc_connection_has_error(conn);
+
+	and no need to call it after calling vnc_connection_set_error() as it
+	will always return TRUE in this scenario.
+
+	conn: Report error if vnc_connection_perform_auth_vnc fails
+	At the moment, when the various crypto operations that
+	vnc_connection_perform_auth_vnc performs fail, no error is reported to
+	the client application. This commit adds the emission of a vnc-error
+	signal when this happens. This is not reported as an auth failure as
+	these errors are not something which is recoverable, they indicate
+	system failures.
+
+	sasl: Emit vnc-auth-failure signal on SASL auth failures
+	When the SASL username or password are wrong, at the moment client
+	application will not get any specific notification for it, they will
+	just know that the remote connection was closed because of an error.
+
+	This commit adds the emission of the vnc-auth-failure signal when
+	vnc_connection_perform_auth_sasl() fails.
+
+	https://bugzilla.redhat.com/show_bug.cgi?id=1456175
+
+	sasl: Factor common code auth failure
+	The new vnc_connection_auth_failure() method will be reused in the
+	next commit.
+
+2018-12-14  Andre Klapper  <a9016009@gmx.de>
+
+	Replace Bugzilla by Gitlab URL in DOAP file
+
+2018-09-05  Daniel P. Berrangé  <berrange@redhat.com>
+
+	Initialize gcrypt before any auth method
+	The gcrypt APIs are now used in multiple auth methods, so we should
+	initialize them early, rather than only in the TLS codepath.
+
+2018-08-30  Guido Günther  <agx@sigxcpu.org>
+
+	gvnc-1.0.pc.in: Use GLIB_REQUIRED
+	GOBJECT_REQUIRED is no more
+
+2018-08-24  Daniel P. Berrangé  <berrange@redhat.com>
+
+	fix crash when connection fails early
+	When reading the initial greeting a timer is set in the background. If
+	the connection fails early, we can jump to cleanup code before the timer
+	is disable. The timer will later fire, read a coroutine context from
+	freed memory, and likely jump to somewhere awful with predictably crashy
+	results.
+
+	  https://bugzilla.redhat.com/show_bug.cgi?id=1620203
+
+	coroutine: use MAP_ANON if MAP_ANONYMOUS does not exist
+	MAP_ANON is the old deprecated name for MAP_ANONYMOUS, but the latter
+	does not exist on at least some macOS 10 versions.
+
+	Resolves: issue #4
+
+2018-08-24  Marc-André Lureau  <marcandre.lureau@redhat.com>
+
+	build-sys: update gitignore
+	GITIGNORE_MAINTAINERCLEANFILES_* helpers, remove plugin files.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=780651
+
+	build-sys: remove .in files from EXTRA_DIST
+	They are already dist'ed by autotools.
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=780651
+
+	build-sys: update git.mk
+	https://bugzilla.gnome.org/show_bug.cgi?id=780651
+
+2018-08-22  Marc-André Lureau  <marcandre.lureau@redhat.com>
+
+	build-sys: drop gnome-common dependency
+	As described in:
+	https://wiki.gnome.org/Projects/GnomeCommon/Migration
+
+	https://bugzilla.gnome.org/show_bug.cgi?id=780651
+
+
+	Tweaked autogen.sh to use 'test' instead of []
+
+2018-08-22  Daniel P. Berrangé  <berrange@redhat.com>
+
+	examples: remove extra parameter from init call in javascript demo
+	The bindings for JS have improved such that the init() can be invoked
+	sensibly.
+
+	Resolves: issue #6
+
+	examples: require specific versions before importing gi libs
+	Resolves: issue #6
+
 2018-08-17  Daniel P. Berrangé  <berrange@redhat.com>
 
 	Update NEWS for 0.9.0 release

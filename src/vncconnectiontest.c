@@ -28,6 +28,7 @@
 #include "vncbaseframebuffer.h"
 
 static gboolean debug;
+static gboolean allowfail;
 
 struct GVncTest {
     GMutex lock;
@@ -48,30 +49,30 @@ struct GVncTest {
 
 static void test_send_bytes(GOutputStream *os, const guint8 *str, gsize len)
 {
-    g_assert(g_output_stream_write_all(os, str, len, NULL, NULL, NULL));
+    g_assert(g_output_stream_write_all(os, str, len, NULL, NULL, NULL) || allowfail);
 }
 
 static void test_send_u8(GOutputStream *os, guint8 v)
 {
-    g_assert(g_output_stream_write_all(os, &v, 1, NULL, NULL, NULL));
+    g_assert(g_output_stream_write_all(os, &v, 1, NULL, NULL, NULL) || allowfail);
 }
 
 static void test_send_u16(GOutputStream *os, guint16 v)
 {
     v = GUINT16_TO_BE(v);
-    g_assert(g_output_stream_write_all(os, &v, 2, NULL, NULL, NULL));
+    g_assert(g_output_stream_write_all(os, &v, 2, NULL, NULL, NULL) || allowfail);
 }
 
 static void test_send_u32(GOutputStream *os, guint32 v)
 {
     v = GUINT32_TO_BE(v);
-    g_assert(g_output_stream_write_all(os, &v, 4, NULL, NULL, NULL));
+    g_assert(g_output_stream_write_all(os, &v, 4, NULL, NULL, NULL) || allowfail);
 }
 
 static void test_send_s32(GOutputStream *os, gint32 v)
 {
     v = GINT32_TO_BE(v);
-    g_assert(g_output_stream_write_all(os, &v, 4, NULL, NULL, NULL));
+    g_assert(g_output_stream_write_all(os, &v, 4, NULL, NULL, NULL) || allowfail);
 }
 
 static void test_recv_bytes(GInputStream *is, guint8 *str, gsize len)
@@ -153,6 +154,7 @@ static gpointer test_helper_server(gpointer opaque)
     }
 
     g_object_unref(client);
+    g_object_unref(server);
 
     return NULL;
 }
@@ -246,7 +248,7 @@ static void test_helper_disconnected(VncConnection *conn G_GNUC_UNUSED,
     g_main_quit(test->loop);
 }
 
-static void test_helper_error(VncConnection *conn,
+static void test_helper_error(VncConnection *conn G_GNUC_UNUSED,
                               const char *str,
                               gpointer opaque)
 {
@@ -254,7 +256,8 @@ static void test_helper_error(VncConnection *conn,
     test->error = g_strdup(str);
 }
 
-static void test_common_bounds_server(GInputStream *is, GOutputStream *os)
+static void test_common_bounds_server(GInputStream *is G_GNUC_UNUSED,
+                                      GOutputStream *os)
 {
     /* Frame buffer width / height */
     test_send_u16(os, 100);
@@ -310,10 +313,12 @@ static void test_rre_bounds_server(GInputStream *is, GOutputStream *os)
     test_send_u32(os, 0x42424242);
 
     /* x, y, w, h */
+    allowfail = TRUE;
     test_send_u16(os, 10);
     test_send_u16(os, 10000);
     test_send_u16(os, 1);
     test_send_u16(os, 1);
+    allowfail = FALSE;
 }
 
 
@@ -346,8 +351,10 @@ static void test_hextile_bounds_server(GInputStream *is, GOutputStream *os)
     test_send_u32(os, 0x12345678);
 
     /* x, y */
+    allowfail = TRUE;
     test_send_u8(os, 0xff);
     test_send_u8(os, 0xff);
+    allowfail = FALSE;
 }
 
 
@@ -371,8 +378,10 @@ static void test_copyrect_bounds_server(GInputStream *is, GOutputStream *os)
     test_send_s32(os, 1);
 
     /* src x, y */
+    allowfail = TRUE;
     test_send_u16(os, 91);
     test_send_u16(os, 91);
+    allowfail = FALSE;
 }
 
 
@@ -433,6 +442,8 @@ static void test_unexpected_cmap_server(GInputStream *is, GOutputStream *os)
     test_send_u8(os, 1);
     /* pad */
     test_send_u8(os, 0);
+
+    allowfail = TRUE;
     /* first color, ncolors */
     test_send_u16(os, 0);
     test_send_u16(os, 1);
@@ -441,6 +452,7 @@ static void test_unexpected_cmap_server(GInputStream *is, GOutputStream *os)
     test_send_u16(os, 128);
     test_send_u16(os, 128);
     test_send_u16(os, 128);
+    allowfail = FALSE;
 }
 
 
@@ -505,12 +517,14 @@ static void test_overflow_cmap_server(GInputStream *is, GOutputStream *os)
     test_send_u16(os, 65535);
     test_send_u16(os, 2);
 
+    allowfail = TRUE;
     /* r,g,b */
     for (int i = 0 ; i < 2; i++) {
         test_send_u16(os, i);
         test_send_u16(os, i);
         test_send_u16(os, i);
     }
+    allowfail = FALSE;
 }
 
 

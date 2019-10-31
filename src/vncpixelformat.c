@@ -58,7 +58,7 @@ VncPixelFormat *vnc_pixel_format_new(void)
 
 /**
  * vnc_pixel_format_copy:
- * @srcFormat: the format to copy
+ * @format: the format to copy
  *
  * Allocate a new VNC pixel format struct whose
  * contents is initialized with the data found
@@ -67,13 +67,13 @@ VncPixelFormat *vnc_pixel_format_new(void)
  *
  * Returns: (transfer full): the new pixel format struct
  */
-VncPixelFormat *vnc_pixel_format_copy(VncPixelFormat *srcFormat)
+VncPixelFormat *vnc_pixel_format_copy(VncPixelFormat *format)
 {
-    VncPixelFormat *format;
+    VncPixelFormat *newformat;
 
-    format = g_slice_dup(VncPixelFormat, srcFormat);
+    newformat = g_slice_dup(VncPixelFormat, format);
 
-    return format;
+    return newformat;
 }
 
 

@@ -1,0 +1,4 @@
+option('enable-werror', type: 'boolean',  value: false, description: 'Enable -Werror flag')
+option('with-coroutine', type: 'string', value: 'auto', description: 'Build with coroutine backend: [auto, ucontext, gthread]')
+option('with-tls-priority', type: 'string', value: 'NORMAL', description: 'Set default TLS priority string')
+option('with-vala', type: 'boolean', value: true, description: 'Enable Vala bindings')

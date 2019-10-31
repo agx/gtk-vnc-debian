@@ -1,133 +1,41 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
-
-/* always defined to indicate that i18n is enabled */
-#undef ENABLE_NLS
-
-/* Enable compile-time and run-time bounds-checking, and some warnings,
-        without upsetting newer glibc. */
-     #if defined __OPTIMIZE__ && __OPTIMIZE__
-     # define _FORTIFY_SOURCE 2
-     #endif
-    
-
-/* GETTEXT package name */
-#undef GETTEXT_PACKAGE
-
-/* Define to 1 if you have the `bind_textdomain_codeset' function. */
-#undef HAVE_BIND_TEXTDOMAIN_CODESET
-
-/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
-   CoreFoundation framework. */
-#undef HAVE_CFLOCALECOPYCURRENT
-
-/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
-   the CoreFoundation framework. */
-#undef HAVE_CFPREFERENCESCOPYAPPVALUE
-
-/* Define to 1 if you have the `dcgettext' function. */
-#undef HAVE_DCGETTEXT
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
-/* Define if the GNU gettext() function is already present or preinstalled. */
-#undef HAVE_GETTEXT
 
 /* Whether GIO UNIX is available */
-#undef HAVE_GIOUNIX
+#mesondefine HAVE_GIOUNIX
 
-/* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+/* whether pulseaudio is available */
+#mesondefine HAVE_PULSEAUDIO
 
-/* Define if your <locale.h> file defines LC_MESSAGES. */
-#undef HAVE_LC_MESSAGES
+/* whether Cyrus SASL is available */
+#mesondefine HAVE_SASL
 
-/* Define to 1 if you have the `z' library (-lz). */
-#undef HAVE_LIBZ
-
-/* Define to 1 if you have the <locale.h> header file. */
-#undef HAVE_LOCALE_H
-
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
-
-/* whether pulseaudio is available for audio streaming */
-#undef HAVE_PULSEAUDIO
-
-/* Define to 1 if you have the <pwd.h> header file. */
-#undef HAVE_PWD_H
-
-/* whether Cyrus SASL is available for authentication */
-#undef HAVE_SASL
-
-/* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
-
-/* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
-
-/* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
-
-/* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
-
-/* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
-
-/* Define to 1 if you have the <termios.h> header file. */
-#undef HAVE_TERMIOS_H
-
-/* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
-
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
-#undef LT_OBJDIR
-
-/* Name of package */
-#undef PACKAGE
-
-/* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
-
-/* Define to the full name of this package. */
-#undef PACKAGE_NAME
-
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
-
-/* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
-
-/* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+/* whether ucontext coroutine is used */
+#mesondefine WITH_UCONTEXT
 
 /* TLS default priority string */
-#undef TLS_PRIORITY
+#define TLS_PRIORITY "@tls_priority@"
 
-/* Version number of package */
-#undef VERSION
+/* GLib logging domain */
+#define G_LOG_DOMAIN "gtk-vnc"
 
-/* Major version number of package */
-#undef VERSION_MAJOR
+/* Gettext .mo file name */
+#define GETTEXT_PACKAGE "gtk-vnc"
 
-/* Micro version number of package */
-#undef VERSION_MICRO
+/* Application package name */
+#define PACKAGE "gtk-vnc"
 
-/* Minor version number of package */
-#undef VERSION_MINOR
+/* TLS default priority string */
+#define TLS_PRIORITY "@tls_priority@"
 
-/* Whether to use libview */
-#undef WITH_LIBVIEW
+/* Version string */
+#define VERSION "@version@"
 
-/* Whether to use ucontext coroutine impl */
-#undef WITH_UCONTEXT
+/* Version digits */
+#define VERSION_MAJOR @version_major@
+#define VERSION_MINOR @version_minor@
+#define VERSION_MICRO @version_micro@
+
+/* Config file dir */
+#define SYSCONFDIR "@sysconfdir@"
+
+/* gettext .mo dir */
+#define PACKAGE_LOCALE_DIR "@localedir@"

@@ -34,10 +34,6 @@
 #include <gio/gunixsocketaddress.h>
 #endif
 
-#if WITH_LIBVIEW
-#include <libview/autoDrawer.h>
-#endif
-
 #ifndef GDK_Return
 #define GDK_Return GDK_KEY_Return
 #endif
@@ -637,27 +633,6 @@ static void vnc_credential(GtkWidget *vncdisplay, GValueArray *credList)
         gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
-#if WITH_LIBVIEW
-static gboolean window_state_event(GtkWidget *widget,
-                                   GdkEventWindowState *event,
-                                   gpointer data)
-{
-    ViewAutoDrawer *drawer = VIEW_AUTODRAWER(data);
-
-    if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
-        if (event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN) {
-            vnc_display_force_grab(VNC_DISPLAY(vnc), TRUE);
-            ViewAutoDrawer_SetActive(drawer, TRUE);
-        } else {
-            vnc_display_force_grab(VNC_DISPLAY(vnc), FALSE);
-            ViewAutoDrawer_SetActive(drawer, FALSE);
-        }
-    }
-
-    return FALSE;
-}
-#endif
-
 int main(int argc, char **argv)
 {
     gchar *name;
@@ -709,11 +684,7 @@ int main(int argc, char **argv)
     vnc = vnc_display_new();
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-#if WITH_LIBVIEW
-    layout = ViewAutoDrawer_New();
-#else
     layout = gtk_vbox_new(FALSE, 0);
-#endif
     menubar = gtk_menu_bar_new();
 
 #ifdef HAVE_PULSEAUDIO
@@ -777,14 +748,8 @@ int main(int argc, char **argv)
 
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(settings), submenu);
 
-#if WITH_LIBVIEW
-    ViewAutoDrawer_SetActive(VIEW_AUTODRAWER(layout), FALSE);
-    ViewOvBox_SetOver(VIEW_OV_BOX(layout), menubar);
-    ViewOvBox_SetUnder(VIEW_OV_BOX(layout), vnc);
-#else
     gtk_box_pack_start(GTK_BOX(layout), menubar, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(layout), vnc, TRUE, TRUE, 0);
-#endif
     gtk_container_add(GTK_CONTAINER(window), layout);
     gtk_widget_realize(vnc);
 
@@ -899,10 +864,6 @@ int main(int argc, char **argv)
                      G_CALLBACK(do_scaling), vnc);
     g_signal_connect(smoothing, "toggled",
                      G_CALLBACK(do_smoothing), vnc);
-#if WITH_LIBVIEW
-    g_signal_connect(window, "window-state-event",
-                     G_CALLBACK(window_state_event), layout);
-#endif
 
     gtk_main();
 
