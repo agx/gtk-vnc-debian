@@ -1,0 +1,9 @@
+# Make sure we have deps basically right
+Test-Command: gvncviewer --help
+Depends: gvncviewer
+Restrictions: superficial
+
+# Make sure gir works
+Test-Command: xvfb-run examples/gvncviewer.py 127.0.0.1
+Depends: gir1.2-gtk-vnc-2.0, python, python-gi, xvfb, xauth
+Restrictions: superficial, allow-stderr
