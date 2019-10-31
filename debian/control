@@ -6,8 +6,7 @@ Uploaders:
  Guido Günther <agx@sigxcpu.org>,
 Standards-Version: 4.4.0
 Build-Depends:
- debhelper (>= 10),
- dh-autoreconf,
+ debhelper (>= 12),
  dh-sequence-gir,
  gobject-introspection,
  intltool,
